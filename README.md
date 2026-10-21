@@ -33,7 +33,7 @@ DeepSeek Harness 插件 + 命令行工具链,版本 `0.0.1-beta`,协议 GPL-3.0�
 
 ```bash
 npm install          # Node.js >= 20
-npm test             # 36 个单元测试
+npm test             # 39 个单元测试(含工具 Schema 回归)
 npm run verify       # 端到端自检(含标准库/商城联网检查,可加 --offline)
 ```
 
