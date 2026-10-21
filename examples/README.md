@@ -9,7 +9,7 @@
 | `stc89c52rc-minimal-v3.report.md` | BOM + 引脚表 + 网络表 |
 | `STC89C52RC-Minimal-v3/sch/Sheet_1.json` | 工程目录形式(含导入说明) |
 | `build-stc89c52rc.mjs` / `build-stc89c52rc-v2.mjs` | 早期版本:内置符号 / 数据手册校对后的手工符号 |
-| `multi-sheet-demo/` | **单工程多图纸**:Sheet_1 4P 排针(VCC/RX/TX/GND)、Sheet_2 8P 排针(VCC/TX/RX/GND/NC×3/GND) |
+| `multi-sheet-demo/` | **单工程多图纸**:Sheet_1 4P 排针、Sheet_2 8P 排针;VCC/GND 用全局标志、RX/TX 用**网络端口**(跨图纸)。`node examples/multi-sheet-demo/build.mjs` 重建 |
 | `auto-layout.spec.json` | **不写坐标的 spec**:`"layout":"auto"`,自动摆放 + 正交走线 |
 | `auto-layout.{esch,ai.png,ai.pdf}` | 由它生成的图(`npm run example:auto`) |
 | `stc89c52rc-minimal.spec.json` | v1 的声明式 spec(演示 spec 格式) |

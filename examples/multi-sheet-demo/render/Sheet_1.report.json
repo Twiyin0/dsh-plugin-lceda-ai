@@ -2,15 +2,15 @@
   "meta": {
     "sheet": "Sheet_1",
     "editorVersion": "6.5.51",
-    "uuid": "923f3ff54f04d54157ce8b15e7a39ffd",
+    "uuid": "6d0a57ce4f5d5f29eb337f91223bcf0c",
     "warnings": [],
     "statistics": {
       "components": 1,
       "pins": 4,
       "wires": 0,
       "junctions": 0,
-      "netLabels": 2,
-      "netFlags": 2,
+      "netLabels": 0,
+      "netFlags": 4,
       "nets": 4,
       "namedNets": 4,
       "conflicts": 0

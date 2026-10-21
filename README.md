@@ -29,7 +29,7 @@ DeepSeek Harness 插件 + 命令行工具链,版本 `0.0.1-beta`,协议 GPL-3.0�
 | 器件库 | **立创EDA 标准库 → 立创商城 → 内置符号** 三级择优,并用手册引脚表校验符号 |
 | 自动布局 | spec 不写坐标也能出图:按网表分侧摆放、正交避障走线,并自检“有没有把两个网络短接” |
 | 离线缓存 | 标准库搜索/取件落盘到 `~/.cache/lceda-ai`,批量建图不再重复请求;`cache` 可查看/清空 |
-| 多图纸工程 | `project` 汇总整个工程:合并 BOM、逐图纸统计、跨图纸同名网络、网络分类(电源/地/复位/时钟/差分/总线风格) |
+| 多图纸工程 | `project` 汇总整个工程:合并 BOM、逐图纸统计、**跨图纸联动**(按 Net Port / NetFlag / NetLabel 三种作用域标注是否真的连通)、网络分类 |
 | Agent 集成 | Harness 插件注册 7 个 `lceda_*` 工具;子进程调用 CLI,改代码即生效 |
 
 ## 安装
@@ -85,6 +85,10 @@ npx lceda-ai export examples/stc89c52rc-minimal-v3.esch --project ./MyProject
   "texts":  [ { "text": "说明", "at": [60, 60], "size": 10 } ]
 }
 ```
+
+**跨图纸联动**:`ports: [{ text, at, rot }]` 生成**网络端口 Net Port**(跨图纸连通);
+`flags: [{ text, kind, at, rot }]` 生成电源/地标志(全局连通);`labels: [{ text, at }]` 是普通网络标签(**仅本图纸**)。
+同名网络是否真的连通取决于用哪一种 —— `project` 报告会直接告诉你。
 
 `at`/`from`/`to` 可以是引脚引用(`"U1.9"`)或坐标。
 
@@ -184,7 +188,7 @@ npx lceda-ai export sheet.esch --project ./MyProject    # 工程目录 + 导入�
 | `lceda_find_component` | 找器件(标准库优先) |
 | `lceda_edit_schematic` | 结构化编辑 + 校验 + 预览 |
 | `lceda_export_json` | 导出可导入 JSON / 工程目录 |
-| `lceda_project_overview` | 多图纸工程汇总:**合并 BOM、跨图纸网络、网络分类** |
+| `lceda_project_overview` | 多图纸工程汇总:**合并 BOM、跨图纸联动(端口/标志/标签作用域)、网络分类** |
 
 安装:
 

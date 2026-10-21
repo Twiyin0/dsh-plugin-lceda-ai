@@ -80,7 +80,48 @@ F~part_netLabel_gnD~x~y~rot~id~~0^^x~y^^GND~#000000~tx~ty~0~start~1~Times New Ro
 - `<polyline>` 想要“只描边”必须显式 `fill="none"`,否则会出现整片黑三角。
 - 图片记录(`Pimage`)的 x/y/w/h 是 `data:` URI 之前最后 4 个数。
 
-## 跨图纸连接:Net Port
+## 跨图纸连接:Net Port(已实测)
+
+### 记录格式
+
+在编辑器里放一个网络端口,读画布 DOM 得到定义(编辑器 6.5.51,运行时生成,不在 bundle 里):
+
+```html
+<g c_partid="part_netLabel_netPort" c_etype="pinpart" c_origin="675,270">
+  <circle c_pindot="true" cx="675" cy="270" r="2" fill="#ff0000"/>
+  <text x="653" y="273.3" font-size="8pt" fill="#0000FF" text-anchor="end">netPort1</text>
+  <polyline points="675 270 670 275 655 275 655 265 670 265 675 270"
+            stroke="#0000FF" stroke-width="1" fill="transparent"/>
+</g>
+```
+
+落到文件里就是一条 **`F~` 记录**(与电源/地标志同族,但 kind 不同),本工具的写法:
+
+```
+F~part_netLabel_netPort~x~y~rot~id~~0^^x~y^^<网络名>~#0000FF~tx~ty~0~<anchor>~1~Times New Roman~8pt~flag_id^^PL~...
+```
+
+- 端口本体 = 5 段 `PL`(相对原点的折线),`#0000FF`,线宽 1,fill `transparent`
+- 文字 = 网络名,`#0000FF`,Times New Roman 8pt;rot 0 时在 `x-22` 右对齐(端口朝左)
+- 旋转:0 朝左、180 朝右、90 朝上、270 朝下
+- 默认名是 `netPort1`、`netPort2`…,放置后改名成网络名
+
+**反向验证**:用本工具生成该记录 → 在编辑器里打开 → 画布上出现 `c_partid="part_netLabel_netPort"` 的端口图形(不是普通标签/标志)。
+
+### 作用域(决定“同名是否连通”)
+
+| 元素 | 记录 | 作用域 | 编辑器节点类型 |
+|---|---|---|---|
+| 网络标签 Net Label | `N~` | **仅本图纸** | ENETLABEL |
+| 电源/地标志 NetFlag | `F~part_netLabel_gnD` 等 | **全局** | ENETFLAG |
+| **网络端口 Net Port** | `F~part_netLabel_netPort` | **跨图纸** | ENETPORT |
+
+所以“两张图纸上有同名网络”**不等于**连通。`project` 报告会按来源标注:
+
+- `网络端口(跨图纸)` / `全局标志` → 连通
+- `网络标签(仅本图纸)` → 只在本图纸内;**若同名网络出现在多张图纸**,报告会单列“⚠️ 同名但未跨图纸连通”,提示改用 Net Port
+
+## 跨图纸连接(旧笔记)
 
 REA 结论(编辑器 bundle `js/main.min.js`):
 

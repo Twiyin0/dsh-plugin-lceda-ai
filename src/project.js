@@ -89,9 +89,14 @@ export async function readProject(dir) {
       row.sheets.add(name);
       bom.set(key, row);
     }
-    // a name carried by a power/ground flag is global in the editor; a plain net
-    // label is sheet-local, so the two are reported differently
-    const flagNames = new Set(doc.shapes.filter((x) => x.type === 'netflag').map((x) => String(x.text)));
+    // Scope matters, and the editor tells the three apart (verified against the
+    // 6.5.51 canvas: a Net Port is a part-like record the netlist marks ENETPORT):
+    //   Net Port  -> connects across sheets
+    //   NetFlag   -> global (power/ground rails)
+    //   NetLabel  -> local to this sheet only
+    const isPortRecord = (x) => x.type === 'netflag' && /netPort/i.test(String(x.kind ?? ''));
+    const portNames = new Set(doc.shapes.filter(isPortRecord).map((x) => String(x.text)));
+    const flagNames = new Set(doc.shapes.filter((x) => x.type === 'netflag' && !isPortRecord(x)).map((x) => String(x.text)));
     const labelNames = new Set(doc.shapes.filter((x) => x.type === 'netlabel').map((x) => String(x.text)));
 
     for (const n of netlist.nets) {
@@ -101,11 +106,14 @@ export async function readProject(dir) {
       row.classes.add(classifyNet(n.name));
       netSheets.set(n.name, row);
 
-      const m = merged.get(n.name) ?? { name: n.name, sheets: new Set(), pins: [], sources: new Set() };
+      const m = merged.get(n.name) ?? { name: n.name, sheets: new Set(), pins: [], sources: new Set(), bySheet: new Map() };
       m.sheets.add(name);
       for (const p of n.pins) m.pins.push({ sheet: name, ref: p.ref, pin: p.pin });
-      if (flagNames.has(n.name)) m.sources.add('flag');
-      if (labelNames.has(n.name)) m.sources.add('label');
+      const local = m.bySheet.get(name) ?? new Set();
+      if (portNames.has(n.name)) { m.sources.add('port'); local.add('port'); }
+      if (flagNames.has(n.name)) { m.sources.add('flag'); local.add('flag'); }
+      if (labelNames.has(n.name)) { m.sources.add('label'); local.add('label'); }
+      m.bySheet.set(name, local);
       merged.set(n.name, m);
     }
   }
@@ -117,6 +125,17 @@ export async function readProject(dir) {
     nets: acc.nets + s.statistics.nets,
     conflicts: acc.conflicts + (s.statistics.conflicts ?? 0),
   }), { components: 0, pins: 0, nets: 0, conflicts: 0 });
+
+  // a same-named net that appears on several sheets but is only ever a Net Label
+  // is NOT connected across them - worth saying out loud
+  const misleading = [...merged.values()]
+    .filter((m) => m.sheets.size > 1 && [...m.bySheet.values()].some((src) => !src.has('port') && !src.has('flag')))
+    .map((m) => ({
+      name: m.name,
+      sheets: [...m.sheets].sort(),
+      localOnlySheets: [...m.bySheet].filter(([, src]) => !src.has('port') && !src.has('flag')).map(([sheet]) => sheet).sort(),
+      pins: m.pins.map((p) => `${p.sheet}:${p.ref}.${p.pin}`).sort(),
+    }));
 
   const classes = {};
   for (const row of netSheets.values()) {
@@ -145,15 +164,25 @@ export async function readProject(dir) {
     mergedNets: [...merged.values()].map((m) => ({
       name: m.name,
       sheets: [...m.sheets].sort(),
-      // flag = 电源/地标志(编辑器里是全局的);label = 普通网络标签(本图纸)
+      // port = 网络端口(跨图纸);flag = 电源/地标志(全局);label = 普通标签(仅本图纸)
+      crossSheet: m.sources.has('port'),
       global: m.sources.has('flag'),
+      // only a Net Port or a NetFlag actually joins sheets; two sheets that both
+      // use a plain Net Label merely share a name
+      connected: m.sources.has('port') || m.sources.has('flag'),
+      mechanism: m.sources.has('port') ? 'port' : (m.sources.has('flag') ? 'flag' : 'none'),
+      // per sheet: a sheet that only used a Net Label is NOT joined to the others
+      localOnlySheets: [...m.bySheet].filter(([, src]) => !src.has('port') && !src.has('flag')).map(([sheet]) => sheet).sort(),
+      connectedSheets: [...m.bySheet].filter(([, src]) => src.has('port') || src.has('flag')).map(([sheet]) => sheet).sort(),
       sources: [...m.sources].sort(),
       pins: m.pins.map((p) => `${p.sheet}:${p.ref}.${p.pin}`).sort(),
     })).sort((a, b) => a.name.localeCompare(b.name)),
     classes,
+    misleading,
     notes: [
-      '跨图纸同名网络只做提示:标准版里网络标志/端口是全局的,普通网络标签是否跨图纸连通取决于标签类型,本工具不臆断。',
-      '总线与层次端口记录的写入格式未经真实文件确认,当前只做读取侧聚合,不生成这类记录。',
+      '连通性按编辑器语义标注:网络端口(Net Port)跨图纸连通,电源/地标志(NetFlag)全局连通,普通网络标签(NetLabel)只在本图纸内。',
+      '同名但来源不同的网络(例如一张图用标签、另一张用端口)不会被当作已连通,需要人工确认。',
+      '总线记录的写入格式未经真实文件确认,当前只做读取侧聚合,不生成这类记录。',
     ],
   };
 }
@@ -187,13 +216,24 @@ export function projectMarkdown(project) {
     if (!project.classes[k]?.length) continue;
     lines.push(`- **${zh[k]}** (${project.classes[k].length}): ${project.classes[k].slice(0, 30).join(', ')}`);
   }
+  if (project.misleading?.length) {
+    lines.push('');
+    lines.push('## ⚠️ 同名但未跨图纸连通');
+    for (const n of project.misleading) {
+      lines.push(`- **${n.name}**:${n.localOnlySheets.join(', ')} 用的是普通网络标签(仅本图纸生效),并没有和其他图纸连上。`);
+      lines.push(`  - 全部引脚:${n.pins.join(' ')}`);
+      lines.push('  - 要真正跨图纸连接,请把这些标签换成**网络端口 Net Port**。');
+    }
+  }
   if (project.mergedNets?.length) {
     lines.push('');
     lines.push('## 工程合并网表(跨图纸联动)');
     lines.push('| 网络 | 类型 | 图纸 | 引脚 |');
     lines.push('|---|---|---|---|');
     for (const n of project.mergedNets) {
-      const kind = n.global ? '全局标志' : (n.sources.includes('label') ? '网络标签' : '-');
+      const kind = n.crossSheet ? '网络端口(跨图纸)'
+        : n.global ? '全局标志'
+          : (n.sources.includes('label') ? '网络标签(仅本图纸)' : '-');
       lines.push(`| **${n.name}** | ${kind} | ${n.sheets.join(', ')} | ${n.pins.join(' ')} |`);
     }
   }

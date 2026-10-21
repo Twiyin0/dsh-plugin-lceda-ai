@@ -7,7 +7,7 @@ import { autoPlace, routeConnection, measureComponent } from './layout.js';
 import { extractNetlist } from './netlist.js';
 import { fmt } from './path.js';
 import {
-  BUILTIN_SYMBOLS, buildSymbolShapes, passiveGraphics, makeComponent, makeNetFlag,
+  BUILTIN_SYMBOLS, buildSymbolShapes, passiveGraphics, makeComponent, makeNetFlag, makeNetPort,
   genUuid, shapesCenter, pinCenter, translateShapes, headerSpec,
 } from './symbol.js';
 
@@ -219,8 +219,12 @@ export function addLabel(doc, { x, y, text, rot = 0, anchor = 'start' }) {
 }
 
 export function addFlag(doc, { x, y, text, kind = 'part_netLabel_gnD', rot = 0 }) {
-  doc.shape.push(makeNetFlag({ x, y, text, kind, rot }));
-  growBBox(doc, x, y, 20);
+  // a Net Port is written as its own record so the editor marks it ENETPORT
+  // (cross-sheet) instead of ENETFLAG (global power/ground only)
+  doc.shape.push(/netPort/i.test(kind)
+    ? makeNetPort({ x, y, text, rot })
+    : makeNetFlag({ x, y, text, kind, rot }));
+  growBBox(doc, x, y, 22);
 }
 
 export function addJunction(doc, { x, y }) {
@@ -350,6 +354,10 @@ export function buildFromSpec(spec = {}, opts = {}) {
   for (const f of spec.flags ?? []) {
     const p = resolvePoint(pins, f.at, 'flag.at');
     addFlag(doc, { x: p.x, y: p.y, text: f.text, kind: f.kind, rot: f.rot ?? 0 });
+  }
+  for (const p of spec.ports ?? []) {
+    const at = resolvePoint(pins, p.at, 'port.at');
+    addFlag(doc, { x: at.x, y: at.y, text: p.text, kind: 'part_netLabel_netPort', rot: p.rot ?? 0 });
   }
   for (const j of spec.junctions ?? []) {
     const p = resolvePoint(pins, j.at, 'junction.at');

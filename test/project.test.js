@@ -74,7 +74,7 @@ test('merged netlist links same-named nets across sheets', async () => {
       { text: 'VCC', kind: 'part_netLabel_+5V', at: 'J1.1', rot: 270 },
       { text: 'GND', kind: 'part_netLabel_gnD', at: 'J1.4', rot: 270 },
     ],
-    labels: [{ text: 'RX', at: 'J1.2', anchor: 'end' }, { text: 'TX', at: 'J1.3', anchor: 'end' }],
+    ports: [{ text: 'RX', at: 'J1.2', rot: 0 }, { text: 'TX', at: 'J1.3', rot: 0 }],
   }).text, 'utf8');
   // sheet 2: 8-pin header VCC / TX / RX / GND / NC NC NC / GND
   await fs.writeFile(path.join(dir, 'Sheet_2.json'), buildFromSpec({
@@ -85,7 +85,7 @@ test('merged netlist links same-named nets across sheets', async () => {
       { text: 'GND', kind: 'part_netLabel_gnD', at: 'J2.4', rot: 270 },
       { text: 'GND', kind: 'part_netLabel_gnD', at: 'J2.8', rot: 270 },
     ],
-    labels: [{ text: 'TX', at: 'J2.2', anchor: 'end' }, { text: 'RX', at: 'J2.3', anchor: 'end' }],
+    ports: [{ text: 'TX', at: 'J2.2', rot: 0 }, { text: 'RX', at: 'J2.3', rot: 0 }],
   }).text, 'utf8');
 
   const project = await readProject(dir);
@@ -99,7 +99,9 @@ test('merged netlist links same-named nets across sheets', async () => {
   assert.deepEqual(byName.get('VCC').pins, ['Sheet_1:J1.1', 'Sheet_2:J2.1']);
   assert.equal(byName.get('GND').global, true);
   assert.deepEqual(byName.get('GND').pins, ['Sheet_1:J1.4', 'Sheet_2:J2.4', 'Sheet_2:J2.8']);
-  // RX/TX are plain net labels on both sheets: reported, not asserted to connect
+  // RX/TX are Net Ports: those DO connect across sheets
+  assert.equal(byName.get('RX').crossSheet, true);
+  assert.equal(byName.get('RX').connected, true);
   assert.equal(byName.get('RX').global, false);
   assert.deepEqual(byName.get('RX').pins, ['Sheet_1:J1.2', 'Sheet_2:J2.3']);
   assert.deepEqual(byName.get('TX').pins, ['Sheet_1:J1.3', 'Sheet_2:J2.2']);
@@ -109,10 +111,55 @@ test('merged netlist links same-named nets across sheets', async () => {
   const connected = new Set(sheet2.nets.flatMap((n) => n.pins));
   for (const nc of ['J2.5', 'J2.6', 'J2.7']) assert.ok(!connected.has(nc), `${nc} must stay unconnected`);
 
+  assert.deepEqual(project.misleading, [], 'nothing should look connected but be local-only');
+
   const md = projectMarkdown(project);
   assert(/工程合并网表/.test(md), 'merged netlist section missing');
   assert(/\*\*VCC\*\* \| 全局标志/.test(md), 'VCC should be reported as a global flag');
-  assert(/\*\*RX\*\* \| 网络标签/.test(md), 'RX should be reported as a net label');
+  assert(/\*\*RX\*\* \| 网络端口\(跨图纸\)/.test(md), 'RX should be reported as a Net Port');
+});
+
+test('a plain net label does NOT join sheets, and the report says so', async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'lceda-labelonly-'));
+  const sheet = (title, ref) => buildFromSpec({
+    title,
+    components: [{ symbol: 'header', pins: 4, ref, x: 400, y: 400 }],
+    labels: [{ text: 'RX', at: `${ref}.2`, anchor: 'end' }],
+  }).text;
+  await fs.writeFile(path.join(dir, 'Sheet_1.json'), sheet('a', 'J1'), 'utf8');
+  await fs.writeFile(path.join(dir, 'Sheet_2.json'), sheet('b', 'J2'), 'utf8');
+
+  const project = await readProject(dir);
+  const rx = project.mergedNets.find((n) => n.name === 'RX');
+  assert.equal(rx.crossSheet, false);
+  assert.equal(rx.connected, false, 'two sheets using a Net Label are not joined');
+  assert.deepEqual(rx.localOnlySheets, ['Sheet_1', 'Sheet_2']);
+  assert.equal(project.misleading.length, 1);
+  assert.equal(project.misleading[0].name, 'RX');
+
+  const md = projectMarkdown(project);
+  assert(/同名但未跨图纸连通/.test(md), 'the report must warn about label-only same-name nets');
+  assert(/网络端口 Net Port/.test(md), 'the warning should say how to fix it');
+});
+
+test('mixed sources: a port on one sheet does not join a label on another', async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'lceda-mixed-'));
+  await fs.writeFile(path.join(dir, 'Sheet_1.json'), buildFromSpec({
+    title: 'a',
+    components: [{ symbol: 'header', pins: 4, ref: 'J1', x: 400, y: 400 }],
+    ports: [{ text: 'RX', at: 'J1.2', rot: 0 }],
+  }).text, 'utf8');
+  await fs.writeFile(path.join(dir, 'Sheet_2.json'), buildFromSpec({
+    title: 'b',
+    components: [{ symbol: 'header', pins: 4, ref: 'J2', x: 400, y: 400 }],
+    labels: [{ text: 'RX', at: 'J2.2', anchor: 'end' }],
+  }).text, 'utf8');
+
+  const project = await readProject(dir);
+  const rx = project.mergedNets.find((n) => n.name === 'RX');
+  assert.deepEqual(rx.localOnlySheets, ['Sheet_2'], 'only Sheet_2 used a local label');
+  assert.deepEqual(rx.connectedSheets, ['Sheet_1']);
+  assert.equal(project.misleading.length, 1);
 });
 
 test('readProject rejects a folder without sheets', async () => {

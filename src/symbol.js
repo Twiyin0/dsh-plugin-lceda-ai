@@ -418,6 +418,50 @@ export function makeNetFlag({ x, y, text, kind = 'part_netLabel_gnD', rot = 0 })
   return [head, anchorBlock, textBlock, ...gfx].join('^^');
 }
 
+/**
+ * Net Port — the element that connects a net across sheets.
+ *
+ * Geometry measured from 嘉立创EDA 6.5.51 by placing one and reading the canvas
+ * DOM (the definition is not in the bundle; it is built at runtime):
+ *
+ *   <g c_partid="part_netLabel_netPort" c_etype="pinpart" c_origin="675,270">
+ *     <circle c_pindot="true" cx="675" cy="270" r="2" fill="#ff0000"/>
+ *     <text x="653" y="273.3" font-size="8pt" fill="#0000FF" text-anchor="end">netPort1</text>
+ *     <polyline points="675 270 670 275 655 275 655 265 670 265 675 270"
+ *               stroke="#0000FF" stroke-width="1" fill="transparent"/>
+ *   </g>
+ *
+ * rot 0 points left (-x), 180 right, 90 up, 270 down. Unlike a Net Label
+ * (`N~`, local to one sheet) and a NetFlag (`F~part_netLabel_gnD`, global),
+ * a Net Port is a part-like record that the editor's netlist marks as ENETPORT
+ * and merges by name across sheets.
+ */
+export function makeNetPort({ x, y, text, rot = 0 }) {
+  const r = ((rot % 360) + 360) % 360;
+  const base = [[0, 0], [-5, 5], [-20, 5], [-20, -5], [-5, -5], [0, 0]];
+  const rad = (r * Math.PI) / 180;
+  const cos = Math.cos(rad), sin = Math.sin(rad);
+  const pt = ([px, py]) => [x + (px * cos - py * sin), y + (px * sin + py * cos)];
+  const pts = base.map(pt);
+
+  const gfx = [];
+  for (let i = 0; i + 1 < pts.length; i++) {
+    const [a, b] = [pts[i], pts[i + 1]];
+    gfx.push(`PL~${fmt(a[0])} ${fmt(a[1])} ${fmt(b[0])} ${fmt(b[1])}~#0000FF~1~transparent~${genId()}~0`);
+  }
+
+  let tx = x - 22, ty = y + 3.3, anchor = 'end';
+  if (r === 180) { tx = x + 22; ty = y - 3.3; anchor = 'start'; }
+  else if (r === 90) { tx = x + 3.3; ty = y - 24; anchor = 'middle'; }
+  else if (r === 270) { tx = x - 3.3; ty = y + 28; anchor = 'middle'; }
+
+  const id = genId();
+  const head = ['F', 'part_netLabel_netPort', fmt(x), fmt(y), String(rot), id, '', '0'].join('~');
+  const anchorBlock = `${fmt(x)}~${fmt(y)}`;
+  const textBlock = [String(text), '#0000FF', fmt(tx), fmt(ty), '0', anchor, '1', 'Times New Roman', '8pt', `flag_${id}`].join('~');
+  return [head, anchorBlock, textBlock, ...gfx].join('^^');
+}
+
 // ---------------------------------------------------------------- catalog
 
 const P = (number, name, side, elec = 0) => ({ number, name, side, elec });

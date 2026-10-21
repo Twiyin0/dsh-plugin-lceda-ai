@@ -20,6 +20,8 @@ export async function findSheetFiles(input) {
     for (const e of entries) {
       const p = path.join(dir, e.name);
       if (e.isDirectory()) await walk(p, depth + 1);
+      // skip our own generated artifacts so a second run does not eat its own output
+      else if (/\.(report|export)\.json$/i.test(e.name) || /\.ai\.(svg|png|pdf|json|md)$/i.test(e.name)) continue;
       else if (/^(Sheet.*|.*sch.*|.*schematic.*)\.(json|esch)$/i.test(e.name) || e.name.endsWith('.esch')) out.push(p);
     }
   }
