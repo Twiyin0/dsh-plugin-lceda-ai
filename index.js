@@ -101,6 +101,45 @@ function netLines(nets) {
   return lines;
 }
 
+/**
+ * Compile the author-facing parameter table into a real JSON Schema.
+ *
+ * `ctx.tools.register()` stores `parameters` verbatim (only `defineTool`, which
+ * is not importable from a bundle, would compile it), and the provider expects
+ * an object-rooted JSON Schema. Passing the shorthand table straight through
+ * makes the API reject the whole function
+ * (`schema must be a JSON Schema of 'type: "object"'`).
+ */
+const PARAM_TYPES = new Set(['string', 'number', 'integer', 'boolean', 'array', 'object']);
+
+export function compileParameters(spec = {}) {
+  const properties = {};
+  const required = [];
+  for (const [name, def] of Object.entries(spec)) {
+    const source = typeof def === 'string' ? { type: def } : (def ?? {});
+    const type = source.type;
+    if (type !== undefined && !PARAM_TYPES.has(type)) {
+      throw new TypeError(`parameter "${name}" has unsupported type ${JSON.stringify(type)}`);
+    }
+    const prop = {};
+    if (type !== undefined) prop.type = type;
+    if (source.description !== undefined) prop.description = String(source.description);
+    if (Array.isArray(source.enum)) prop.enum = source.enum.map((v) => String(v));
+    if (source.items !== undefined) {
+      const itemType = source.items?.type;
+      if (!PARAM_TYPES.has(itemType)) throw new TypeError(`parameter "${name}" has unsupported items type ${JSON.stringify(itemType)}`);
+      prop.items = { type: itemType, ...(source.items.description ? { description: String(source.items.description) } : {}) };
+    }
+    properties[name] = prop;
+    if (source.required === true) required.push(name);
+  }
+  return {
+    type: 'object',
+    properties,
+    ...(required.length ? { required } : {}),
+  };
+}
+
 const TOOLS = [
   {
     name: 'lceda_find_component',
@@ -419,7 +458,7 @@ export function apply(ctx) {
     ctx.tools.register({
       name: tool.name,
       description: tool.description,
-      parameters: tool.parameters,
+      parameters: compileParameters(tool.parameters),
       output: {
         schema: {
           type: 'object',
