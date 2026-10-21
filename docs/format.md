@@ -80,6 +80,20 @@ F~part_netLabel_gnD~x~y~rot~id~~0^^x~y^^GND~#000000~tx~ty~0~start~1~Times New Ro
 - `<polyline>` 想要“只描边”必须显式 `fill="none"`,否则会出现整片黑三角。
 - 图片记录(`Pimage`)的 x/y/w/h 是 `data:` URI 之前最后 4 个数。
 
+## 跨图纸连接:Net Port
+
+REA 结论(编辑器 bundle `js/main.min.js`):
+
+| 元素 | 作用域 | 记录/命令 |
+|---|---|---|
+| Net Label(`N~`) | **本图纸** | 菜单 `place_part(netLabel_...)` |
+| NetFlag(电源/地,`F~part_netLabel_gnD/+5V`) | **全局** | `place_part(netLabel_GNd)` 等 |
+| **Net Port** | **跨图纸** | `place_part(netLabel_netPort)`,partId 含 `part_netLabel_netPort`,枚举 `ENETPORT` |
+
+所以“同一个网络名出现在两张图纸”**不等于**它们连通:要看用的是哪一种。本工具的 `project` 报告会区分
+`全局标志` 与 `网络标签`,不会把同名网络当成已连通。要真正跨图纸连接,应放置 Net Port(格式待采样,
+见 `docs/roadmap-pcb.md` P-01)。
+
 ## 总线 / 层次图:为什么只读不写
 
 检查过的真实工程里,顶层记录只有 `LIB / F / W / N / J` 五类:

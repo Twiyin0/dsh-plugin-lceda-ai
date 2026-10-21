@@ -67,6 +67,7 @@ export async function readProject(dir) {
   const sheets = [];
   const bom = new Map();
   const netSheets = new Map();
+  const merged = new Map();      // net name -> { sheets, pins, sources }
 
   for (const file of files) {
     const doc = parseDocument(await fs.readFile(file, 'utf8'));
@@ -88,12 +89,24 @@ export async function readProject(dir) {
       row.sheets.add(name);
       bom.set(key, row);
     }
+    // a name carried by a power/ground flag is global in the editor; a plain net
+    // label is sheet-local, so the two are reported differently
+    const flagNames = new Set(doc.shapes.filter((x) => x.type === 'netflag').map((x) => String(x.text)));
+    const labelNames = new Set(doc.shapes.filter((x) => x.type === 'netlabel').map((x) => String(x.text)));
+
     for (const n of netlist.nets) {
       if (!n.named) continue;
       const row = netSheets.get(n.name) ?? { name: n.name, sheets: new Set(), classes: new Set() };
       row.sheets.add(name);
       row.classes.add(classifyNet(n.name));
       netSheets.set(n.name, row);
+
+      const m = merged.get(n.name) ?? { name: n.name, sheets: new Set(), pins: [], sources: new Set() };
+      m.sheets.add(name);
+      for (const p of n.pins) m.pins.push({ sheet: name, ref: p.ref, pin: p.pin });
+      if (flagNames.has(n.name)) m.sources.add('flag');
+      if (labelNames.has(n.name)) m.sources.add('label');
+      merged.set(n.name, m);
     }
   }
 
@@ -129,6 +142,14 @@ export async function readProject(dir) {
       .sort((a, b) => a.value.localeCompare(b.value)),
     crossSheet: [...netSheets.values()].filter((r) => r.sheets.size > 1)
       .map((r) => ({ name: r.name, sheets: [...r.sheets].sort(), classes: [...r.classes] })),
+    mergedNets: [...merged.values()].map((m) => ({
+      name: m.name,
+      sheets: [...m.sheets].sort(),
+      // flag = 电源/地标志(编辑器里是全局的);label = 普通网络标签(本图纸)
+      global: m.sources.has('flag'),
+      sources: [...m.sources].sort(),
+      pins: m.pins.map((p) => `${p.sheet}:${p.ref}.${p.pin}`).sort(),
+    })).sort((a, b) => a.name.localeCompare(b.name)),
     classes,
     notes: [
       '跨图纸同名网络只做提示:标准版里网络标志/端口是全局的,普通网络标签是否跨图纸连通取决于标签类型,本工具不臆断。',
@@ -166,10 +187,15 @@ export function projectMarkdown(project) {
     if (!project.classes[k]?.length) continue;
     lines.push(`- **${zh[k]}** (${project.classes[k].length}): ${project.classes[k].slice(0, 30).join(', ')}`);
   }
-  if (project.crossSheet.length) {
+  if (project.mergedNets?.length) {
     lines.push('');
-    lines.push('## 跨图纸同名网络(提示)');
-    for (const n of project.crossSheet.slice(0, 40)) lines.push(`- **${n.name}** → ${n.sheets.join(', ')}`);
+    lines.push('## 工程合并网表(跨图纸联动)');
+    lines.push('| 网络 | 类型 | 图纸 | 引脚 |');
+    lines.push('|---|---|---|---|');
+    for (const n of project.mergedNets) {
+      const kind = n.global ? '全局标志' : (n.sources.includes('label') ? '网络标签' : '-');
+      lines.push(`| **${n.name}** | ${kind} | ${n.sheets.join(', ')} | ${n.pins.join(' ')} |`);
+    }
   }
   lines.push('');
   lines.push('## 说明');

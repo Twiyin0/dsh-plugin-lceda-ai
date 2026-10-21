@@ -64,6 +64,57 @@ test('readProject merges sheets, BOM and cross-sheet nets', async () => {
   assert.match(md, /\*\*地\*\*/);
 });
 
+test('merged netlist links same-named nets across sheets', async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'lceda-link-'));
+  // sheet 1: 4-pin header VCC / RX / TX / GND
+  await fs.writeFile(path.join(dir, 'Sheet_1.json'), buildFromSpec({
+    title: 's1',
+    components: [{ symbol: 'header', pins: 4, ref: 'J1', x: 400, y: 400 }],
+    flags: [
+      { text: 'VCC', kind: 'part_netLabel_+5V', at: 'J1.1', rot: 270 },
+      { text: 'GND', kind: 'part_netLabel_gnD', at: 'J1.4', rot: 270 },
+    ],
+    labels: [{ text: 'RX', at: 'J1.2', anchor: 'end' }, { text: 'TX', at: 'J1.3', anchor: 'end' }],
+  }).text, 'utf8');
+  // sheet 2: 8-pin header VCC / TX / RX / GND / NC NC NC / GND
+  await fs.writeFile(path.join(dir, 'Sheet_2.json'), buildFromSpec({
+    title: 's2',
+    components: [{ symbol: 'header', pins: 8, ref: 'J2', x: 400, y: 400 }],
+    flags: [
+      { text: 'VCC', kind: 'part_netLabel_+5V', at: 'J2.1', rot: 270 },
+      { text: 'GND', kind: 'part_netLabel_gnD', at: 'J2.4', rot: 270 },
+      { text: 'GND', kind: 'part_netLabel_gnD', at: 'J2.8', rot: 270 },
+    ],
+    labels: [{ text: 'TX', at: 'J2.2', anchor: 'end' }, { text: 'RX', at: 'J2.3', anchor: 'end' }],
+  }).text, 'utf8');
+
+  const project = await readProject(dir);
+  assert.equal(project.sheets.length, 2);
+  assert.equal(project.totals.components, 2);
+  assert.equal(project.totals.pins, 12);
+
+  const byName = new Map(project.mergedNets.map((n) => [n.name, n]));
+  // VCC and GND ride on power/ground flags: global in the editor
+  assert.equal(byName.get('VCC').global, true);
+  assert.deepEqual(byName.get('VCC').pins, ['Sheet_1:J1.1', 'Sheet_2:J2.1']);
+  assert.equal(byName.get('GND').global, true);
+  assert.deepEqual(byName.get('GND').pins, ['Sheet_1:J1.4', 'Sheet_2:J2.4', 'Sheet_2:J2.8']);
+  // RX/TX are plain net labels on both sheets: reported, not asserted to connect
+  assert.equal(byName.get('RX').global, false);
+  assert.deepEqual(byName.get('RX').pins, ['Sheet_1:J1.2', 'Sheet_2:J2.3']);
+  assert.deepEqual(byName.get('TX').pins, ['Sheet_1:J1.3', 'Sheet_2:J2.2']);
+
+  // the three NC pins stay unconnected
+  const sheet2 = project.sheets.find((s) => s.name === 'Sheet_2');
+  const connected = new Set(sheet2.nets.flatMap((n) => n.pins));
+  for (const nc of ['J2.5', 'J2.6', 'J2.7']) assert.ok(!connected.has(nc), `${nc} must stay unconnected`);
+
+  const md = projectMarkdown(project);
+  assert(/工程合并网表/.test(md), 'merged netlist section missing');
+  assert(/\*\*VCC\*\* \| 全局标志/.test(md), 'VCC should be reported as a global flag');
+  assert(/\*\*RX\*\* \| 网络标签/.test(md), 'RX should be reported as a net label');
+});
+
 test('readProject rejects a folder without sheets', async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'lceda-empty-'));
   await assert.rejects(() => readProject(dir), /no schematic sheets/);

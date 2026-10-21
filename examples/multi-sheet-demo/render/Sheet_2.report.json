@@ -1,0 +1,145 @@
+{
+  "meta": {
+    "sheet": "Sheet_2",
+    "editorVersion": "6.5.51",
+    "uuid": "4be3a455bba77f990ffd3bff00afc569",
+    "warnings": [],
+    "statistics": {
+      "components": 1,
+      "pins": 8,
+      "wires": 0,
+      "junctions": 0,
+      "netLabels": 2,
+      "netFlags": 3,
+      "nets": 7,
+      "namedNets": 4,
+      "conflicts": 0
+    }
+  },
+  "components": [
+    {
+      "ref": "J2",
+      "name": "",
+      "value": "UART-8P",
+      "package": "HDR-M-2.54_1XN",
+      "mfrPart": "",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        },
+        {
+          "number": "3",
+          "name": "3",
+          "type": "unspecified"
+        },
+        {
+          "number": "4",
+          "name": "4",
+          "type": "unspecified"
+        },
+        {
+          "number": "5",
+          "name": "5",
+          "type": "unspecified"
+        },
+        {
+          "number": "6",
+          "name": "6",
+          "type": "unspecified"
+        },
+        {
+          "number": "7",
+          "name": "7",
+          "type": "unspecified"
+        },
+        {
+          "number": "8",
+          "name": "8",
+          "type": "unspecified"
+        }
+      ]
+    }
+  ],
+  "nets": [
+    {
+      "name": "GND",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J2.4",
+        "J2.8"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$1",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J2.5"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$2",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J2.6"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$3",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J2.7"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "RX",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J2.3"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "TX",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J2.2"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "VCC",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J2.1"
+      ],
+      "wireCount": 0
+    }
+  ]
+}

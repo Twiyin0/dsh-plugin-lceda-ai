@@ -9,6 +9,7 @@
 | `stc89c52rc-minimal-v3.report.md` | BOM + 引脚表 + 网络表 |
 | `STC89C52RC-Minimal-v3/sch/Sheet_1.json` | 工程目录形式(含导入说明) |
 | `build-stc89c52rc.mjs` / `build-stc89c52rc-v2.mjs` | 早期版本:内置符号 / 数据手册校对后的手工符号 |
+| `multi-sheet-demo/` | **单工程多图纸**:Sheet_1 4P 排针(VCC/RX/TX/GND)、Sheet_2 8P 排针(VCC/TX/RX/GND/NC×3/GND) |
 | `auto-layout.spec.json` | **不写坐标的 spec**:`"layout":"auto"`,自动摆放 + 正交走线 |
 | `auto-layout.{esch,ai.png,ai.pdf}` | 由它生成的图(`npm run example:auto`) |
 | `stc89c52rc-minimal.spec.json` | v1 的声明式 spec(演示 spec 格式) |
@@ -18,6 +19,7 @@
 npm run example            # 重新生成 v3 全套产物
 node bin/lceda-ai.js build examples/auto-layout.spec.json -o examples/auto-layout.esch --auto-layout --export
 node bin/lceda-ai.js project examples/STC89C52RC-Minimal-v3 -o /tmp/proj --render
+node bin/lceda-ai.js project examples/multi-sheet-demo -o /tmp/multi   # 跨图纸联动
 ```
 
 ## 电路

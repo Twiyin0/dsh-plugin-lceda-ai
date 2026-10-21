@@ -234,6 +234,12 @@ docs/format.md       .esch 文件格式笔记(踩坑记录)
 并依据 STC89C51RC/RD+ 数据手册标注了引脚、复位时序、POR、ISP 的出处。
 详见 [`examples/README.md`](examples/README.md)。
 
+## 路线图(未实现)
+
+PCB 方向(原理图转 PCB、封装管理、布局、布线、铺铜、过孔、DRC、Gerber、BOM/贴片坐标)的技术方案已写成
+[`docs/roadmap-pcb.md`](docs/roadmap-pcb.md):每个工作流给了 2–3 条可选路线、推荐路线与验证方式,
+并附 REA 得到的事实(文档类型、跨图纸用 **Net Port**、封装可从商城接口取)。
+
 ## 开发
 
 ```bash
