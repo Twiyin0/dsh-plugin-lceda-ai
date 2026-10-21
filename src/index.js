@@ -33,6 +33,12 @@ export async function convert(input, opts = {}) {
   } = opts;
   const files = await findSheetFiles(input);
   if (!files.length) throw new Error(`no schematic files found under ${input}`);
+  const KNOWN = new Set(['svg', 'png', 'pdf', 'report']);
+  const unknown = formats.filter((f) => !KNOWN.has(String(f).toLowerCase()));
+  if (unknown.length) {
+    // fail loudly: a typo used to produce an empty output directory
+    throw new Error(`unknown format${unknown.length > 1 ? 's' : ''} ${unknown.map((f) => JSON.stringify(f)).join(', ')}; expected svg/png/pdf/report`);
+  }
   const results = [];
   for (const file of files) {
     const sheetName = path.basename(file).replace(/\.(json|esch)$/i, '');

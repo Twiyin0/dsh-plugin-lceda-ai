@@ -611,15 +611,21 @@ function validate(doc, beforeNetlist) {
   const wires = doc.shapes.filter((s) => s.type === 'wire');
   const near = (p, list) => list.some((w) => w.points.some((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) < 0.75));
   const onAnyWire = (p) => wires.some((w) => w.points.slice(0, -1).some((a, i) => onSeg(p, a, w.points[i + 1])));
-
-  for (const l of doc.shapes.filter((s) => s.type === 'netlabel')) {
-    if (!onAnyWire([l.x, l.y])) warnings.push(`网络标签 "${l.text}" @ (${l.x}, ${l.y}) 没有落在任何导线上,它不会生效`);
-  }
-  for (const f of doc.shapes.filter((s) => s.type === 'netflag')) {
-    if (!onAnyWire(f.anchor)) warnings.push(`电源标志 "${f.text}" @ (${f.anchor[0]}, ${f.anchor[1]}) 没有落在导线上,它不会生效`);
-  }
+  // a label/flag placed exactly on a pin attaches to that pin — no wire needed
   const pinPoints = [];
   for (const c of doc.components) for (const p of c.pins) pinPoints.push([p.x, p.y]);
+  const onAnyPin = (p) => pinPoints.some((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) < 0.75);
+
+  for (const l of doc.shapes.filter((s) => s.type === 'netlabel')) {
+    if (!onAnyWire([l.x, l.y]) && !onAnyPin([l.x, l.y])) {
+      warnings.push(`网络标签 "${l.text}" @ (${l.x}, ${l.y}) 既不在导线上也不在引脚上,它不会生效`);
+    }
+  }
+  for (const f of doc.shapes.filter((s) => s.type === 'netflag')) {
+    if (!onAnyWire(f.anchor) && !onAnyPin(f.anchor)) {
+      warnings.push(`电源标志 "${f.text}" @ (${f.anchor[0]}, ${f.anchor[1]}) 既不在导线上也不在引脚上,它不会生效`);
+    }
+  }
   for (const w of wires) {
     for (const end of [w.points[0], w.points[w.points.length - 1]]) {
       const attached = near(end, wires.filter((x) => x !== w))

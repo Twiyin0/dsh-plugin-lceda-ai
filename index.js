@@ -76,7 +76,19 @@ async function runCli(args, { cwd, timeoutMs = 180000 } = {}) {
 
 const asBool = (v, dflt) => (v === undefined || v === null ? dflt : v === true || v === 'true' || v === 1 || v === '1' || v === 'yes');
 const asNum = (v, dflt) => { const n = Number(v); return Number.isFinite(n) ? n : dflt; };
-const asArray = (v) => (Array.isArray(v) ? v : typeof v === 'string' && v.trim() ? v.split(',').map((s) => s.trim()) : []);
+/** Accept an array, a JSON-encoded array, or a comma-separated string. */
+const asArray = (v) => {
+  if (Array.isArray(v)) return v;
+  const s = typeof v === 'string' ? v.trim() : '';
+  if (!s) return [];
+  if (s.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(s);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { /* fall through to comma splitting */ }
+  }
+  return s.split(',').map((x) => x.trim()).filter(Boolean);
+};
 const str = (v) => (v === undefined || v === null ? '' : String(v));
 
 async function resolvePath(ctx, exec, input) {

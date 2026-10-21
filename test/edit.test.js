@@ -6,6 +6,7 @@ import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { parseDocument, extractNetlist } from '../src/index.js';
 import { editSheet, editText } from '../src/edit.js';
+import { buildFromSpec } from '../src/create.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixture = path.join(here, 'fixtures', 'mini.json');
@@ -195,4 +196,25 @@ test('describe lists editable element ids', async () => {
   assert.match(dump, /网络标签/);
   assert.match(dump, /电源标志/);
   assert.match(dump, /VCC_TEST/);
+});
+
+test('a net label placed exactly on a pin is not reported as unattached', async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'lceda-label-'));
+  const file = path.join(dir, 'pins.esch');
+  const { text, netlist } = buildFromSpec({
+    title: 'pin label',
+    components: [
+      { symbol: 'resistor', ref: 'R1', value: '1k', x: 200, y: 200, rot: 90 },
+      { symbol: 'resistor', ref: 'R2', value: '2k', x: 260, y: 200, rot: 90 },
+    ],
+  });
+  await fs.writeFile(file, text, 'utf8');
+  const pin = netlist.components.find((c) => c.ref === 'R1').pins.find((p) => p.number === '1');
+  const res = await editSheet(file, [
+    { op: 'add_net_label', x: pin.x, y: pin.y, text: 'ON_PIN' },
+  ], { dryRun: true });
+  const labelWarnings = res.warnings.filter((w) => w.includes('ON_PIN') && w.includes('不会生效'));
+  assert.equal(labelWarnings.length, 0, `unexpected warning: ${labelWarnings.join(' | ')}`);
+  const lines = Array.isArray(res.diff) ? res.diff : (res.diff?.lines ?? []);
+  assert.ok(lines.some((l) => String(l).includes('ON_PIN')), 'net should be renamed');
 });
