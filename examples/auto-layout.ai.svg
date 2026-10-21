@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1180px" height="840px" viewBox="-10 -10 1180 840">
+<title>auto-layout</title>
+<rect x="-10" y="-10" width="1180" height="840" fill="#FFFFFF" stroke="none"/>
+<g id="sheet">
+<text x="606" y="726" font-family="Arial" font-size="9" fill="#880000" text-anchor="start">TITLE:</text>
+<text x="660" y="726" font-family="Arial" font-size="12" fill="#0000FF" text-anchor="start">自动布局演示</text>
+<text x="1058" y="726" font-family="Arial" font-size="9" fill="#880000" text-anchor="start">REV:</text>
+<text x="1090" y="726" font-family="Arial" font-size="9" fill="#0000FF" text-anchor="start">1.0</text>
+<text x="606" y="758" font-family="Arial" font-size="8" fill="#880000" text-anchor="start">Date:</text>
+<text x="770" y="758" font-family="Arial" font-size="8" fill="#880000" text-anchor="start">Drawn By:</text>
+<text x="1058" y="758" font-family="Arial" font-size="8" fill="#880000" text-anchor="start">Sheet:</text>
+<text x="1100" y="758" font-family="Arial" font-size="8" fill="#0000FF" text-anchor="start">1/1</text>
+<text x="606" y="788" font-family="Arial" font-size="8" fill="#880000" text-anchor="start">Company:</text>
+<rect x="8" y="8" width="1144" height="804" stroke="#880000" stroke-width="1" fill="none" />
+<rect x="22" y="22" width="1116" height="776" stroke="#880000" stroke-width="2" fill="none" />
+<polyline points="208,22 208,32" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="208,788 208,798" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="394,22 394,32" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="394,788 394,798" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="580,22 580,32" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="580,788 580,798" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="766,22 766,32" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="766,788 766,798" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="952,22 952,32" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="952,788 952,798" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="22,216 32,216" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="1128,216 1138,216" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="22,410 32,410" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="1128,410 1138,410" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="22,604 32,604" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="1128,604 1138,604" stroke="#880000" stroke-width="1" fill="none" />
+<text x="115" y="30" font-family="Arial" font-size="8" fill="#880000" text-anchor="middle">1</text>
+<text x="115" y="796" font-family="Arial" font-size="8" fill="#880000" text-anchor="middle">1</text>
+<text x="301" y="30" font-family="Arial" font-size="8" fill="#880000" text-anchor="middle">2</text>
+<text x="301" y="796" font-family="Arial" font-size="8" fill="#880000" text-anchor="middle">2</text>
+<text x="487" y="30" font-family="Arial" font-size="8" fill="#880000" text-anchor="middle">3</text>
+<text x="487" y="796" font-family="Arial" font-size="8" fill="#880000" text-anchor="middle">3</text>
+<text x="673" y="30" font-family="Arial" font-size="8" fill="#880000" text-anchor="middle">4</text>
+<text x="673" y="796" font-family="Arial" font-size="8" fill="#880000" text-anchor="middle">4</text>
+<text x="859" y="30" font-family="Arial" font-size="8" fill="#880000" text-anchor="middle">5</text>
+<text x="859" y="796" font-family="Arial" font-size="8" fill="#880000" text-anchor="middle">5</text>
+<text x="1045" y="30" font-family="Arial" font-size="8" fill="#880000" text-anchor="middle">6</text>
+<text x="1045" y="796" font-family="Arial" font-size="8" fill="#880000" text-anchor="middle">6</text>
+<text x="28" y="122" font-family="Arial" font-size="8" fill="#880000" text-anchor="start">A</text>
+<text x="1132" y="122" font-family="Arial" font-size="8" fill="#880000" text-anchor="end">A</text>
+<text x="28" y="316" font-family="Arial" font-size="8" fill="#880000" text-anchor="start">B</text>
+<text x="1132" y="316" font-family="Arial" font-size="8" fill="#880000" text-anchor="end">B</text>
+<text x="28" y="510" font-family="Arial" font-size="8" fill="#880000" text-anchor="start">C</text>
+<text x="1132" y="510" font-family="Arial" font-size="8" fill="#880000" text-anchor="end">C</text>
+<text x="28" y="704" font-family="Arial" font-size="8" fill="#880000" text-anchor="start">D</text>
+<text x="1132" y="704" font-family="Arial" font-size="8" fill="#880000" text-anchor="end">D</text>
+<rect x="600" y="700" width="535" height="96" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="600,732 1135,732" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="600,764 1135,764" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="1050,732 1050,796" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="750,764 750,796" stroke="#880000" stroke-width="1" fill="none" />
+<rect x="510" y="290" width="140" height="240" stroke="#880000" stroke-width="2" fill="none" />
+<text x="490" y="543" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">STC89C52RC-40I</text>
+<text x="490" y="284" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">U1</text>
+<path d="M 490 315 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="312" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">1</text>
+<text x="514" y="318" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P1.0</text>
+<path d="M 490 325 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="322" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">2</text>
+<text x="514" y="328" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P1.1</text>
+<path d="M 490 335 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="332" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">3</text>
+<text x="514" y="338" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P1.2</text>
+<path d="M 490 345 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="342" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">4</text>
+<text x="514" y="348" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P1.3</text>
+<path d="M 490 355 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="352" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">5</text>
+<text x="514" y="358" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P1.4</text>
+<path d="M 490 365 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="362" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">6</text>
+<text x="514" y="368" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P1.5</text>
+<path d="M 490 375 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="372" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">7</text>
+<text x="514" y="378" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P1.6</text>
+<path d="M 490 385 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="382" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">8</text>
+<text x="514" y="388" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P1.7</text>
+<path d="M 490 395 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="392" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">9</text>
+<text x="514" y="398" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">RST</text>
+<path d="M 490 405 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="402" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">10</text>
+<text x="514" y="408" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P3.0/RXD</text>
+<path d="M 490 415 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="412" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">11</text>
+<text x="514" y="418" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P3.1/TXD</text>
+<path d="M 490 425 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="422" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">12</text>
+<text x="514" y="428" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P3.2/INT0</text>
+<path d="M 490 435 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="432" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">13</text>
+<text x="514" y="438" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P3.3/INT1</text>
+<path d="M 490 445 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="442" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">14</text>
+<text x="514" y="448" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P3.4/T0</text>
+<path d="M 490 455 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="452" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">15</text>
+<text x="514" y="458" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P3.5/T1</text>
+<path d="M 490 465 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="462" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">16</text>
+<text x="514" y="468" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P3.6/WR</text>
+<path d="M 490 475 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="472" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">17</text>
+<text x="514" y="478" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">P3.7/RD</text>
+<path d="M 490 485 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="482" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">18</text>
+<text x="514" y="488" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">XTAL2</text>
+<path d="M 490 495 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="492" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">19</text>
+<text x="514" y="498" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">XTAL1</text>
+<path d="M 490 505 h 20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="484" y="502" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="end">20</text>
+<text x="514" y="508" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">GND</text>
+<path d="M 670 315 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="312" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">21</text>
+<text x="646" y="318" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P2.0</text>
+<path d="M 670 325 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="322" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">22</text>
+<text x="646" y="328" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P2.1</text>
+<path d="M 670 335 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="332" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">23</text>
+<text x="646" y="338" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P2.2</text>
+<path d="M 670 345 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="342" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">24</text>
+<text x="646" y="348" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P2.3</text>
+<path d="M 670 355 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="352" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">25</text>
+<text x="646" y="358" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P2.4</text>
+<path d="M 670 365 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="362" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">26</text>
+<text x="646" y="368" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P2.5</text>
+<path d="M 670 375 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="372" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">27</text>
+<text x="646" y="378" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P2.6</text>
+<path d="M 670 385 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="382" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">28</text>
+<text x="646" y="388" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P2.7</text>
+<path d="M 670 395 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="392" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">29</text>
+<text x="646" y="398" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">PSEN</text>
+<path d="M 670 405 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="402" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">30</text>
+<text x="646" y="408" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">ALE</text>
+<path d="M 670 415 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="412" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">31</text>
+<text x="646" y="418" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">EA/VPP</text>
+<path d="M 670 425 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="422" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">32</text>
+<text x="646" y="428" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P0.7</text>
+<path d="M 670 435 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="432" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">33</text>
+<text x="646" y="438" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P0.6</text>
+<path d="M 670 445 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="442" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">34</text>
+<text x="646" y="448" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P0.5</text>
+<path d="M 670 455 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="452" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">35</text>
+<text x="646" y="458" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P0.4</text>
+<path d="M 670 465 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="462" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">36</text>
+<text x="646" y="468" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P0.3</text>
+<path d="M 670 475 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="472" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">37</text>
+<text x="646" y="478" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P0.2</text>
+<path d="M 670 485 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="482" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">38</text>
+<text x="646" y="488" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P0.1</text>
+<path d="M 670 495 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="492" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">39</text>
+<text x="646" y="498" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">P0.0</text>
+<path d="M 670 505 h -20" stroke="#880000" stroke-width="1" fill="none" />
+<text x="676" y="502" font-family="Verdana" font-size="7" fill="#0000FF" text-anchor="start">40</text>
+<text x="646" y="508" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">VCC</text>
+<text x="342" y="364" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">11.0592MHz</text>
+<text x="342" y="323" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">Y1</text>
+<polyline points="363,329 363,351" stroke="#A00000" stroke-width="2" fill="none" />
+<polyline points="377,329 377,351" stroke="#A00000" stroke-width="2" fill="none" />
+<rect x="366" y="330" width="8" height="20" stroke="#A00000" stroke-width="1" fill="none" />
+<path d="M 342 340 h 21" stroke="#880000" stroke-width="1" fill="none" />
+<path d="M 398 340 h -21" stroke="#880000" stroke-width="1" fill="none" />
+<text x="426" y="503" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">30pF</text>
+<text x="374" y="496" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">C1</text>
+<polyline points="412,497.5 388,497.5" stroke="#A00000" stroke-width="2" fill="none" />
+<polyline points="412,502.5 388,502.5" stroke="#A00000" stroke-width="2" fill="none" />
+<path d="M 400 472 L 400 497.5" stroke="#880000" stroke-width="1" fill="none" />
+<path d="M 400 528 L 400 502.5" stroke="#880000" stroke-width="1" fill="none" />
+<text x="426" y="263" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">30pF</text>
+<text x="374" y="256" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">C2</text>
+<polyline points="412,257.5 388,257.5" stroke="#A00000" stroke-width="2" fill="none" />
+<polyline points="412,262.5 388,262.5" stroke="#A00000" stroke-width="2" fill="none" />
+<path d="M 400 232 L 400 257.5" stroke="#880000" stroke-width="1" fill="none" />
+<path d="M 400 288 L 400 262.5" stroke="#880000" stroke-width="1" fill="none" />
+<rect x="410" y="608" width="10" height="24" stroke="#A00000" stroke-width="1" fill="none" />
+<text x="434" y="623" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">10k</text>
+<text x="396" y="616" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">R1</text>
+<path d="M 415 588 L 415 608" stroke="#880000" stroke-width="1" fill="none" />
+<path d="M 415 652 L 415 632" stroke="#880000" stroke-width="1" fill="none" />
+<text x="764" y="383" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">RESET</text>
+<text x="713" y="376" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">SW1</text>
+<polyline points="743,373 727,373" stroke="#A00000" stroke-width="2" fill="none" />
+<polyline points="743,387 727,387" stroke="#A00000" stroke-width="2" fill="none" />
+<polyline points="745,370 745,390" stroke="#A00000" stroke-width="2" fill="none" />
+<polyline points="745,380 750,380" stroke="#A00000" stroke-width="2" fill="none" />
+<path d="M 735 352 L 735 372" stroke="#880000" stroke-width="1" fill="none" />
+<path d="M 735 408 L 735 388" stroke="#880000" stroke-width="1" fill="none" />
+<rect x="320" y="410" width="70" height="24" stroke="#880000" stroke-width="2" fill="none" />
+<text x="320" y="447" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">ISP</text>
+<text x="320" y="384" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">J1</text>
+<path d="M 375 390 L 375 410" stroke="#880000" stroke-width="1" fill="none" />
+<path d="M 365 390 L 365 410" stroke="#880000" stroke-width="1" fill="none" />
+<path d="M 355 390 L 355 410" stroke="#880000" stroke-width="1" fill="none" />
+<path d="M 345 390 L 345 410" stroke="#880000" stroke-width="1" fill="none" />
+<path d="M 335 390 L 335 410" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="490,495 470,495 470,190 320,190 320,340 342,340" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="490,485 420,485 420,340 398,340" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="342,340 280,340 280,450 400,450 400,472" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="398,340 420,340 420,190 400,190 400,232" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="490,395 415,395 415,588" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="490,405 355,405 355,390" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="490,415 345,415 345,390" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="400,528 400,538" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="409,538 391,538" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="406,540 394,540" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="403,542 397,542" stroke="#000000" stroke-width="1" fill="none" />
+<text x="400" y="558" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
+<polyline points="400,288 400,298" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="409,298 391,298" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="406,300 394,300" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="403,302 397,302" stroke="#000000" stroke-width="1" fill="none" />
+<text x="400" y="318" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
+<polyline points="415,652 415,662" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="424,662 406,662" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="421,664 409,664" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="418,666 412,666" stroke="#000000" stroke-width="1" fill="none" />
+<text x="415" y="682" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
+<polyline points="670,505 680,505" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="680,500 680,510" stroke="#000000" stroke-width="1" fill="none" />
+<text x="688" y="509" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="start">+5V</text>
+<polyline points="490,505 490,515" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="499,515 481,515" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="496,517 484,517" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="493,519 487,519" stroke="#000000" stroke-width="1" fill="none" />
+<text x="490" y="535" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
+</g>
+</svg>

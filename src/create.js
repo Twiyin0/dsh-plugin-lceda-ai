@@ -3,6 +3,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { parseDocument } from './parser.js';
+import { autoPlace, routeConnection, measureComponent } from './layout.js';
 import { extractNetlist } from './netlist.js';
 import { fmt } from './path.js';
 import {
@@ -183,7 +184,8 @@ export function pinIndex(doc) {
   const parsed = parseDocument(JSON.parse(JSON.stringify(doc)));
   const map = new Map();
   for (const c of parsed.components) {
-    for (const p of c.pins) map.set(`${c.designator}.${p.number}`, { x: p.x, y: p.y, name: p.name });
+    // `orient` is what the auto-router uses to leave a pin in the right direction
+    for (const p of c.pins) map.set(`${c.designator}.${p.number}`, { x: p.x, y: p.y, name: p.name, orient: p.orient });
   }
   return map;
 }
@@ -235,18 +237,110 @@ export function addText(doc, { x, y, text, size = 9, color = '#000080', anchor =
  *          wires:[{from,to}|{points:[[x,y],...]}], labels:[{text,at,rot}], flags:[{text,kind,at,rot}],
  *          junctions:[{at}], texts:[{text,at,size,color}] }
  */
-export function buildFromSpec(spec = {}) {
+/**
+ * Build a whole sheet from a declarative spec.
+ *
+ * `spec.layout: "auto"` (or `{ autoLayout: true }`) places every component that
+ * has no x/y and routes `{from,to}` wires orthogonally instead of drawing a
+ * straight diagonal. Components with coordinates are never moved, so a partly
+ * hand-placed sheet keeps its layout.
+ */
+/**
+ * Auto-routing must never join two nets. Compare what the spec asked for (each
+ * wire joins two pins) with the netlist that came out: a net holding pins from
+ * two different requested groups means a wire crossed a pin or another wire.
+ */
+function detectAutoShorts(wires, netlist) {
+  const parent = new Map();
+  const find = (x) => { while (parent.has(x) && parent.get(x) !== x) x = parent.get(x); return x; };
+  const union = (a, b) => {
+    for (const k of [a, b]) if (!parent.has(k)) parent.set(k, k);
+    const [ra, rb] = [find(a), find(b)];
+    if (ra !== rb) parent.set(ra, rb);
+  };
+  const refOf = (v) => (typeof v === 'string' ? v : null);
+  for (const w of wires) {
+    const a = refOf(w.from);
+    const b = refOf(w.to);
+    if (a && b) union(a, b);
+  }
+  if (!parent.size) return [];
+  const out = [];
+  for (const net of netlist.nets) {
+    const keys = net.pins.map((p) => `${p.ref}.${p.pin}`);
+    const groups = new Set(keys.filter((k) => parent.has(k)).map(find));
+    if (groups.size > 1) {
+      out.push(`⚠️ 自动走线把 ${groups.size} 个本该独立的网络并在了一起:${keys.join(', ')} —— 请给这些 wire 显式指定 points`);
+    }
+  }
+  return out;
+}
+
+export function buildFromSpec(spec = {}, opts = {}) {
+  const auto = opts.autoLayout === true || spec.layout === 'auto' || spec.layout?.mode === 'auto';
+  let components = spec.components ?? [];
+  const layoutWarnings = [];
+  let placements = [];
+  if (auto) {
+    const layoutOpts = spec.layout && typeof spec.layout === 'object' ? { ...spec.layout } : {};
+    layoutOpts.links = spec.wires ?? [];
+    const laid = autoPlace(components, layoutOpts);
+    components = laid.components;
+    placements = laid.placements;
+    layoutWarnings.push(...laid.warnings);
+  }
   const doc = newDocument(spec);
-  for (const c of spec.components ?? []) placeComponent(doc, c);
+  for (const c of components) placeComponent(doc, c);
   const pins = pinIndex(doc);
+  // component boxes, so an auto-routed wire never cuts through a part
+  const boxes = [];
+  const boxByRef = new Map();
+  if (auto) {
+    for (const c of components) {
+      try {
+        const m = measureComponent(c);
+        const box = { minX: c.x + m.minX, maxX: c.x + m.maxX, minY: c.y + m.minY, maxY: c.y + m.maxY };
+        boxes.push(box);
+        boxByRef.set(c.ref, box);
+      } catch { /* unmeasurable part: routing just skips it */ }
+    }
+  }
+  const routedSegments = [];        // [[p1, p2], ...] of auto-routed wires
+  const pinPoints = [...pins.values()].map((p) => ({ x: p.x, y: p.y }));
   for (const w of spec.wires ?? []) {
     if (w.points) addWire(doc, w.points.map((p) => resolvePoint(pins, p, 'wire.points')));
     else if (w.from && w.to) {
       const a = resolvePoint(pins, w.from, 'wire.from');
       const b = resolvePoint(pins, w.to, 'wire.to');
-      const pts = [{ x: a.x, y: a.y }, { x: b.x, y: b.y }];
+      let pts;
+      if (auto && !w.straight) {
+        const centreOf = (ref) => {
+          const comp = components.find((c) => c.ref === ref);
+          return comp ? { x: comp.x, y: comp.y } : null;
+        };
+        const fromRef = typeof w.from === 'string' ? w.from.split('.')[0] : null;
+        const toRef = typeof w.to === 'string' ? w.to.split('.')[0] : null;
+        const pinOf = (ref) => pins.get(ref) ?? null;
+        // the endpoints' own parts must not block their own wire
+        const obstacles = boxes.filter((b) => b !== boxByRef.get(fromRef) && b !== boxByRef.get(toRef));
+        // foreign pins only: the two endpoints may of course be touched
+        const foreignPins = pinPoints.filter((p) => !(p.x === a.x && p.y === a.y) && !(p.x === b.x && p.y === b.y));
+        pts = routeConnection(a, b, {
+          fromCenter: fromRef ? centreOf(fromRef) : null,
+          toCenter: toRef ? centreOf(toRef) : null,
+          stub: w.stub ?? 20,
+          obstacles,
+          pins: foreignPins,
+          segments: routedSegments,
+          fromPin: pinOf(w.from),
+          toPin: pinOf(w.to),
+        });
+      } else {
+        pts = [{ x: a.x, y: a.y }, { x: b.x, y: b.y }];
+      }
       if (w.via) pts.push(...w.via.map((p) => resolvePoint(pins, p, 'wire.via')));
       addWire(doc, pts);
+      for (let i = 0; i + 1 < pts.length; i++) routedSegments.push([pts[i], pts[i + 1]]);
     } else throw new Error('each wire needs either "points" or "from"/"to"');
   }
   for (const l of spec.labels ?? []) {
@@ -268,7 +362,9 @@ export function buildFromSpec(spec = {}) {
   const text = JSON.stringify(doc);
   const parsed = parseDocument(JSON.parse(text));
   const netlist = extractNetlist(parsed);
-  return { doc, text, parsed, netlist, warnings: parsed.warnings };
+  const warnings = [...parsed.warnings, ...layoutWarnings];
+  if (auto) warnings.push(...detectAutoShorts(spec.wires ?? [], netlist));
+  return { doc, text, parsed, netlist, placements, warnings };
 }
 
 /** Fluent authoring API: place symbols, then wire/label/flag by pin reference. */

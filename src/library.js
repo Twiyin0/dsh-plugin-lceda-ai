@@ -2,6 +2,7 @@
 // and inventory of parts already used in a project.
 import { BUILTIN_SYMBOLS } from './symbol.js';
 import { partFromApi } from './create.js';
+import { readCache, writeCache } from './cache.js';
 
 const API = 'https://easyeda.com/api/products';
 // The standard edition editor talks to this host for its own component library.
@@ -45,12 +46,16 @@ export const STANDARD_EQUIVALENTS = {
 
 /**
  * Known-good pinouts used to pick (and sanity-check) library symbols.
- * STC89C52RC DIP-40: STC89C51RC/RD+ datasheet 1.4 Pin Descriptions, p.7.
+ *
+ * Only parts whose pinout is unambiguous are listed: the point is to reject a
+ * library symbol that draws the right package with the wrong pin names. Each
+ * entry cites where the table comes from; a pin may carry several equivalent
+ * names ("PC6/RESET"), which the matcher treats as a set.
  */
 export const PINOUT_REFERENCES = {
   stc89c52rc: {
     package: 'DIP-40',
-    source: 'STC89C51RC/RD+ datasheet 1.4, p.7',
+    source: 'STC89C51RC/RD+ datasheet 1.4 Pin Descriptions, p.7',
     pins: {
       1: 'P1.0', 2: 'P1.1', 3: 'P1.2', 4: 'P1.3', 5: 'P1.4', 6: 'P1.5', 7: 'P1.6', 8: 'P1.7',
       9: 'RST', 10: 'P3.0', 11: 'P3.1', 12: 'P3.2', 13: 'P3.3', 14: 'P3.4', 15: 'P3.5',
@@ -59,10 +64,77 @@ export const PINOUT_REFERENCES = {
       29: 'PSEN', 30: 'ALE', 31: 'EA', 32: 'P0.7', 33: 'P0.6', 34: 'P0.5', 35: 'P0.4',
       36: 'P0.3', 37: 'P0.2', 38: 'P0.1', 39: 'P0.0', 40: 'VCC',
     },
-    // the datasheet lists these as alternates of the same pin
-    aliases: { RXD: 'P3.0', TXD: 'P3.1', 'RD#': 'P3.7', 'WR#': 'P3.6', INT0: 'P3.2', INT1: 'P3.3', 'INT0#': 'P3.2', 'INT1#': 'P3.3', T0: 'P3.4', T1: 'P3.5', T2: 'P1.0', T2EX: 'P1.1', 'EA/VPP': 'EA', '/EA': 'EA', RST1: 'RST' },
+    aliases: { RXD: 'P3.0', TXD: 'P3.1', 'RD#': 'P3.7', 'WR#': 'P3.6', INT0: 'P3.2', INT1: 'P3.3', T0: 'P3.4', T1: 'P3.5', T2: 'P1.0', T2EX: 'P1.1', EA: 'EA', VPP: 'EA', PROG: 'ALE', RST1: 'RST' },
+  },
+  ne555: {
+    package: 'DIP-8',
+    source: 'NE555/SE555 standard timer pinout (TI/ST datasheets)',
+    pins: { 1: 'GND', 2: 'TRIG', 3: 'OUT', 4: 'RESET', 5: 'CTRL', 6: 'THR', 7: 'DIS', 8: 'VCC' },
+    aliases: { CV: 'CTRL', CONT: 'CTRL', TRIGGER: 'TRIG', THRESHOLD: 'THR', DISCHARGE: 'DIS', OUT1: 'OUT' },
+  },
+  lm358: {
+    package: 'DIP-8',
+    source: 'LM358/LM2904 dual op-amp pinout (TI datasheet)',
+    pins: { 1: 'OUT1', 2: 'IN1-', 3: 'IN1+', 4: 'GND', 5: 'IN2+', 6: 'IN2-', 7: 'OUT2', 8: 'VCC' },
+    aliases: { VEE: 'GND', VCC1: 'VCC', 'IN1-': 'IN1-', 'IN1+': 'IN1+' },
+  },
+  hc595: {
+    package: 'DIP-16',
+    source: '74HC595 8-bit shift register pinout (Nexperia/TI datasheet)',
+    pins: {
+      1: 'QB', 2: 'QC', 3: 'QD', 4: 'QE', 5: 'QF', 6: 'QG', 7: 'QH', 8: 'GND',
+      9: "QH'", 10: 'SRCLR', 11: 'SRCLK', 12: 'RCLK', 13: 'OE', 14: 'SER', 15: 'QA', 16: 'VCC',
+    },
+    aliases: { 'QH*': "QH'", RCLR: 'SRCLR', SRCLR1: 'SRCLR', SHCP: 'SRCLK', STCP: 'RCLK', DS: 'SER', Q0: 'QA', Q1: 'QB', Q2: 'QC', Q3: 'QD', Q4: 'QE', Q5: 'QF', Q6: 'QG', Q7: 'QH', G: 'OE', OE1: 'OE' },
+  },
+  atmega328p: {
+    package: 'DIP-28',
+    source: 'ATmega328P PDIP pinout (Microchip datasheet, 28-pin PDIP)',
+    pins: {
+      1: 'PC6', 2: 'PD0', 3: 'PD1', 4: 'PD2', 5: 'PD3', 6: 'PD4', 7: 'VCC', 8: 'GND',
+      9: 'PB6', 10: 'PB7', 11: 'PD5', 12: 'PD6', 13: 'PD7', 14: 'PB0', 15: 'PB1', 16: 'PB2',
+      17: 'PB3', 18: 'PB4', 19: 'PB5', 20: 'AVCC', 21: 'AREF', 22: 'GND', 23: 'PC0', 24: 'PC1',
+      25: 'PC2', 26: 'PC3', 27: 'PC4', 28: 'PC5',
+    },
+    aliases: { RESET: 'PC6', XTAL1: 'PB6', XTAL2: 'PB7', RXD: 'PD0', TXD: 'PD1', INT0: 'PD2', INT1: 'PD3', T0: 'PD4', T1: 'PD5', AIN0: 'PD6', AIN1: 'PD7', ICP1: 'PB0', OC1A: 'PB1', SS: 'PB2', MOSI: 'PB3', MISO: 'PB4', SCK: 'PB5', ADC0: 'PC0', ADC1: 'PC1', ADC2: 'PC2', ADC3: 'PC3', SDA: 'PC4', SCL: 'PC5', A4: 'PC4', A5: 'PC5' },
+  },
+  ams1117: {
+    package: 'SOT-223',
+    source: 'AMS1117-3.3 SOT-223 pinout (AMS datasheet; tab is VOUT)',
+    pins: { 1: 'GND', 2: 'VOUT', 3: 'VIN' },
+    aliases: { ADJ: 'GND', TAB: 'VOUT', OUT: 'VOUT', IN: 'VIN', VI: 'VIN', VO: 'VOUT' },
+  },
+  ch340g: {
+    package: 'SOP-16',
+    source: 'CH340G USB-UART pinout (WCH datasheet)',
+    pins: {
+      1: 'GND', 2: 'TXD', 3: 'RXD', 4: 'V3', 5: 'UD+', 6: 'UD-', 7: 'XI', 8: 'XO',
+      9: 'CTS#', 10: 'DSR#', 11: 'RI#', 12: 'DCD#', 13: 'DTR#', 14: 'RTS#', 15: 'R232', 16: 'VCC',
+    },
+    aliases: { DPLUS: 'UD+', DMINUS: 'UD-', XIN: 'XI', XOUT: 'XO', TXD1: 'TXD', RXD1: 'RXD', V33: 'V3', V3V3: 'V3' },
   },
 };
+
+/** Map a symbol name / library title onto a reference table. */
+const PINOUT_MATCHERS = [
+  [/^(stc89c5|stc89le5|stc89c52)/i, 'stc89c52rc'],
+  [/^(ne|se|lm|tlc|icm|na)?\s*555/i, 'ne555'],
+  [/^(lm|lm2904|ne|rc|ts|mc|ua)?\s*358|^(lm2904)/i, 'lm358'],
+  [/^(sn)?74(hc|hct|ls)?595|^hc595/i, 'hc595'],
+  [/^atmega328/i, 'atmega328p'],
+  [/^ams1117/i, 'ams1117'],
+  [/^(ch|ch340|ch340g|ch341)/i, 'ch340g'],
+];
+
+/** Resolve a reference by built-in key, library title, or part number. */
+export function findPinoutReference(nameOrKey) {
+  const key = String(nameOrKey ?? '');
+  if (PINOUT_REFERENCES[key]) return { key, ref: PINOUT_REFERENCES[key] };
+  for (const [re, refKey] of PINOUT_MATCHERS) {
+    if (re.test(key)) return { key: refKey, ref: PINOUT_REFERENCES[refKey] };
+  }
+  return null;
+}
 
 /** Pin number + name of one `P~` record. */
 export function pinInfoOf(record) {
@@ -72,33 +144,77 @@ export function pinInfoOf(record) {
   return { number: String(head[3] ?? '').trim(), name: String(nameBlock[4] ?? '').trim() };
 }
 
-const canonicalPinName = (name, ref) => {
-  const raw = String(name).toUpperCase().trim();
-  const base = raw.split('/')[0].replace(/#/g, '').trim();
-  const aliases = ref?.aliases ?? {};
-  const hit = aliases[base] ?? aliases[raw.replace(/#/g, '')] ?? aliases[base + '#'] ?? null;
-  const v = (hit ?? base).toUpperCase();
-  const m = /^P(\d)\.(\d)/.exec(v);
-  return m ? `P${m[1]}.${m[2]}` : v;
-};
+/**
+ * All the names a pin may legitimately carry, upper-cased and de-hashed.
+ * "P3.0(RXD)/TXD" -> {"P3.0", "RXD", "TXD"}; slash, parentheses and trailing
+ * hash marks are the three styles LCEDA libraries actually use.
+ */
+function pinTokens(name, ref) {
+  const tokens = new Set();
+  const push = (raw) => {
+    const t = String(raw ?? '').toUpperCase().replace(/[#*\s]+/g, '').trim();
+    if (!t) return;
+    tokens.add(t);
+    const alias = ref?.aliases?.[t];
+    if (alias) tokens.add(String(alias).toUpperCase().replace(/[#*\s]+/g, ''));
+  };
+  const text = String(name ?? '');
+  for (const part of text.split('/')) {
+    const m = /^([^(]+)(?:\(([^)]*)\))?/.exec(part.trim());
+    if (m) { push(m[1]); if (m[2]) for (const alt of m[2].split(/[,/]/)) push(alt); }
+    else push(part);
+  }
+  // a GPIO name like P1.0 may be written P1_0 or P10 in some libraries
+  for (const t of [...tokens]) {
+    const gpio = /^P(\d)[._](\d)$/.exec(t);
+    if (gpio) tokens.add(`P${gpio[1]}${gpio[2]}`);
+  }
+  return tokens;
+}
+
+/**
+ * Supply rails are named differently by every library; VCC/VDD/VIN all mean the
+ * positive rail of a small part, GND/VSS/VEE the return. Keep analog rails
+ * (AVCC, VDDA, VBAT, VREF) out of the equivalence so they stay distinguishable.
+ */
+const SUPPLY_GROUPS = [
+  new Set(['VCC', 'VDD', 'VIN', 'VS', 'V+', 'VDDIO']),
+  new Set(['GND', 'VSS', 'VEE', '0V', 'GNDA']),
+];
+const supplyGroup = (token) => SUPPLY_GROUPS.findIndex((g) => g.has(token));
+
+/** Whether two pin names denote the same pin. */
+function samePin(a, b, ref) {
+  const ta = pinTokens(a, ref);
+  const tb = pinTokens(b, ref);
+  for (const t of ta) if (tb.has(t)) return true;
+  // VCC vs VDD, GND vs VSS: same rail, different library convention
+  for (const t of ta) {
+    const g = supplyGroup(t);
+    if (g === -1) continue;
+    for (const u of tb) if (supplyGroup(u) === g) return true;
+  }
+  return false;
+}
 
 /**
  * Compare a symbol's pin names with a known reference pinout.
  * @returns {{total:number, matched:number, ratio:number, mismatches:Array}}
  */
-export function validatePinout(doc, key) {
-  const ref = PINOUT_REFERENCES[key];
+export function validatePinout(doc, keyOrName) {
+  const found = findPinoutReference(keyOrName);
+  const ref = found?.ref;
   if (!ref) return { total: 0, matched: 0, ratio: 1, mismatches: [], unknown: true };
   const pins = (doc?.shape ?? []).filter((r) => String(r).startsWith('P~')).map(pinInfoOf);
   let matched = 0; const mismatches = [];
   for (const p of pins) {
     const want = ref.pins[p.number];
     if (!want) continue;
-    if (canonicalPinName(p.name, ref) === canonicalPinName(want, ref)) matched++;
+    if (samePin(p.name, want, ref)) matched++;
     else mismatches.push({ pin: p.number, got: p.name, want });
   }
   const total = Object.keys(ref.pins).length;
-  return { total, matched, ratio: matched / total, mismatches, source: ref.source };
+  return { total, matched, ratio: matched / total, mismatches, source: ref.source, reference: found.key };
 }
 
 /** Heuristic drawing quality: real symbols have visible pin stubs and a body that
@@ -135,6 +251,8 @@ export async function searchStandard(wd, { timeoutMs = 15000 } = {}) {
   const q = String(wd ?? '').trim();
   if (q.length < 2) return [];
   if (stdCache.has(q)) return stdCache.get(q);
+  const cachedHits = await readCache('search', q);
+  if (cachedHits) { stdCache.set(q, cachedHits); return cachedHits; }
   let res;
   try {
     res = await fetch(`${STD}/search`, {
@@ -169,6 +287,7 @@ export async function searchStandard(wd, { timeoutMs = 15000 } = {}) {
     }
   }
   stdCache.set(q, out);
+  await writeCache('search', q, out);
   return out;
 }
 
@@ -176,6 +295,12 @@ export async function searchStandard(wd, { timeoutMs = 15000 } = {}) {
 export async function fetchStandard(uuid, { timeoutMs = 15000 } = {}) {
   const key = String(uuid);
   if (cache.has(`std:${key}`)) return cache.get(`std:${key}`);
+  const cachedDoc = await readCache('std', key);
+  if (cachedDoc) {
+    const part = { doc: cachedDoc, title: cachedDoc.head?.c_para?.name ?? key, uuid: key, source: 'standard' };
+    cache.set(`std:${key}`, part);
+    return part;
+  }
   let res;
   try {
     res = await fetch(`${STD}/${key}?version=${STD_VERSION}`, {
@@ -202,6 +327,7 @@ export async function fetchStandard(uuid, { timeoutMs = 15000 } = {}) {
     source: 'standard',
   };
   cache.set(`std:${key}`, part);
+  await writeCache('std', key, part.doc);
   return part;
 }
 

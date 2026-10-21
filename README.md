@@ -27,13 +27,16 @@ DeepSeek Harness 插件 + 命令行工具链,版本 `0.0.1-beta`,协议 GPL-3.0�
 | 编辑 | 改值/位号/属性、移动、旋转、复制、删除、增删导线/结点/标签/标志;带网络表 diff 与告警、`.bak` 备份 |
 | 导出 | 立创EDA 可直接打开的 JSON(与编辑器落盘逐键一致)、工程目录形式 |
 | 器件库 | **立创EDA 标准库 → 立创商城 → 内置符号** 三级择优,并用手册引脚表校验符号 |
+| 自动布局 | spec 不写坐标也能出图:按网表分侧摆放、正交避障走线,并自检“有没有把两个网络短接” |
+| 离线缓存 | 标准库搜索/取件落盘到 `~/.cache/lceda-ai`,批量建图不再重复请求;`cache` 可查看/清空 |
+| 多图纸工程 | `project` 汇总整个工程:合并 BOM、逐图纸统计、跨图纸同名网络、网络分类(电源/地/复位/时钟/差分/总线风格) |
 | Agent 集成 | Harness 插件注册 7 个 `lceda_*` 工具;子进程调用 CLI,改代码即生效 |
 
 ## 安装
 
 ```bash
 npm install          # Node.js >= 20
-npm test             # 39 个单元测试(含工具 Schema 回归)
+npm test             # 52 个单元测试(含工具 Schema、自动布局、缓存、工程聚合)
 npm run verify       # 端到端自检(含标准库/商城联网检查,可加 --offline)
 ```
 
@@ -60,7 +63,9 @@ npx lceda-ai export examples/stc89c52rc-minimal-v3.esch --project ./MyProject
 | `create <out.esch> [--title --company --rev --date --drawn-by]` | 新建图纸 |
 | `find <query> [--file <sheet>] [--json]` | 标准库 / 商城编号 / 内置库 / 工程内器件 |
 | `place <sch> <符号或uuid或C编号> [--ref --value --at x,y --rot --std --standard --pins]` | 放一个器件,返回引脚坐标 |
-| `build <spec.json> -o <out.esch> [--export]` | 按声明式 spec 画整图 |
+| `build <spec.json> -o <out.esch> [--auto-layout] [--export]` | 按声明式 spec 画整图;`--auto-layout` 自动摆放并正交走线 |
+| `project <dir> [-o <out>] [--render]` | 多图纸工程汇总(合并 BOM / 网络分类 / 跨图纸同名网络) |
+| `cache [stats\|clear]` | 查看或清空器件缓存(任何命令都可加 `--no-cache`) |
 | `edit <sch> --ops '<json>' [--dry-run] [--out] [--preview]` | 结构化编辑 |
 | `export <sch> [-o out.json] [--project <dir>]` | 导出可导入立创EDA 的 JSON |
 
@@ -81,8 +86,21 @@ npx lceda-ai export examples/stc89c52rc-minimal-v3.esch --project ./MyProject
 }
 ```
 
-`at`/`from`/`to` 可以是引脚引用(`"U1.9"`)或坐标。**接线坐标请先从引脚探测出来**
-(`place` 的返回、或 `SchematicBuilder#pins()`),再写进 spec —— 换符号也不会错位。
+`at`/`from`/`to` 可以是引脚引用(`"U1.9"`)或坐标。
+
+**不想手算坐标**:给 spec 加 `"layout": "auto"`(或构建时加 `--auto-layout`),没写 `x/y` 的器件会自动摆放,
+`{from,to}` 连线会自动走正交折线:
+
+```jsonc
+{ "layout": "auto",
+  "components": [ { "symbol": "stc89c52rc", "ref": "U1" }, { "symbol": "crystal", "ref": "Y1" } ],
+  "wires": [ { "from": "U1.19", "to": "Y1.1" } ] }
+```
+
+规则:引脚最多的器件当锚点居中;其余器件按**网表连到锚点哪一侧**分左右两列(会沿网表传递),
+摆放时避开已占区域;走线沿引脚朝向外伸 20,再折向目标,避开器件本体、其他引脚与已布导线。
+构建结束会做一次**短路自检**:如果某条自动走线把两个本该独立的网络并在了一起,会给出告警并要求你显式写 `points`。
+手写的 `x/y` 永远优先,所以可以“手工放几个关键器件 + 其余自动”。
 
 ### 结构化编辑
 
@@ -110,6 +128,13 @@ npx lceda-ai edit sheet.esch --ops '[
 | 2 | **立创商城** | `easyeda.com/api/products/{LCSC}/components`;标准库没有时按编号取 |
 | 3 | 内置符号 | 离线兜底(自制画法,仅应急) |
 
+搜索结果与器件文档会缓存到 `~/.cache/lceda-ai`(可用 `LCEDA_CACHE_DIR` 改位置、`LCEDA_NO_CACHE=1` 或 `--no-cache` 关闭):
+
+```bash
+npx lceda-ai cache stats      # 有多少条、占多少空间
+npx lceda-ai cache clear
+```
+
 ```bash
 npx lceda-ai find R_0603_US        # 标准库搜索:uuid / 封装
 npx lceda-ai find C25804           # 商城器件
@@ -117,9 +142,22 @@ npx lceda-ai place out.esch R_0603_US --ref R1 --value 10k --at 300,400 --rot 90
 npx lceda-ai place out.esch --std 96ab93705fad467397e1ee5fa4b8c4da --ref R2 --at 400,400
 ```
 
-**符号质量校验**:同名器件是用户共建的,引脚名可能写错。工具内置数据手册引脚参照表
-(`src/library.js` 的 `PINOUT_REFERENCES`),按“引脚名匹配率 + 图形规整度”挑符号;
-把 `29/30/31` 号脚写成 `P4.4/P4.5/P4.6` 的那批 STC89C52 符号会被自动淘汰。
+**符号质量校验**:同名器件是用户共建的,引脚名可能写错。工具内置引脚参照表
+(`src/library.js` 的 `PINOUT_REFERENCES`),按“引脚名匹配率 + 图形规整度”挑符号。已覆盖:
+
+| 器件 | 封装 | 出处 |
+|---|---|---|
+| STC89C52RC | DIP-40 | STC89C51RC/RD+ 数据手册 p.7 |
+| NE555 | DIP-8 | TI/ST 555 数据手册 |
+| LM358 | DIP-8 | TI LM358 数据手册 |
+| 74HC595 | DIP-16 | Nexperia/TI 数据手册 |
+| ATmega328P | DIP-28 | Microchip 数据手册 |
+| AMS1117-3.3 | SOT-223 | AMS 数据手册 |
+| CH340G | SOP-16 | WCH 数据手册 |
+
+匹配容忍写法差异:`P3.0(RXD)`、`ALE/PROG`、`NRESET`、`VDD/VCC`、`VSS/GND` 都能对上;
+真正的错误(例如 31 号脚写成 `P4.6`)照样会被淘汰。引脚表通过 `findPinoutReference()` 也能按**库标题**命中,
+所以从标准库直接放 `NE555`、`74HC595` 也会被校验。
 
 ## 导出到立创EDA
 
@@ -133,7 +171,7 @@ npx lceda-ai export sheet.esch --project ./MyProject    # 工程目录 + 导入�
 
 ![真实编辑器打开导出的 json](docs/images/editor-import-json.png)
 
-## Harness 插件(7 个工具)
+## Harness 插件(8 个工具)
 
 本包本身就是 Harness bundle(`dsh-plugin-lceda-ai`,patch 见 `cordis.patch.yml`,row id `lceda-schematic-ai`),注册:
 
@@ -146,6 +184,7 @@ npx lceda-ai export sheet.esch --project ./MyProject    # 工程目录 + 导入�
 | `lceda_find_component` | 找器件(标准库优先) |
 | `lceda_edit_schematic` | 结构化编辑 + 校验 + 预览 |
 | `lceda_export_json` | 导出可导入 JSON / 工程目录 |
+| `lceda_project_overview` | 多图纸工程汇总:**合并 BOM、跨图纸网络、网络分类** |
 
 安装:
 
@@ -181,6 +220,9 @@ src/edit.js          编辑引擎:操作、网络表 diff、校验、原子写�
 src/symbol.js        符号生成(内置库)、器件构造、电源/地标志
 src/create.js        新建图纸、放器件、spec 构建器、SchematicBuilder
 src/library.js       标准库 / 商城 / 内置库、引脚校验、符号择优
+src/cache.js         器件与搜索结果落盘缓存(可关闭、可清理)
+src/layout.js        自动布局 + 正交避障走线
+src/project.js       多图纸工程聚合、网络分类
 src/exportjson.js    导出立创EDA 可打开的 JSON
 src/path.js          路径解析/变换(旋转、平移)
 docs/format.md       .esch 文件格式笔记(踩坑记录)
@@ -204,10 +246,15 @@ npm run example          # 重新生成 v3 示例全套产物
 
 - 只支持**标准版**(`docType` 1);专业版格式不同。
 - 渲染是忠实描边:编辑器里画得难看的库符号,渲染出来一样难看。
-- 不做自动布局:spec 里的坐标需按符号尺寸微调(引脚坐标由工具探测)。
+- 自动布局是启发式排版(分侧 + 正交走线 + 短路自检),不会像人一样追求美观;关键器件仍建议手写坐标。
 - 内置符号只有 8 类(8051/R/C/极性C/晶振/按键/LED/排针),其余请用标准库/商城。
 - 商城按编号取件可用;关键词搜索接口有 WAF,关键词检索请走标准库。
 - `.esch` 里若含编辑器私有插件对象,编辑时原样保留但不理解其语义。
+- **总线 / 层次图只做读取侧聚合,不写这类记录**。检查过的真实工程(`Sheet_*.json`)里只有
+  `LIB/F/W/N/J` 五类记录,`BUS` 只出现在 `VBUS` 这类网络名中,`B~` 是图框文字与图片数据;
+  在拿到真实的总线/层次端口样本前,工具不会凭猜测生成这类记录,以免产出编辑器打不开的文件。
+  跨图纸的连通性也不臆断(标准版里网络标志/端口是全局的,普通网络标签是否跨图纸连通取决于标签类型),
+  `project` 只把同名网络列出来供人工确认。
 
 ## 目录结构
 

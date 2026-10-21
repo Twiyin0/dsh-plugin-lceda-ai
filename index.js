@@ -196,6 +196,7 @@ const TOOLS = [
       drawnBy: { type: 'string', description: 'Author line.' },
       spec: { type: 'string', description: 'Optional JSON spec of components/wires/labels/flags/junctions/texts (a JSON string is accepted).' },
       export: { type: 'boolean', description: 'Also write svg/png/pdf/report next to the .esch (default false).' },
+      autoLayout: { type: 'boolean', description: 'Auto-place every component that has no x/y and route {from,to} wires orthogonally (same as setting "layout":"auto" in the spec).' },
     },
     async execute(args, ctx, exec) {
       const cwd = await ctx.workingDirectory.ensure(exec.agent, exec.signal);
@@ -227,9 +228,11 @@ const TOOLS = [
           ...spec,
         };
         merged.title = spec.title ?? merged.title;
+        if (asBool(args.autoLayout)) merged.layout = 'auto';
         const argv = specFile
           ? ['build', specFile, '-o', target, '--json']
           : ['build', '-o', target, '--spec', JSON.stringify(merged), '--json'];
+        if (asBool(args.autoLayout)) argv.push('--auto-layout');
         const wantExport = asBool(args.export, false);
         if (wantExport) argv.push('--export');
         const res = await runCli(argv, { cwd });
@@ -397,6 +400,40 @@ const TOOLS = [
         for (const [k, p] of Object.entries(r.outputs ?? {})) { files.push(p); lines.push(`- ${k}: ${p}`); }
       }
       if (!lines.length) throw new Error('no sheet converted');
+      return { text: lines.join('\n'), files };
+    },
+  },
+  {
+    name: 'lceda_project_overview',
+    description: 'Summarise a multi-sheet 嘉立创EDA project folder: per-sheet component/pin/net counts, a merged BOM (the same value+package across sheets collapses into one row; duplicate designators are qualified with @Sheet), nets that appear on more than one sheet, and a net-class breakdown (power / ground / reset / clock / differential / bus). Analysis only: it never writes to the sheets.',
+    parameters: {
+      path: { type: 'string', required: true, description: 'Project folder containing Sheet_*.json (or .esch) files.' },
+      outDir: { type: 'string', description: 'Write project.json + project.md into this directory.' },
+      render: { type: 'boolean', description: 'Also render every sheet to svg/png/pdf/report (default false).' },
+    },
+    async execute(args, ctx, exec) {
+      const cwd = await ctx.workingDirectory.ensure(exec.agent, exec.signal);
+      const target = await resolvePath(ctx, exec, args.path);
+      const argv = ['project', target, '--json'];
+      if (args.outDir) argv.push('-o', await resolvePath(ctx, exec, args.outDir));
+      const res = await runCli(argv, { cwd });
+      const lines = [`${res.sheets?.length ?? 0} 张图纸, ${res.totals?.components ?? 0} 器件, ${res.totals?.pins ?? 0} 引脚, ${res.totals?.nets ?? 0} 网络`];
+      for (const s of res.sheets ?? []) lines.push(`- ${s.title || s.name}: ${s.statistics.components} 器件 / ${s.statistics.nets} 网络 (${String(s.file).split('/').pop()})`);
+      if (res.crossSheet?.length) lines.push(`跨图纸同名网络: ${res.crossSheet.map((n) => n.name).slice(0, 15).join(', ')}${res.crossSheet.length > 15 ? ' …' : ''}`);
+      const files = [];
+      if (args.outDir) {
+        const dir = await resolvePath(ctx, exec, args.outDir);
+        files.push(`${dir}/project.json`, `${dir}/project.md`);
+        lines.push(`写入 ${dir}/project.json 与 project.md`);
+      }
+      if (asBool(args.render)) {
+        const out = args.outDir ? await resolvePath(ctx, exec, args.outDir) : undefined;
+        const conv = ['convert', target, '--formats', 'svg,png,pdf,report', '--scale', String(DEFAULT_SCALE), '--json'];
+        if (out) conv.push('-o', out);
+        const rows = await runCli(conv, { cwd });
+        for (const r of Array.isArray(rows) ? rows : []) for (const [k, p] of Object.entries(r.outputs ?? {})) files.push(p);
+        lines.push(`已渲染 ${(Array.isArray(rows) ? rows : []).length} 张图纸`);
+      }
       return { text: lines.join('\n'), files };
     },
   },

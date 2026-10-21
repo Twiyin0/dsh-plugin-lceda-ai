@@ -11,8 +11,10 @@ import { promisify } from 'node:util';
 
 import { parseDocument, extractNetlist, renderSVG, buildReport, editSheet, convert } from '../src/index.js';
 import { exportJson } from '../src/exportjson.js';
-import { SchematicBuilder, newDocument, placeComponent } from '../src/create.js';
-import { searchStandard, fetchStandard, fetchPart, resolveStandard, isLcscNumber, validatePinout } from '../src/library.js';
+import { SchematicBuilder, newDocument, placeComponent, buildFromSpec } from '../src/create.js';
+import { searchStandard, fetchStandard, fetchPart, resolveStandard, isLcscNumber, validatePinout, findPinoutReference } from '../src/library.js';
+import { autoPlace, measureComponent } from '../src/layout.js';
+import { readProject, projectMarkdown } from '../src/project.js';
 
 const run = promisify(execFile);
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -186,7 +188,80 @@ await check('library:LCSC part by number', async (offline) => {
   throw new Error('no candidate LCSC number resolved');
 });
 
-// 7. CLI contract -----------------------------------------------------------
+// 7. new capabilities -------------------------------------------------------
+
+await check('layout:auto places parts without coordinates and routes orthogonally', async () => {
+  const spec = {
+    title: 'auto',
+    layout: 'auto',
+    components: [
+      { symbol: 'stc89c52rc', ref: 'U1' },
+      { symbol: 'crystal', ref: 'Y1' },
+      { symbol: 'capacitor', ref: 'C1', rot: 90 },
+      { symbol: 'header', pins: 5, ref: 'J1', rot: 90 },
+    ],
+    wires: [{ from: 'U1.19', to: 'Y1.1' }, { from: 'U1.10', to: 'J1.3' }],
+  };
+  const built = buildFromSpec(spec);
+  assert(built.placements.length === 4, 'parts were not auto-placed');
+  assert(built.warnings.length === 0, `warnings: ${built.warnings.join(' | ')}`);
+  const nets = built.netlist.nets.filter((n) => n.pins.length > 1).map((n) => n.pins.map((p) => `${p.ref}.${p.pin}`).sort().join(' '));
+  assert(nets.includes(['U1.19', 'Y1.1'].sort().join(' ')), 'crystal net missing');
+  assert(nets.includes(['J1.3', 'U1.10'].sort().join(' ')), 'header net missing');
+  return `${built.placements.length} parts, ${nets.length} nets`;
+});
+await check('layout:measuring and routing helpers stay orthogonal', async () => {
+  const m = measureComponent({ symbol: 'resistor', ref: 'R1', rot: 90 });
+  assert(m.pins.length === 2 && m.height > m.width, 'rotated resistor should be taller than wide');
+  const { routeConnection } = await import('../src/layout.js');
+  const pts = routeConnection({ x: 100, y: 100 }, { x: 300, y: 220 }, { stub: 20 });
+  for (let i = 0; i + 1 < pts.length; i++) {
+    assert(pts[i].x === pts[i + 1].x || pts[i].y === pts[i + 1].y, 'diagonal segment');
+  }
+  return `${pts.length} points`;
+});
+await check('pinout:references cover common parts and reject wrong names', async () => {
+  const need = ['NE555', 'LM358', '74HC595', 'ATmega328P', 'AMS1117-3.3', 'CH340G', 'STC89C52RC'];
+  for (const n of need) assert(findPinoutReference(n), `no reference for ${n}`);
+  const mk = (num, name) => `P~show~0~${num}~0~0~180~g${num}~0^^0 0^^M 0 0 h 10~#880000^^0~2~2~0~${name}~start~~~#0000FF^^0~0~0~9~${num}~end~~~#000080^^none^^none`;
+  const good = { shape: [[1, 'GND'], [2, 'TRIG'], [3, 'OUT'], [4, 'RESET'], [5, 'CTRL'], [6, 'THR'], [7, 'DIS'], [8, 'VCC']].map(([n, v]) => mk(n, v)) };
+  const bad = { shape: [[1, 'GND'], [2, 'TRIG'], [3, 'OUT'], [4, 'NRESET'], [5, 'CTRL'], [6, 'THR'], [7, 'DIS'], [8, 'VCC']].map(([n, v]) => mk(n, v)) };
+  assert(validatePinout(good, 'NE555').ratio === 1, 'correct NE555 pinout must score 1.0');
+  assert(validatePinout(bad, 'NE555').mismatches.length === 1, 'wrong pin name must be reported');
+  return `${need.length} parts`;
+});
+await check('cache:disk cache answers a lookup without the network', async () => {
+  const { writeCache, readCache } = await import('../src/cache.js');
+  const { fetchStandard: fetchStd } = await import('../src/library.js');
+  const uuid = 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+  await writeCache('std', uuid, { head: { docType: '2', c_para: { package: 'X', name: 'CACHED' } }, shape: ['P~show~0~1~0~0~180~g1~0^^0 0^^M 0 0 h 10~#880000^^0~2~2~0~1~start~~~#0000FF^^0~0~0~9~1~end~~~#000080^^0~0~0'] });
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = () => { throw new Error('network used'); };
+  try {
+    const part = await fetchStd(uuid);
+    assert(part.doc.head.c_para.name === 'CACHED', 'cached part has the wrong name');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  assert((await readCache('std', uuid)).head.c_para.name === 'CACHED', 'cache entry unreadable');
+  return 'offline hit';
+});
+await check('project:multi-sheet overview', async () => {
+  const dir = path.join(tmp, 'proj');
+  await fs.mkdir(dir, { recursive: true });
+  const spec = (ref) => ({ title: ref, components: [{ symbol: 'resistor', ref: 'R1', value: '10k', x: 200, y: 200, rot: 90 }], flags: [{ text: '+5V', kind: 'part_netLabel_+5V', at: 'R1.1', rot: 0 }] });
+  await fs.writeFile(path.join(dir, 'Sheet_1.json'), buildFromSpec(spec('a')).text, 'utf8');
+  await fs.writeFile(path.join(dir, 'Sheet_2.json'), buildFromSpec(spec('b')).text, 'utf8');
+  const project = await readProject(dir);
+  assert(project.sheets.length === 2, 'sheet count');
+  assert(project.totals.components === 2, 'component total');
+  assert(project.bom.some((r) => r.value === '10k' && r.count === 2), 'BOM not merged');
+  assert(project.classes.power.includes('+5V'), 'net class missing');
+  assert(/工程总览/.test(projectMarkdown(project)), 'project markdown missing');
+  return `${project.sheets.length} sheets, ${project.bom.length} BOM rows`;
+});
+
+// 8. CLI contract -----------------------------------------------------------
 await check('cli:--json output parses', async () => {
   const { stdout } = await run(process.execPath, [bin, 'read', doc3, '--json'], { cwd: root });
   const j = JSON.parse(stdout);
@@ -194,6 +269,41 @@ await check('cli:--json output parses', async () => {
   assert(sheet.components?.length > 10, 'components missing');
   assert(Array.isArray(sheet.nets) && sheet.nets.length > 20, 'nets missing');
   return `${sheet.components.length} components`;
+});
+await check('cli:build --auto-layout', async () => {
+  const specFile = path.join(tmp, 'auto.json');
+  await fs.writeFile(specFile, JSON.stringify({
+    title: 'cli auto',
+    layout: 'auto',
+    components: [{ symbol: 'resistor', ref: 'R1', rot: 90 }, { symbol: 'capacitor', ref: 'C1', rot: 90 }],
+    wires: [],
+  }), 'utf8');
+  const out = path.join(tmp, 'auto.esch');
+  const { stdout } = await run(process.execPath, [bin, 'build', specFile, '-o', out, '--auto-layout', '--json'], { cwd: root });
+  const j = JSON.parse(stdout);
+  assert(j.placements?.length === 2, 'placements missing from --json');
+  assert(j.statistics.components === 2, 'component count');
+  return path.basename(out);
+});
+await check('cli:project', async () => {
+  const dir = path.join(tmp, 'proj2');
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(path.join(dir, 'Sheet_1.json'), buildFromSpec({ title: 'x', components: [{ symbol: 'resistor', ref: 'R1', x: 200, y: 200, rot: 90 }] }).text, 'utf8');
+  const outDir = path.join(tmp, 'proj-out');
+  await run(process.execPath, [bin, 'project', dir, '-o', outDir, '--json'], { cwd: root });
+  const md = await fs.readFile(path.join(outDir, 'project.md'), 'utf8');
+  assert(/工程总览/.test(md), 'project.md missing the overview');
+  return 'project.md';
+});
+await check('cli:cache stats/clear', async () => {
+  const dir = path.join(tmp, 'cache-cli');
+  const env = { ...process.env, LCEDA_CACHE_DIR: dir };
+  const { stdout } = await run(process.execPath, [bin, 'cache', 'stats', '--json'], { cwd: root, env });
+  const stats = JSON.parse(stdout);
+  assert(stats.dir === dir, 'cache dir mismatch');
+  const { stdout: cleared } = await run(process.execPath, [bin, 'cache', 'clear', '--json'], { cwd: root, env });
+  assert(JSON.parse(cleared).action === 'clear', 'cache clear failed');
+  return 'stats + clear';
 });
 await check('cli:export command', async () => {
   const out = path.join(tmp, 'cli-export.json');

@@ -35,9 +35,12 @@ Commands:
         [--title T] [--company C] [--rev R] [--date D] [--drawn-by N]
   find <query>                   Search parts: built-in catalogue, LCSC number (Cnnnn), or --file sheet
   place <sch.json> <symbol|Cnnn> Place one component [--ref R1] [--value 10k] [--at x,y] [--rot 90]
+  cache [stats|clear]            Inspect or clear the component cache (also: --no-cache on any command)
+  project <dir>                  Multi-sheet project overview (merged BOM, net classes); [-o out] [--render]
   export <sch.esch|json>         Write the LCEDA-importable JSON (文件 → 打开 → 嘉立创EDA)
         [-o out.json] [--project Dir] [--sheet-name Sheet_1] [--json]
   build <spec.json> -o out.esch  Build a whole schematic from a declarative spec
+        [--auto-layout] [--export]   (auto-place parts without x/y, route wires orthogonally)
         [--spec '<json>'] (inline spec instead of a file)
         [--export] (also write svg/png/pdf/report)
   edit <sch.json> --ops '<json>' Structured edits (see below); validates, writes with .bak
@@ -164,6 +167,47 @@ async function main() {
     for (const p of pins) log(`  ${p.pin} ${p.name} @ ${p.x},${p.y}`);
     return;
   }
+  if (cmd === 'project') {
+    const dir = rest[0];
+    if (!dir) return usage();
+    const { readProject, projectMarkdown } = await import('../src/project.js');
+    const fsMod = await import('node:fs/promises');
+    const project = await readProject(dir);
+    const markdown = projectMarkdown(project);
+    const outDir = flag('-o', flag('--out', null));
+    if (outDir) {
+      await fsMod.mkdir(outDir, { recursive: true });
+      await fsMod.writeFile(`${outDir}/project.json`, JSON.stringify(project, null, 2));
+      await fsMod.writeFile(`${outDir}/project.md`, markdown, 'utf8');
+    }
+    emit({ ...project, markdown });
+    log(markdown);
+    if (outDir) log(`\nwrote ${outDir}/project.json and ${outDir}/project.md`);
+    if (rest.includes('--render')) {
+      const convert = await lazyConvert();
+      const results = await convert(dir, { outDir: outDir ?? undefined, formats: ['svg', 'png', 'pdf', 'report'], scale: 3 });
+      for (const r of results) for (const [k, v] of Object.entries(r.outputs)) log(`  ${k}: ${v}`);
+    }
+    return;
+  }
+
+  if (cmd === 'cache') {
+    const { cacheStats, clearCache } = await import('../src/cache.js');
+    const action = rest[0] ?? 'stats';
+    if (action === 'clear') {
+      const removed = await clearCache();
+      emit({ action: 'clear', removed });
+      log(`cleared ${removed} cache file(s)`);
+      return;
+    }
+    const stats = await cacheStats();
+    emit(stats);
+    log(`cache: ${stats.dir}`);
+    for (const [kind, v] of Object.entries(stats.kinds)) log(`  ${kind.padEnd(6)} ${String(v.entries).padStart(4)} files  ${(v.bytes / 1024).toFixed(1)} KB`);
+    log(`  total  ${(stats.totalBytes / 1024).toFixed(1)} KB${stats.disabled ? '  (disabled by LCEDA_NO_CACHE)' : ''}`);
+    return;
+  }
+
   if (cmd === 'export') {
     const input = rest[0];
     if (!input) return usage();
@@ -179,6 +223,7 @@ async function main() {
     return;
   }
   if (cmd === 'build') {
+    const autoLayout = rest.includes('--auto-layout');
     const fsMod = await import('node:fs/promises');
     const inline = flag('--spec', null);
     const specFile = inline ? null : rest[0];
@@ -190,13 +235,13 @@ async function main() {
         try { c.part = await fetchPart(c.lcsc); } catch (e) { console.warn(`warn: ${e.message}`); }
       }
     }
-    const built = buildFromSpec(spec);
+    const built = buildFromSpec(spec, { autoLayout });
     const out = flag('-o', flag('--out', null));
     if (!out) return usage();
     await writeDocument(out, built.text);
     const { markdown } = buildReport(built.doc, built.netlist, { sheetName: spec.title ?? 'Sheet_1' });
     await fsMod.writeFile(out.replace(/\.(esch|json)$/, '') + '.report.md', markdown, 'utf8');
-    emit({ file: out, statistics: built.netlist.statistics, warnings: built.warnings,
+    emit({ file: out, statistics: built.netlist.statistics, warnings: built.warnings, placements: built.placements,
       components: built.netlist.components.map((c) => ({ ref: c.ref, value: c.value, package: c.package, pins: c.pins.length })),
       nets: built.netlist.nets.map((n) => ({ name: n.name, aliases: n.aliases, pins: n.pins.map((p) => `${p.ref}.${p.pin}`) })) });
     log(`built ${out}: ${built.netlist.statistics.components} components, ${built.netlist.statistics.pins} pins, ${built.netlist.statistics.nets} nets`);

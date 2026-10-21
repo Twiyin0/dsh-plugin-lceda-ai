@@ -15,6 +15,8 @@ Harness 里还注册了 7 个工具(前缀 `lceda_`)。**优先用工具**,批�
 | 看懂一张图 / 回答“这个引脚接哪” | `lceda_read_schematic`(`detail: summary`)再按需 `full` |
 | 给人/AI 一份可看的图 | `lceda_render_schematic`(png+pdf+report) |
 | 从零画一张 | `lceda_create_schematic` + 一份 spec(可一次画完) |
+| 不想算坐标 | spec 加 `"layout":"auto"` 或传 `autoLayout:true`(自动摆放 + 正交避障走线) |
+| 整个工程(多图纸) | `lceda_project_overview`(合并 BOM、跨图纸网络、网络分类) |
 | 加一个器件 | `lceda_place_component`(标准库标题 / uuid / LCSC 编号) |
 | 改已有图 | `lceda_edit_schematic`(先 `{"op":"describe"}`,再 `dryRun`) |
 | 交给立创EDA 打开 | `lceda_export_json` |
@@ -44,6 +46,20 @@ node bin/lceda-ai.js edit   <sheet> --ops '[{"op":"set_value","ref":"C1","value"
 spec 里 `at`/`from`/`to` 可以写引脚引用(`"U1.9"`),坐标一定要**先探测引脚再算**:
 `SchematicBuilder.pins()` 给出真实引脚位置,把结果写进 spec,这样换符号也不会错位。
 
+## 取器件与缓存
+
+- 器件优先走**立创EDA 标准库**(`lceda_find_component`),没有再走立创商城编号,最后才是内置符号。
+- 搜索与器件文档会落盘缓存(`~/.cache/lceda-ai`);要强制刷新加 `--no-cache` / 设 `LCEDA_NO_CACHE=1`。
+- 符号会按内置引脚表校验:标准库里同名器件常有错脚(例如把 29/30/31 写成 `P4.4/P4.5/P4.6`),
+  校验会自动挑正确的那个;放 `NE555`/`74HC595`/`ATmega328P`/`AMS1117`/`CH340G` 也会校验。
+
+## 自动布局
+
+`"layout":"auto"` 时:引脚最多的器件居中作锚点,其余按**网表连到锚点哪一侧**分左右两列(沿网表传递),
+摆放避开已占区域;`{from,to}` 连线沿引脚朝向外伸再折线,避开器件本体、其他引脚与已布导线。
+构建后会有**短路自检**:自动走线若把两个网络并在了一起会告警,此时给这些 wire 显式写 `points`。
+手写 `x/y` 永远优先,可以“关键器件手工放 + 其余自动”。
+
 ## 必须遵守的规矩
 
 - **先 `dryRun`** 再写盘;每次编辑都会返回网络表 diff 与告警(悬空导线、未生效标签、单引脚网络)。
@@ -58,4 +74,5 @@ spec 里 `at`/`from`/`to` 可以写引脚引用(`"U1.9"`),坐标一定要**先�
   `env -u ELECTRON_RUN_AS_NODE` 才会正常启动(仅在需要真机验证时用)。
 - Harness 插件通过**子进程**调用 CLI,所以改了 `src/` 后不用重载插件;改了 `plugin/index.js` 才需要重载。
 - 渲染是“忠实描边”:编辑器里画得丑的库符号,渲染出来一样丑,不是渲染 bug。
+- 总线/层次图**只读不写**:没有真实样本,工具不生成 `B~`/端口记录,也不判断跨图纸同名网络是否连通。
 - 版式(器件间距、标签避让)需要按符号尺寸微调;引脚坐标可从 `place` 的返回值直接读。

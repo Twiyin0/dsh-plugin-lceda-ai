@@ -36,7 +36,8 @@
   "scripts": {
     "test": "node --test test/",
     "verify": "node scripts/verify-e2e.mjs",
-    "example": "node examples/build-stc89c52rc-v3.mjs"
+    "example": "node examples/build-stc89c52rc-v3.mjs",
+    "example:auto": "node bin/lceda-ai.js build examples/auto-layout.spec.json -o examples/auto-layout.esch --auto-layout --export"
   },
   "keywords": [
     "dsh-plugin",
