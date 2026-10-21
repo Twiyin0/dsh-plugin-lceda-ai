@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# local python environment used by the datasheet skill
+.venv/
+__pycache__/
+*.pyc
+
+# third-party datasheets and extracted page text (large, downloadable)
+datasheet/
+
+# scratch output and throwaway renders
+out/
+examples/_generated/
+*.tmp-*
+*.bak
+
+# private sample project: real customer sheets must never be published
+examples/private/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+
+# local verification symlink
+node_modules

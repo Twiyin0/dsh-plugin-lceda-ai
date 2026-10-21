@@ -1,0 +1,26 @@
+{
+  "head": { "docType": "1", "editorVersion": "6.5.51", "uuid": "testdoc0001" },
+  "canvas": "CA~1000~1000~#FFFFFF~yes~#CCCCCC~5~1000~1000~line~5~pixel~5~0~0",
+  "shape": [
+    "T~0~60~-30~0~#000080~Arial~~~~~comment~Annotation~ggeT1~0",
+    "PT~M 60 -60 L 90 -60 L 90 -40~#880000~1~0~none~ggePT1~0",
+    "PL~60 -20 90 -20~#0000ff~1~0~none~ggePL1~0",
+    "R~60~-16~~~20~10~#A00000~1~0~none~ggeR1~0",
+    "E~120~-30~6~4~#880000~1~0~#880000~ggeE1~0",
+    "A~M 150 -20 A 10 10 0 0 0 170 -20~~#8D2323~1~0~none~ggeA1~0",
+    "PG~180 -20 190 -30 200 -20~#880000~1~0~#880000~ggePG1~0",
+    "W~100 -100 200 -100~#008800~1~0~none~gge1~0",
+    "N~100~-100~0~#0000ff~VCC_TEST~gge4~start~102~-102.5~Times New Roman~7pt~0",
+    "W~300 -100 400 -100~#008800~1~0~none~gge3~0",
+    "J~350~-100~2.5~#CC0000~gge5~0",
+    "F~part_netLabel_gnD~400~-100~0~gge6~~0^^400~-100^^GND~#000000~396~-92~0~end~1~Times New Roman~9pt~flag_gge7^^PL~400 -90 400 -100~#000000~1~0~none~gge8~0",
+    "W~100 -200 200 -200~#008800~1~0~none~gge9~0",
+    "F~part_netLabel_gnD~100~-200~0~gge30~~0^^100~-200^^GND~#000000~96~-192~0~end~1~Times New Roman~9pt~flag_gge31^^PL~100 -190 100 -200~#000000~1~0~none~gge32~0",
+    "F~part_netLabel_+5V~200~-200~0~gge33~~0^^200~-200^^+5V~#000000~204~-192~0~start~1~Times New Roman~9pt~flag_gge34^^PL~200 -190 200 -200~#000000~1~0~none~gge35~0",
+    "LIB~120~-100~package`R0603`nameAlias`Value(Ω)`Supplier Part``Supplier``Contributor`LCEDA_Lib`spicePre`R`spiceSymbolName`R_0603_EU`Manufacturer Part``~~0~ggeR1~libuuid1~schuuid1~0~~yes~yes~~1586862199~#@$T~N~124~-104~0~#000080~Arial~~~~~comment~1k~1~start~gge10~0~#@$T~P~110~-104~0~#000080~Arial~~~~~comment~R1~1~start~gge11~0~#@$R~110~-104~~~20~10~#A00000~1~0~none~gge12~0~#@$P~show~0~1~100~-100~180~gge13~0^^100~-100^^M 110 -100 h -10~#800^^1~114~-100~0~A~start~~~#800^^1~106~-104~0~1~end~~~#800^^0~82~-100^^0~M 85 -97 L 88 -100 L 85 -103~#@$P~show~0~2~140~-100~0~gge14~0^^140~-100^^M 130 -100 h 10~#800^^1~126~-100~0~B~end~~~#800^^1~134~-104~0~2~start~~~#800^^0~158~-100^^0~M 155 -97 L 152 -100 L 155 -103",
+    "LIB~320~-100~package`C0603`nameAlias`Value(F)`Supplier Part``Supplier``Contributor`LCEDA_Lib`spicePre`C`spiceSymbolName`C_0603_US`Manufacturer Part``~~0~ggeC1~libuuid2~schuuid2~0~~yes~yes~~1586863195~#@$T~N~324~-104~0~#000080~Arial~~~~~comment~1u~1~start~gge20~0~#@$T~P~310~-104~0~#000080~Arial~~~~~comment~C1~1~start~gge21~0~#@$P~show~0~1~300~-100~180~gge22~0^^300~-100^^M 310 -100 h -10~#800^^1~314~-100~0~P1~start~~~#800^^1~306~-104~0~1~end~~~#800^^0~282~-100^^0~M 285 -97 L 288 -100 L 285 -103~#@$P~show~0~2~340~-100~0~gge23~0^^340~-100^^M 330 -100 h 10~#800^^1~326~-100~0~P2~end~~~#800^^1~334~-104~0~2~start~~~#800^^0~358~-100^^0~M 355 -97 L 352 -100 L 355 -103",
+    "LIB~520~-100~package`HDR-M-2.54_1X1`Supplier Part`C81276`Supplier`LCSC`Manufacturer Part``Contributor`LCEDA_Lib`spicePre`J`spiceSymbolName`HDR-M-2.54_1x1`~~0~ggeJ1~libuuid3~schuuid3~0~~yes~yes~~1586865082~#@$T~N~524~-104~0~#000080~Arial~~~~~comment~Header~1~start~gge40~0~#@$T~P~510~-104~0~#000080~Arial~~~~~comment~J1~1~start~gge41~0~#@$R~510~-104~~~20~10~#880000~1~0~none~gge42~0~#@$P~show~0~1~500~-100~180~gge43~0^^500~-100^^M 510 -100 h -10~#800^^1~514~-100~0~PIN1~start~~~#800^^1~506~-104~0~1~end~~~#800^^0~482~-100^^0~M 485 -97 L 488 -100 L 485 -103"
+  ],
+  "BBox": { "x": 0, "y": -260, "width": 600, "height": 260 },
+  "colors": {}
+}

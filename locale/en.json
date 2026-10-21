@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "LCEDA Schematic AI",
+    "description": "Read 嘉立创EDA (LCEDA standard) schematics as BOM + pin tables + netlist, and export them to SVG/PNG/PDF for AI agents."
+  }
+}

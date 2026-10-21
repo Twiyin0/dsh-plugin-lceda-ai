@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "立创EDA 原理图 AI 工具",
+    "description": "把嘉立创EDA(标准版)原理图读成 BOM、引脚表与网络表,并导出 SVG/PNG/PDF 供 AI Agent 理解。"
+  }
+}

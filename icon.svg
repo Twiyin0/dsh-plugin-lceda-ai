@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="LCEDA schematic">
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="#0b3d2c"/>
+  <g stroke="#38d39f" stroke-width="2.5" stroke-linecap="round" fill="none">
+    <path d="M14 20h8M14 32h8M14 44h8M42 20h8M42 32h8M42 44h8"/>
+    <path d="M22 14v36M42 14v36"/>
+  </g>
+  <rect x="22" y="18" width="20" height="28" rx="3" fill="#0e5a41" stroke="#7ef0c4" stroke-width="2"/>
+  <g stroke="#7ef0c4" stroke-width="2" stroke-linecap="round">
+    <path d="M27 26h10M27 32h10M27 38h6"/>
+  </g>
+</svg>

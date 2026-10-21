@@ -1,0 +1,65 @@
+{
+  "name": "dsh-plugin-lceda-ai",
+  "version": "0.0.1-beta",
+  "description": "DeepSeek Harness plugin + toolchain for 嘉立创EDA (LCEDA standard) schematics: read, render, author, edit and export them, using the editor's own component library.",
+  "license": "GPL-3.0",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./toolchain": "./src/index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "bin": {
+    "lceda-ai": "bin/lceda-ai.js"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "bin",
+    "src",
+    "docs",
+    "skills",
+    "examples/README.md",
+    "examples/*.mjs",
+    "examples/*.spec.json",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "test": "node --test test/",
+    "verify": "node scripts/verify-e2e.mjs",
+    "example": "node examples/build-stc89c52rc-v3.mjs"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "lceda",
+    "嘉立创eda",
+    "easyeda",
+    "schematic",
+    "eda",
+    "netlist",
+    "svg",
+    "pdf",
+    "ai-agent"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Twiyin0/dsh-plugin-lceda-ai.git"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "sharp": "^0.35.5"
+  }
+}

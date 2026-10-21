@@ -1,0 +1,4 @@
+- insert:
+    - id: lceda-schematic-ai
+      name: 'dsh-plugin-lceda-ai'
+      config: {}
