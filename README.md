@@ -69,6 +69,7 @@ npx lceda-ai export examples/stc89c52rc-minimal-v3.esch --project ./MyProject
 | `pcb render <file\|dir> -o <out>` | PCB 分层渲染 svg/png/pdf + 报告(`--view bottom` 看底层) |
 | `pcb fp <LCSC\|uuid\|封装名>` | 查器件对应的封装(焊盘数/间距/尺寸/层) |
 | `pcb map <sch\|dir>` | 把原理图每个器件映射到封装并校验 **引脚↔焊盘**(缺失=错误,多余=提示) |
+| `pcb from-sch <sch> -o board.json` | **原理图→PCB**:摆放封装 + 把网表写进焊盘(`--export` 顺带出图) |
 | `cache [stats\|clear]` | 查看或清空器件缓存(任何命令都可加 `--no-cache`) |
 | `edit <sch> --ops '<json>' [--dry-run] [--out] [--preview]` | 结构化编辑 |
 | `export <sch> [-o out.json] [--project <dir>]` | 导出可导入立创EDA 的 JSON |
@@ -251,6 +252,8 @@ docs/format.md       .esch 文件格式笔记(踩坑记录)
 - **P-02 渲染**:`pcb render` —— 分层配色、顶层/底层视图、图例、报告;与编辑器打开同一文档比对一致。
 - **P-03 封装管理**:`pcb fp` / `pcb map` —— 按立创编号(产品接口 `packageDetail`)或**封装名**(标准库封装类目)
   找封装,并校验引脚↔焊盘;实测 v3 最小系统 13/13 匹配。
+- **P-04 原理图→PCB**:`pcb from-sch` —— 记录序列化器 + 按封装尺寸摆放 + 网表写入焊盘 net 字段;
+  生成的板子已在编辑器里打开验证(75 个焊盘带网络、位号/值文本齐全)。示例见 `examples/pcb-demo/`。
 
 ## 路线图(未实现)
 

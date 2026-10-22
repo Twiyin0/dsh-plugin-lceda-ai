@@ -131,7 +131,10 @@ export function renderPcbSVG(model, opts = {}) {
   }
   // a fixed margin would swamp a small footprint and crowd a large board
   const pad = opts.margin ?? Math.max((maxX - minX) * 0.06, (maxY - minY) * 0.06, 10);
-  const vx = minX - pad, vy = minY - pad, vw = (maxX - minX) + pad * 2, vh = (maxY - minY) + pad * 2;
+  // reserve a band above the drawing for the legend, so it never covers parts
+  const legendItems = opts.legendItems ?? 6;
+  const bandH = opts.showLegend === false ? pad : Math.max(pad, ((maxX - minX) + pad * 2) * 0.055 * (legendItems + 1.4));
+  const vx = minX - pad, vy = minY - bandH, vw = (maxX - minX) + pad * 2, vh = (maxY - minY) + bandH + pad;
 
   const bg = dark ? '#11161B' : '#FFFFFF';
   const copperTop = styleFor(1).color, copperBottom = styleFor(2).color;

@@ -294,6 +294,22 @@ await check('pcb:map resolves a whole schematic by package name', async () => {
   assert(summary.ok === summary.total && summary.total >= 13, `ok ${summary.ok}/${summary.total}`);
   return `${summary.ok}/${summary.total} mapped`;
 });
+await check('pcb:schematic -> board carries the netlist onto pads', async () => {
+  const { boardFromSchematic } = await import('../src/pcb/fromSchematic.js');
+  const res = await boardFromSchematic(path.join(root, 'examples/stc89c52rc-minimal-v3.esch'));
+  assert(res.stats.components >= 13, `components ${res.stats.components}`);
+  assert(res.stats.pads >= 70, `pads ${res.stats.pads}`);
+  assert(res.stats.nets >= 35, `nets ${res.stats.nets}`);
+  assert(res.board.widthMm > 20 && res.board.widthMm < 400, `board width ${res.board.widthMm}`);
+  // every placed footprint must carry nets on its pads
+  const model = res.model;
+  const withNets = model.footprints.filter((f) => f.pads.some((p) => p.net));
+  assert(withNets.length === model.footprints.length, 'some footprint has no nets');
+  const names = new Set(model.footprints.flatMap((f) => f.pads.map((p) => p.net)).filter(Boolean));
+  assert(names.has('GND'), 'GND missing');
+  assert([...names].some((n) => /^N\$/.test(n)), 'auto nets missing');
+  return `${res.stats.components} parts, ${names.size} nets`;
+});
 await check('cli:pcb read/render', async () => {
   const { stdout } = await run(process.execPath, [bin, 'pcb', 'read', path.join(root, 'test/fixtures/pcb/mini-board.pcb.json'), '--json'], { cwd: root });
   const summary = JSON.parse(stdout);

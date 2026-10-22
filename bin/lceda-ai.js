@@ -40,6 +40,7 @@ Commands:
   pcb render <file|dir> -o out   Render PCB layers to svg/png/pdf (+ report)
   pcb fp <LCSC|uuid|封装名>       Show the footprint behind a part (pads, size, layers)
   pcb map <sch|dir>              Map every component to a footprint and check pin<->pad numbers
+  pcb from-sch <sch> -o board    Build a PCB from a schematic: place footprints + carry the netlist
   project <dir>                  Multi-sheet project overview (merged BOM, net classes); [-o out] [--render]
   export <sch.esch|json>         Write the LCEDA-importable JSON (文件 → 打开 → 嘉立创EDA)
         [-o out.json] [--project Dir] [--sheet-name Sheet_1] [--json]
@@ -245,6 +246,36 @@ async function main() {
       }
       emit({ files: rows, totals });
       if (totals.missing || totals.mismatch) process.exitCode = 1;
+      return;
+    }
+    if (sub === 'from-sch') {
+      const { boardFromSchematic } = await import('../src/pcb/fromSchematic.js');
+      const out = flag('-o', flag('--out', null));
+      if (!out) return usage();
+      const sch = input;
+      const res = await boardFromSchematic(sch, {
+        refresh: rest.includes('--refresh'),
+        pitchMm: Number(flag('--pitch', 12.7)) || 12.7,
+        marginMm: Number(flag('--margin', 5)) || 5,
+        title: flag('--title', '') || undefined,
+      });
+      await fsMod.mkdir(await import('node:path').then((m) => m.dirname(out)), { recursive: true });
+      await fsMod.writeFile(out, res.text, 'utf8');
+      emit({
+        file: out, board: res.board, stats: res.stats, warnings: res.warnings,
+        failed: res.failed, placements: res.placements,
+        nets: [...new Set(res.placements.flatMap((p) => Object.values(p.nets ?? {})))],
+      });
+      log(`built ${out}: ${res.stats.components} 器件 / ${res.stats.pads} 焊盘 / ${res.stats.nets} 网络 | 板框 ${res.board.widthMm} x ${res.board.heightMm} mm`);
+      for (const p of res.placements) log(`  ${String(p.ref).padEnd(5)} ${String(p.footprint).slice(0, 28).padEnd(29)} @${p.x},${p.y} ${p.pins}脚 ${p.nets}网络${p.byNumber ? '' : ' (按顺序对应焊盘)'}`);
+      for (const f of res.failed) log(`  ! ${f.ref}: ${f.reason}`);
+      for (const w of res.warnings) log(`  ! ${w}`);
+      if (rest.includes('--export')) {
+        const { renderPcbFiles } = await import('../src/pcb/render.js');
+        const dir = out.replace(/\.(json|epcb)$/i, '') + '.render';
+        const results = await renderPcbFiles([out], { outDir: dir, formats: ['png', 'svg', 'report'], scale: 8 });
+        for (const r of results) for (const [k, v] of Object.entries(r.outputs)) log(`  ${k}: ${v}`);
+      }
       return;
     }
     if (sub === 'render') {
