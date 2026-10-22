@@ -605,7 +605,15 @@ function expandBBox(doc, json) {
   return true;
 }
 
-function validate(doc, beforeNetlist) {
+/**
+ * Structural checks on a document: labels and flags that sit on neither a wire
+ * nor a pin never take effect, and a wire end that touches nothing is dangling.
+ *
+ * Exported so the authoring path (buildFromSpec) runs exactly the same checks as
+ * the editing path - it did not, and a label 6 units off its wire silently broke
+ * a crystal net with no warning at all.
+ */
+export function validate(doc, beforeNetlist) {
   const warnings = [];
   const nl = extractNetlist(doc);
   const wires = doc.shapes.filter((s) => s.type === 'wire');

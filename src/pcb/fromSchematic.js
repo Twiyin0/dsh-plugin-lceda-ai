@@ -177,8 +177,15 @@ export async function boardFromSchematic(input, opts = {}) {
       pins: p.component.pins ?? [],
       netsByPad: p.netsByPad,
       extent: footprintExtent(p.footprint.model),
+      // where the part sits on the sheet: the schematic is drawn by function, so
+      // its reading order is a good placement hint
+      schX: p.component.x,
+      schY: p.component.y,
     }));
-    const ruled = rulePlace(entries, { netlist, boardWidthMm: opts.boardWidthMm, gapMm: opts.gapMm ?? 1.5, edgeMm: opts.edgeMm ?? 2.5 });
+    const ruled = rulePlace(entries, {
+      netlist, boardWidthMm: opts.boardWidthMm, gapMm: opts.gapMm ?? 1.5, edgeMm: opts.edgeMm ?? 2.5,
+      useSchematicOrder: opts.placement === 'schematic',
+    });
     layoutNotes.push(...ruled.notes);
     if (ruled.strategy) layoutNotes.push(`布局策略:${ruled.strategy.order} 顺序 / 行宽 ${ruled.strategy.rowWidthMm}mm(试了 ${ruled.strategy.tried} 种)`);
     ruleBoard = ruled.board;

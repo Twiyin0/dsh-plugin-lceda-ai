@@ -44,11 +44,13 @@ Commands:
         [--place rule|shelf] [--export]
   pcb route <board.json> -o out  Autoroute the board (grid maze router) and self-check the result
         [--cell 2] [--clearance 1] [--width 1] [--layers 2] [--export]
+        [--priority "RXD,TXD,RST,..."] route these nets first, one at a time
+        [--only-priority]               with --priority, skip the remaining nets
   pcb pour <board.json> -o out   Copper pour (flood fill + thermal spokes + island removal) and self-check
         [--net GND] [--layer 1] [--cell 2] [--clearance 1] [--no-thermal] [--keep-island] [--export]
   pcb via <board.json> -o out    Stitching vias inside a pour (rule-checked) [--net GND] [--spacing 5] [--export]
   pcb drc <board.json>           Design rule check: width / clearance / via ring / hole-to-hole / edge / silk / connectivity
-        [--checks a,b,c] [-o report.md]
+        [--checks a,b,c] [-o report.md] [--no-fail]
   pcb gerber <board.json> -o dir Export Gerber (RS-274X) + Excellon drill, then self-check [--name board] [--manifest]
   pcb bom <board.json> -o dir    Export BOM + pick-and-place (CSV, and XLSX unless --no-xlsx)
         [--sch sheet.esch] [--name board]
@@ -336,7 +338,9 @@ async function main() {
         if (out) await fsMod.writeFile(files.length > 1 ? out.replace(/\.md$/, '') + '-' + f.replace(/[^\w.-]/g, '_') + '.md' : out, drcMarkdown(result, { file: f }), 'utf8');
       }
       emit({ files: rows });
-      if (rows.some((r) => !r.ok)) process.exitCode = 1;
+      // A failing DRC is a result, not a broken command: --no-fail keeps the exit
+      // code at 0 so a tool call can read the report instead of seeing a failure.
+      if (rows.some((r) => !r.ok) && !rest.includes('--no-fail')) process.exitCode = 1;
       return;
     }
     if (sub === 'via') {
@@ -396,18 +400,45 @@ async function main() {
       return;
     }
     if (sub === 'route') {
-      const { readPcbFile: readPcb } = await import('../src/pcb/parser.js');
+      const { readPcbFile: readPcb, copperItems, parsePcb } = await import('../src/pcb/parser.js');
       const { routeBoard, verifyRouting } = await import('../src/pcb/route.js');
       const out = flag('-o', flag('--out', null));
       if (!out) return usage();
       const model = await readPcb(input);
       const t0 = Date.now();
-      const routed = routeBoard(model, {
+      const routeOpts = {
         cell: Number(flag('--cell', 2)) || 2,
         clearance: Number(flag('--clearance', 1)) || 1,
         width: Number(flag('--width', 1)) || 1,
         viaCost: Number(flag('--via-cost', 6)) || 6,
-      });
+      };
+      // --priority "RXD,TXD,RST,..." routes those nets one at a time, in that
+      // order, then (unless --only-priority) the rest of the board.
+      const priority = flag('--priority', null);
+      if (priority) {
+        const { routeInOrder } = await import('../src/pcb/route.js');
+        const order = String(priority).split(',').map((x) => x.trim()).filter(Boolean);
+        const seq = routeInOrder(model, order, routeOpts);
+        let finalDoc = seq.doc;
+        let restStats = null;
+        if (!rest.includes('--only-priority')) {
+          const allNets = [...new Set(copperItems(parsePcb(finalDoc)).filter((i) => i.kind === 'pad' && i.net).map((i) => i.net))];
+          const restNets = allNets.filter((n) => !order.includes(n));
+          if (restNets.length) {
+            const rest = routeBoard(parsePcb(finalDoc), { ...routeOpts, nets: restNets });
+            finalDoc = rest.doc;
+            restStats = rest.stats;
+          }
+        }
+        await fsMod.writeFile(out, JSON.stringify(finalDoc), 'utf8');
+        const check = verifyRouting(model, copperItems(parsePcb(finalDoc)).filter((i) => i.kind === 'track'), { clearance: routeOpts.clearance });
+        emit({ file: out, priority: order, passes: seq.passes, stats: seq.stats, rest: restStats, check, ms: Date.now() - t0 });
+        log(`routed ${out}: 优先网络 ${seq.stats.routed}/${seq.stats.nets}${restStats ? ` | 其余 ${restStats.routed}/${restStats.nets}` : ''} | ${Date.now() - t0} ms`);
+        for (const p of seq.passes) log(`  ${p.ok ? '✓' : '✗'} ${String(p.net).padEnd(9)} 走线 ${String(p.tracks).padStart(3)} 过孔 ${String(p.vias).padStart(3)}`);
+        log(`  自检:压盘 ${check.count} 处`);
+        return;
+      }
+      const routed = routeBoard(model, routeOpts);
       await fsMod.writeFile(out, JSON.stringify(routed.doc), 'utf8');
       const check = verifyRouting(model, routed.tracks);
       emit({ file: out, stats: routed.stats, routed: routed.routed, failed: routed.failed, check, ms: Date.now() - t0 });

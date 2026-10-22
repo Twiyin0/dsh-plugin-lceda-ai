@@ -8,7 +8,8 @@
 //
 // Output is emitted through the writer, so what comes out is the same record
 // format the editor reads.
-import { mmToUnit, toMm, UNIT_MM, boardOutline, copperItems, padBBox } from './parser.js';
+import { mmToUnit, toMm, UNIT_MM, boardOutline, copperItems, padBBox, parsePcb } from './parser.js';
+import { copperGap } from './drc.js';
 import { trackRecord, viaRecord, genGid, boardDocument, DEFAULT_LAYERS, DEFAULT_DRC } from './writer.js';
 
 const key = (l, i, j) => `${l}:${i}:${j}`;
@@ -47,7 +48,23 @@ export function buildGrid(model, opts = {}) {
   // later net run straight through an earlier track (the DRC found it, the
   // router's own pad-only check did not).
   const hard = new Map();
-  for (const l of layers) { blocked.set(l, new Uint8Array(cols * rows)); hard.set(l, new Uint8Array(cols * rows)); }
+  // Cells where a via may not be placed: within (via radius + clearance) of ANY
+  // pad. A via is a disc, so on a 0.65 mm pitch connector it cannot fit between
+  // two pads - the router used to drop one on the pad centre and violate the
+  // clearance to the neighbour. Through-hole pads do not need a via anyway
+  // (skipVia handles them), so excluding every pad is both safe and simple.
+  const noVia = new Map();
+  // A via *inside* a pad is never allowed; one in the ring around a pad is priced
+  // rather than forbidden, so the router can still finish when there is no other
+  // way across.
+  const noViaHard = new Map();
+  const viaRadius = opts.viaRadius ?? 1.5;
+  for (const l of layers) {
+    blocked.set(l, new Uint8Array(cols * rows));
+    hard.set(l, new Uint8Array(cols * rows));
+    noVia.set(l, new Uint8Array(cols * rows));
+    noViaHard.set(l, new Uint8Array(cols * rows));
+  }
   const idx = (i, j) => j * cols + i;
   const inBounds = (i, j) => i >= 0 && j >= 0 && i < cols && j < rows;
 
@@ -94,6 +111,19 @@ export function buildGrid(model, opts = {}) {
         // pads stay "soft": a net may open its own pad area, while routed copper
         // and the board edge are permanent
         blockRect(layer, bb.minX, bb.minY, bb.maxX, bb.maxY, inflate, false);
+        // ... but a via keep-out around every pad is permanent
+        // physical requirement only: the via edge must keep the clearance
+        const keep = clearance + viaRadius;
+        const vi0 = Math.max(0, snap(bb.minX - keep, minX, cell));
+        const vi1 = Math.min(cols - 1, snap(bb.maxX + keep, minX, cell));
+        const vj0 = Math.max(0, snap(bb.minY - keep, minY, cell));
+        const vj1 = Math.min(rows - 1, snap(bb.maxY + keep, minY, cell));
+        for (let j = vj0; j <= vj1; j++) for (let i = vi0; i <= vi1; i++) noVia.get(layer)[idx(i, j)] = 1;
+        const hi0 = Math.max(0, snap(bb.minX, minX, cell));
+        const hi1 = Math.min(cols - 1, snap(bb.maxX, minX, cell));
+        const hj0 = Math.max(0, snap(bb.minY, minY, cell));
+        const hj1 = Math.min(rows - 1, snap(bb.maxY, minY, cell));
+        for (let j = hj0; j <= hj1; j++) for (let i = hi0; i <= hi1; i++) noViaHard.get(layer)[idx(i, j)] = 1;
       }
       for (const layer of layersForPad) {
         if (!blocked.has(layer)) continue;
@@ -123,11 +153,22 @@ export function buildGrid(model, opts = {}) {
   }
 
   return {
-    cell, clearance, width, inflate, layers, cols, rows, minX, minY, maxX, maxY, blocked, hard, idx, inBounds,
+    cell, clearance, width, inflate, viaRadius, layers, cols, rows, minX, minY, maxX, maxY, blocked, hard, noVia, idx, inBounds,
     toCell: (x, y) => ({ i: snap(x, minX, cell), j: snap(y, minY, cell) }),
     toBoard: (i, j) => ({ x: minX + i * cell, y: minY + j * cell }),
     isBlocked: (layer, i, j) => !inBounds(i, j) || blocked.get(layer)[idx(i, j)] === 1,
     isHard: (layer, i, j) => !inBounds(i, j) || (hard.get(layer)?.[idx(i, j)] ?? 0) === 1,
+    isViaAllowed: (i, j) => {
+      if (!inBounds(i, j)) return false;
+      for (const l of layers) if (noVia.get(l)?.[idx(i, j)] === 1) return false;
+      return true;
+    },
+    /** True when a via would sit inside a pad: never acceptable. */
+    isViaForbidden: (i, j) => {
+      if (!inBounds(i, j)) return true;
+      for (const l of layers) if (noViaHard.get(l)?.[idx(i, j)] === 1) return true;
+      return false;
+    },
     setBlocked: (layer, i, j, v = 1) => {
       if (!inBounds(i, j) || !blocked.has(layer)) return;
       blocked.get(layer)[idx(i, j)] = v;
@@ -172,9 +213,18 @@ export function routeCells(grid, start, goal, opts = {}) {
       const i = cur.i + di, j = cur.j + dj;
       if (!grid.isBlocked(cur.l, i, j)) neighbours.push({ l: cur.l, i, j, cost: 1 });
     }
+    // A via inside the keep-out (next to a fine-pitch pad) is a bad idea but not
+    // impossible, so it is priced, not forbidden: forbidding it outright made the
+    // router unable to finish simple two-layer boards, because the escape from a
+    // pad that had just been routed through was only available on the other layer.
+    // A via inside the keep-out is priced, not forbidden: forbidding it outright
+    // pushed vias next to through-hole pads instead (hole-to-hole errors) and cost
+    // routability on both boards.
+    const viaAllowedHere = !grid.isViaAllowed || grid.isViaAllowed(cur.i, cur.j);
+    const viaPenalty = viaAllowedHere ? 1 : (opts.keepOutPenalty ?? 12);
     for (const l of layers) {
       if (l === cur.l) continue;
-      if (!grid.isBlocked(l, cur.i, cur.j)) neighbours.push({ l, i: cur.i, j: cur.j, cost: viaCost, via: true });
+      if (!grid.isBlocked(l, cur.i, cur.j)) neighbours.push({ l, i: cur.i, j: cur.j, cost: viaCost * viaPenalty, via: true });
     }
     for (const nb of neighbours) {
       const k = key(nb.l, nb.i, nb.j);
@@ -261,7 +311,8 @@ export function autoroute(model, opts = {}) {
   const drc = model.drc?.default ?? DEFAULT_DRC.Default;
   const width = opts.width ?? Math.max(1, Math.round(mmToUnit(drc.trackWidth ?? 0.254)));
   const clearance = opts.clearance ?? Math.max(1, Math.round(mmToUnit(drc.clearance ?? 0.254)));
-  const grid = buildGrid(model, { clearance, ...opts });
+  const viaDiameterOpt = opts.viaDiameter ?? Math.max(3, Math.round(mmToUnit((model.drc?.default ?? DEFAULT_DRC.Default).viaHoleDiameter ?? 0.6)));
+  const grid = buildGrid(model, { clearance, viaRadius: viaDiameterOpt / 2, ...opts });
   const netOf = new Map();
   for (const pad of grid.padTerminals) {
     if (!pad.net) continue;
@@ -281,15 +332,17 @@ export function autoroute(model, opts = {}) {
   const allPads = [];
   for (const fp of model.footprints) {
     for (const pad of fp.pads) {
-      if (!pad.net) continue;
+      // Pads with no net are still copper: the micro-USB shield pads are netless
+      // and a VBUS track ran 0.22 mm from one of them. They must be avoided too,
+      // so they are kept here and never match a routing net.
       const b = padBBox(pad);
-      allPads.push({ net: pad.net, x: pad.x, y: pad.y, minX: b.minX, maxX: b.maxX, minY: b.minY, maxY: b.maxY });
+      allPads.push({ net: pad.net || '', x: pad.x, y: pad.y, minX: b.minX, maxX: b.maxX, minY: b.minY, maxY: b.maxY });
     }
   }
   const nearestForeign = (x, y, net) => {
     let best = Infinity;
     for (const p of allPads) {
-      if (p.net === net) continue;
+      if (p.net && p.net === net) continue;
       const dx = Math.max(p.minX - x, 0, x - p.maxX);
       const dy = Math.max(p.minY - y, 0, y - p.maxY);
       const d = Math.hypot(dx, dy);
@@ -297,6 +350,14 @@ export function autoroute(model, opts = {}) {
     }
     return best;
   };
+  // A pad opening must leave room for the LARGEST copper the router may place
+  // there. Using only the track half width let a via (radius 1.5 units) land
+  // 0.84 units from a neighbouring pad of another net, which the DRC flagged.
+  const viaRadius = (opts.viaDiameter ?? Math.max(3, Math.round(mmToUnit((model.drc?.default ?? DEFAULT_DRC.Default).viaHoleDiameter ?? 0.6)))) / 2;
+  // The opening guard is about TRACKS: it must let a track leave the pad, so it
+  // uses the track half width. Making it via-sized (radius 1.5) stopped a pad's
+  // own centre cell from opening whenever a different-net pad sat 6 units away,
+  // which made those nets unroutable. Vias are handled by the keep-out mask.
   const needed = clearance + width / 2;
 
   // cells of through-hole pads: a layer change there needs no via
@@ -338,10 +399,15 @@ export function autoroute(model, opts = {}) {
     // max(halfW, halfH): that square reaches 10 units sideways and unblocks the
     // neighbouring through-hole pad, which the router then happily crosses.
     const bb = pad.bbox ?? { minX: pad.x - (pad.width ?? 0) / 2, maxX: pad.x + (pad.width ?? 0) / 2, minY: pad.y - (pad.height ?? 0) / 2, maxY: pad.y + (pad.height ?? 0) / 2 };
-    const i0 = snap(bb.minX - clearance, grid.minX, grid.cell);
-    const i1 = snap(bb.maxX + clearance, grid.minX, grid.cell);
-    const j0 = snap(bb.minY - clearance, grid.minY, grid.cell);
-    const j1 = snap(bb.maxY + clearance, grid.minY, grid.cell);
+    // Open far enough to clear the pad's OWN blocking ring, not just the pad plus
+    // the clearance: the ring is `inflate` wide, so a smaller window left the pad
+    // an island inside its own blocked cells and the router could only escape by
+    // dropping a via on the pad.
+    const reach = grid.inflate + grid.cell;
+    const i0 = snap(bb.minX - reach, grid.minX, grid.cell);
+    const i1 = snap(bb.maxX + reach, grid.minX, grid.cell);
+    const j0 = snap(bb.minY - reach, grid.minY, grid.cell);
+    const j1 = snap(bb.maxY + reach, grid.minY, grid.cell);
     for (const layer of grid.layers) {
       for (let j = j0; j <= j1; j++) {
         for (let i = i0; i <= i1; i++) {
@@ -349,8 +415,14 @@ export function autoroute(model, opts = {}) {
           // never open a cell that is blocked by foreign copper or the board edge
           if (grid.isHard(layer, i, j)) continue;
           const at = grid.toBoard(i, j);
+          // A cell inside the pad's own body is always walkable: it is the same
+          // net, so no clearance applies. Guarding it too isolated a fine-pitch
+          // pad from its own escape route (the micro-USB pads are 0.65 mm apart,
+          // so every cell around them failed the foreign-pad test and the only
+          // way out was a via dropped on the pad).
+          const insideOwnPad = at.x >= bb.minX && at.x <= bb.maxX && at.y >= bb.minY && at.y <= bb.maxY;
           // ... nor one that would let the track violate a foreign pad
-          if (nearestForeign(at.x, at.y, pad.net) < needed) continue;
+          if (!insideOwnPad && nearestForeign(at.x, at.y, pad.net) < needed) continue;
           grid.setBlocked(layer, i, j, 0);
           cells.push([layer, i, j]);
         }
@@ -365,15 +437,28 @@ export function autoroute(model, opts = {}) {
     }
   };
 
-  // route short nets first: they are the ones that get boxed in
+  // Escape difficulty first: a net leaving a 0.65 mm pitch connector has very few
+  // legal paths, so it must be routed before the easy nets fill the board. Then
+  // fewest pads, then shortest span. Ordering by span alone left the UART and
+  // crystal nets unroutable even though each of them routes fine on its own.
+  const pitchOf = new Map();
+  for (const fp of model.footprints) {
+    const pads = (fp.pads ?? []).filter((p) => p.net);
+    const xs = [...new Set(pads.map((p) => p.x))].sort((a, b) => a - b);
+    const ys = [...new Set(pads.map((p) => p.y))].sort((a, b) => a - b);
+    const gaps = [];
+    for (const list of [xs, ys]) for (let i = 1; i < list.length; i++) if (list[i] - list[i - 1] > 0.5) gaps.push(list[i] - list[i - 1]);
+    pitchOf.set(fp.name, gaps.length ? Math.min(...gaps) : 99);
+  }
   const order = [...netOf.entries()]
     .map(([net, pads]) => {
       const xs = pads.map((p) => p.x), ys = pads.map((p) => p.y);
       const span = (Math.max(...xs) - Math.min(...xs)) + (Math.max(...ys) - Math.min(...ys));
-      return { net, pads, span };
+      const pitch = Math.min(...pads.map((p) => pitchOf.get(p.footprint) ?? 99));
+      return { net, pads, span, pitch, padCount: new Set(pads.map((p) => `${p.footprint}.${p.number}`)).size };
     })
     .filter((n) => n.pads.length > 1 && (!opts.nets || opts.nets.includes(n.net)))
-    .sort((a, b) => a.span - b.span || a.net.localeCompare(b.net));
+    .sort((a, b) => a.pitch - b.pitch || a.padCount - b.padCount || a.span - b.span || a.net.localeCompare(b.net));
 
   const tracks = [];
   const vias = [];
@@ -397,6 +482,9 @@ export function autoroute(model, opts = {}) {
         for (let di = -6; di <= 6; di++) for (let dj = -6; dj <= 6; dj++) {
           if (grid.isHard(a.layer, a.i + di, a.j + dj)) hardNear.push(`${a.i + di},${a.j + dj}`);
         }
+        const row = [];
+        for (let i = a.i - 2; i <= a.i + 8; i++) row.push(`${i}${grid.isBlocked(a.layer, i, a.j) ? 'X' : '.'}${grid.isHard(a.layer, i, a.j) ? 'H' : ''}`);
+        console.error('   start row:', row.join(' '));
         console.error(`[route] ${net} ${a.footprint}.${a.number}->${b.footprint}.${b.number}`,
           `opened=${opened.length}`, `start=${a.layer}:${a.i},${a.j} blk=${grid.isBlocked(a.layer, a.i, a.j)}`,
           `goal=${b.layer}:${b.i},${b.j} blk=${grid.isBlocked(b.layer, b.i, b.j)}`,
@@ -410,6 +498,32 @@ export function autoroute(model, opts = {}) {
         continue;
       }
       const produced = pathToCopper(grid, path, { net, width, skipVia });
+      // Land the ends exactly on the pad centres. The grid snaps to cell centres,
+      // and on a 0.65 mm pitch connector that 0.4 unit offset was the difference
+      // between 0.221 mm and a legal 0.32 mm to the neighbouring pad.
+      if (produced.tracks.length) {
+        const first = produced.tracks[0];
+        if (first.layer === a.layer) {
+          first.points[0] = { x: a.x, y: a.y };
+          // keep the escape segment axis aligned, otherwise the slant walks the
+          // track back towards the neighbouring pad further along
+          if (first.points.length >= 2) {
+            const p1 = first.points[1];
+            if (Math.abs(p1.y - a.y) >= Math.abs(p1.x - a.x)) p1.x = a.x;
+            else p1.y = a.y;
+          }
+        }
+        const last = produced.tracks[produced.tracks.length - 1];
+        if (last.layer === b.layer) {
+          const n = last.points.length;
+          last.points[n - 1] = { x: b.x, y: b.y };
+          if (n >= 2) {
+            const p = last.points[n - 2];
+            if (Math.abs(p.y - b.y) >= Math.abs(p.x - b.x)) p.x = b.x;
+            else p.y = b.y;
+          }
+        }
+      }
       netTracks.push(...produced.tracks);
       netVias.push(...produced.vias);
       // reserve the new copper so later nets keep their distance
@@ -432,6 +546,8 @@ export function autoroute(model, opts = {}) {
       for (const via of produced.vias) {
         const c = grid.toCell(via.x, via.y);
         const radius = Math.ceil((viaDiameter / 2 + grid.clearance) / grid.cell);
+        // (no via-vs-via keep-out: pricing vias out around other vias cost both
+        // routability and a lot of time, and the DRC still checks the result)
         for (const l of grid.layers) for (let di = -radius; di <= radius; di++) for (let dj = -radius; dj <= radius; dj++) {
           if (isOwnPadCell(net, l, c.i + di, c.j + dj)) continue;
           grid.setBlocked(l, c.i + di, c.j + dj, 1);
@@ -507,9 +623,117 @@ export function verifyRouting(model, tracks, { clearance = 1, epsilon = 0.01 } =
   return { ok: violations.length === 0, violations: violations.slice(0, 20), count: violations.length };
 }
 
+/**
+ * Nudge vias that ended up too close to foreign copper.
+ *
+ * The maze router prices bad via spots but will still use one when there is no
+ * alternative, which leaves a handful of near misses. This pass tries small
+ * offsets around each offending via and moves the endpoints of the tracks that
+ * meet it along, so the connection survives. It never invents copper: if no
+ * offset is legal the via stays where it is and the DRC reports it.
+ */
+export function legalizeVias(model, tracks, vias, opts = {}) {
+  const clearance = opts.clearance ?? 1;
+  const maxShift = opts.maxShift ?? 8;
+  const eps = 0.75;
+  // Match the DRC's rule set: only copper that carries a net, and only pads,
+  // tracks and vias (pours are handled by their own check). Netless pads are the
+  // decorative pads some footprints carry, and the DRC ignores them too.
+  const foreign = copperItems(model).filter((i) => i.net && ['pad', 'track', 'via'].includes(i.kind));
+  const asTrack = (t) => ({ kind: 'track', net: t.net || '', layer: t.layer, width: t.width ?? 1, points: t.points });
+  const asVia = (v) => ({ kind: 'via', net: v.net || '', layer: 11, x: v.x, y: v.y, diameter: v.diameter ?? 3 });
+  const legal = (candidate, net) => {
+    for (const other of foreign) {
+      if ((other.net || '') === (net || '')) continue;
+      // a via spans every layer, so a pad on any layer matters
+      if (copperGap(candidate, other) < clearance - 0.01) return false;
+    }
+    for (const other of tracks) {
+      if (other === candidate.source) continue;
+      if ((other.net || '') === (net || '')) continue;
+      if (copperGap(candidate, asTrack(other)) < clearance - 0.01) return false;
+    }
+    for (const other of vias) {
+      if (other === candidate.source) continue;
+      if ((other.net || '') === (net || '')) continue;
+      if (copperGap(candidate, asVia(other)) < clearance - 0.01) return false;
+    }
+    return true;
+  };
+
+  let moved = 0;
+  const unresolved = [];
+  for (const via of vias) {
+    if (legal(asVia(via), via.net)) continue;
+    const attached = [];
+    for (const t of tracks) {
+      if (!t.points?.length) continue;
+      const first = t.points[0], last = t.points[t.points.length - 1];
+      if (Math.hypot(first.x - via.x, first.y - via.y) < eps) attached.push({ track: t, index: 0 });
+      else if (Math.hypot(last.x - via.x, last.y - via.y) < eps) attached.push({ track: t, index: t.points.length - 1 });
+    }
+    let placed = null;
+    outer:
+    for (let r = 1; r <= maxShift && !placed; r++) {
+      for (const [dx, dy] of [[r, 0], [-r, 0], [0, r], [0, -r], [r, r], [-r, r], [r, -r], [-r, -r]]) {
+        const candidate = { ...via, x: via.x + dx, y: via.y + dy };
+        if (!legal(asVia(candidate), via.net)) continue;
+        // the moved endpoints must be legal too
+        const saved = attached.map(({ track, index }) => ({ ...track.points[index] }));
+        attached.forEach(({ track, index }) => { track.points[index] = { x: candidate.x, y: candidate.y }; });
+        const okEnds = attached.every(({ track }) => legal(asTrack(track), track.net));
+        if (okEnds) { placed = candidate; break outer; }
+        attached.forEach(({ track, index }, i) => { track.points[index] = saved[i]; });
+      }
+    }
+    if (placed) { via.x = placed.x; via.y = placed.y; moved++; }
+    else unresolved.push({ x: via.x, y: via.y, net: via.net });
+  }
+  return { moved, unresolved };
+}
+
+/**
+ * Route nets one at a time, in the order given.
+ *
+ * The whole-board router has to guess a good order, and on a board with a 0.65 mm
+ * pitch connector it guesses wrong: the UART and crystal nets route fine on their
+ * own but lose the race for space when everything is routed together. Calling the
+ * router once per net, in a caller-chosen order, gives each one a clear board -
+ * the same "route the hard nets first" a person would do.
+ *
+ * @param {object} model parsed board
+ * @param {string[]} order net names, in the order to route them
+ * @param {object} opts forwarded to autoroute
+ */
+export function routeInOrder(model, order, opts = {}) {
+  let board = JSON.parse(JSON.stringify(model.doc ?? { shape: model.rawShape }));
+  const passes = [];
+  for (const net of order) {
+    const current = parsePcb(board);
+    const result = routeBoard(current, { ...opts, nets: [net] });
+    board = result.doc;
+    passes.push({ net, ok: result.stats.routed === 1, tracks: result.stats.tracks, vias: result.stats.vias, lengthMm: result.stats.lengthMm });
+  }
+  const finalModel = parsePcb(board);
+  return {
+    doc: board,
+    model: finalModel,
+    passes,
+    stats: {
+      nets: order.length,
+      routed: passes.filter((p) => p.ok).length,
+      failed: passes.filter((p) => !p.ok).map((p) => p.net),
+      tracks: passes.reduce((n, p) => n + p.tracks, 0),
+      vias: passes.reduce((n, p) => n + p.vias, 0),
+      lengthMm: +passes.reduce((n, p) => n + p.lengthMm, 0).toFixed(1),
+    },
+  };
+}
+
 /** Autoroute a board and return a new document with the copper added. */
 export function routeBoard(model, opts = {}) {
   const result = autoroute(model, opts);
+  const legalized = opts.legalizeVias === false ? { moved: 0, unresolved: [] } : legalizeVias(model, result.tracks, result.vias, { clearance: opts.clearance ?? 1 });
   const drc = model.drc?.default ?? DEFAULT_DRC.Default;
   const viaDiameter = opts.viaDiameter ?? Math.max(3, Math.round(mmToUnit(drc.viaHoleDiameter ?? 0.6)));
   const viaHole = opts.viaHole ?? Math.max(1, Math.round(mmToUnit(drc.viaHoleD ?? 0.3)));
@@ -523,6 +747,6 @@ export function routeBoard(model, opts = {}) {
     originX: model.canvas?.originX ?? 4000,
     originY: model.canvas?.originY ?? 3000,
   });
-  return { doc, ...result };
+  return { doc, ...result, legalized };
 }
 

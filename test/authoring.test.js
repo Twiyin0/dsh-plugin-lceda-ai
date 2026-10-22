@@ -180,3 +180,32 @@ test('validatePinout matches datasheet pin names and tolerates aliases', async (
   // geometry heuristic: a box-only document scores 0
   assert.equal(symbolQuality({ shape: ['R~0~0~~~~100~100'] }), 0);
 });
+
+test('buildFromSpec warns when a label sits off its wire', () => {
+  // A label that is not on a wire or a pin does nothing. The editing path always
+  // checked this; the authoring path did not, so a label six units off a wire
+  // silently broke a net with no warning at all.
+  // built-in symbols are addressed by key, like the other authoring tests
+  const spec = {
+    title: 'label check',
+    components: [
+      { symbol: 'resistor', ref: 'R1', value: '1k', x: 300, y: 300, rot: 90 },
+      { symbol: 'resistor', ref: 'R2', value: '1k', x: 300, y: 400, rot: 90 },
+    ],
+    wires: [{ points: [{ x: 300, y: 332 }, { x: 300, y: 368 }] }],
+    labels: [{ text: 'MID', at: [300, 350], anchor: 'end' }],
+  };
+  const onWire = buildFromSpec(spec);
+  assert.equal(onWire.warnings.filter((w) => /不在导线上/.test(w)).length, 0, 'a label on the wire is fine');
+
+  const offWire = buildFromSpec({ ...spec, labels: [{ text: 'MID', at: { x: 306, y: 350 }, anchor: 'start' }] });
+  assert.ok(offWire.warnings.some((w) => /不在导线上/.test(w)), `expected an off-wire warning, got ${JSON.stringify(offWire.warnings)}`);
+
+  // and the dangling wire end check runs too: this wire runs past R2's pin
+  const dangling = buildFromSpec({
+    ...spec,
+    wires: [{ points: [{ x: 300, y: 332 }, { x: 300, y: 368 }, { x: 300, y: 420 }] }],
+    labels: [],
+  });
+  assert.ok(dangling.warnings.some((w) => /悬空/.test(w)), `an unconnected wire end is reported: ${JSON.stringify(dangling.warnings)}`);
+});

@@ -359,12 +359,35 @@ export function boardOutline(model) {
  * the renderer - has to look at the polygon first.
  */
 export function padBBox(pad) {
-  if (pad?.points?.length) {
+  if (pad?.points?.length >= 3) {
     const xs = pad.points.map((p) => p.x), ys = pad.points.map((p) => p.y);
     const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
     return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY, fromPolygon: true };
   }
+  if (pad?.points?.length === 2) {
+    // An OVAL pad stores its spine (two points along the long axis) rather than
+    // an outline, so the real extent is the spine stroked by half the short side.
+    const [a, b] = pad.points;
+    const r = Math.min(Number(pad.width) || 0, Number(pad.height) || 0) / 2;
+    const minX = Math.min(a.x, b.x) - r, maxX = Math.max(a.x, b.x) + r;
+    const minY = Math.min(a.y, b.y) - r, maxY = Math.max(a.y, b.y) + r;
+    return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY, fromPolygon: true, fromSpine: true };
+  }
   const w = Number(pad?.width) || 0, h = Number(pad?.height) || 0;
+  // A pad's own rotation changes its footprint on the board. The micro-USB pads
+  // in the demo are 2.0 x 0.4 mm at 270 degrees: read as an unrotated 2.0 x 0.4 mm
+  // box they overlapped their four neighbours, which made the router block the
+  // whole connector and the DRC report clearances that do not exist.
+  const rot = ((Number(pad?.rotation) || 0) % 360 + 360) % 360;
+  if (rot % 180 === 90) {
+    return { minX: pad.x - h / 2, maxX: pad.x + h / 2, minY: pad.y - w / 2, maxY: pad.y + w / 2, width: h, height: w, fromPolygon: false, rotated: rot };
+  }
+  if (rot !== 0) {
+    const rad = (rot * Math.PI) / 180;
+    const c = Math.abs(Math.cos(rad)), sn = Math.abs(Math.sin(rad));
+    const bw = w * c + h * sn, bh = w * sn + h * c;
+    return { minX: pad.x - bw / 2, maxX: pad.x + bw / 2, minY: pad.y - bh / 2, maxY: pad.y + bh / 2, width: bw, height: bh, fromPolygon: false, rotated: rot };
+  }
   return { minX: pad.x - w / 2, maxX: pad.x + w / 2, minY: pad.y - h / 2, maxY: pad.y + h / 2, width: w, height: h, fromPolygon: false };
 }
 

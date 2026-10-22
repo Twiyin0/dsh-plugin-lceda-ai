@@ -6,6 +6,9 @@ import { parseDocument } from './parser.js';
 import { autoPlace, routeConnection, measureComponent } from './layout.js';
 import { extractNetlist } from './netlist.js';
 import { fmt } from './path.js';
+// structural validation is shared with the editing path (no cycle: edit.js does
+// not import create.js)
+import { validate } from './edit.js';
 import {
   BUILTIN_SYMBOLS, buildSymbolShapes, passiveGraphics, makeComponent, makeNetFlag, makeNetPort,
   genUuid, shapesCenter, pinCenter, translateShapes, headerSpec,
@@ -371,6 +374,9 @@ export function buildFromSpec(spec = {}, opts = {}) {
   const parsed = parseDocument(JSON.parse(text));
   const netlist = extractNetlist(parsed);
   const warnings = [...parsed.warnings, ...layoutWarnings];
+  // same structural checks the editing path runs: a label or flag that sits on
+  // neither a wire nor a pin does nothing, and an unattached wire end is a bug
+  warnings.push(...validate(parsed, null));
   if (auto) warnings.push(...detectAutoShorts(spec.wires ?? [], netlist));
   return { doc, text, parsed, netlist, placements, warnings };
 }

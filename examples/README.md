@@ -9,6 +9,7 @@
 | `stc89c52rc-minimal-v3.report.md` | BOM + 引脚表 + 网络表 |
 | `STC89C52RC-Minimal-v3/sch/Sheet_1.json` | 工程目录形式(含导入说明) |
 | `build-stc89c52rc.mjs` / `build-stc89c52rc-v2.mjs` | 早期版本:内置符号 / 数据手册校对后的手工符号 |
+| `stc89c52rc-usb-isp/` | **完整产品级示例**:STC89C52RC + AMS1117-5.0 + CH340G USB 下载板 —— 原理图 / PCB 四阶段 / Gerber / BOM / DRC 报告 / 渲染图,含独立校验与已知问题说明 |
 | `pcb-demo/` | **原理图→PCB→布线→铺铜→缝合孔→Gerber**:`board.json` → `board-routed.json` → `board-poured.json` → `board-stitched.json` + `gerber/`(8 个制造文件)+ `bom/`(BOM 与贴片坐标 CSV/XLSX)+ `drc.md` + 各阶段渲染图 |
 | `multi-sheet-demo/` | **单工程多图纸**:Sheet_1 4P 排针、Sheet_2 8P 排针;VCC/GND 用全局标志、RX/TX 用**网络端口**(跨图纸)。`node examples/multi-sheet-demo/build.mjs` 重建 |
 | `auto-layout.spec.json` | **不写坐标的 spec**:`"layout":"auto"`,自动摆放 + 正交走线 |

@@ -1,0 +1,421 @@
+{
+  "file": "/Volumes/UMIS1TB/Project/node/dsh-plugin-lceda-ai/examples/stc89c52rc-usb-isp/board.json",
+  "docType": "3",
+  "package": "",
+  "name": "",
+  "counts": {
+    "footprints": 24,
+    "pads": 128,
+    "tracks": 168,
+    "vias": 0,
+    "holes": 0,
+    "copperAreas": 0,
+    "solidRegions": 0,
+    "texts": 0,
+    "dimensions": 0
+  },
+  "board": {
+    "widthMm": 81.947,
+    "heightMm": 77.93
+  },
+  "unit": {
+    "name": "unit",
+    "mm": 0.254,
+    "note": "1 unit = 0.254 mm = 10 mil"
+  },
+  "drc": {
+    "trackWidth": 0.254,
+    "clearance": 0.254,
+    "viaHoleDiameter": 0.6,
+    "viaHoleD": 0.3
+  },
+  "layers": [
+    {
+      "id": 1,
+      "name": "TopLayer",
+      "color": "#FF0000",
+      "visible": true
+    },
+    {
+      "id": 2,
+      "name": "BottomLayer",
+      "color": "#0000FF",
+      "visible": true
+    },
+    {
+      "id": 3,
+      "name": "TopSilkLayer",
+      "color": "#FFCC00",
+      "visible": true
+    },
+    {
+      "id": 4,
+      "name": "BottomSilkLayer",
+      "color": "#66CC33",
+      "visible": true
+    },
+    {
+      "id": 5,
+      "name": "TopPasteMaskLayer",
+      "color": "#808080",
+      "visible": true
+    },
+    {
+      "id": 6,
+      "name": "BottomPasteMaskLayer",
+      "color": "#800000",
+      "visible": true
+    },
+    {
+      "id": 7,
+      "name": "TopSolderMaskLayer",
+      "color": "#800080",
+      "visible": true
+    },
+    {
+      "id": 8,
+      "name": "BottomSolderMaskLayer",
+      "color": "#AA00FF",
+      "visible": true
+    },
+    {
+      "id": 10,
+      "name": "BoardOutLine",
+      "color": "#FFFFFF",
+      "visible": true
+    },
+    {
+      "id": 11,
+      "name": "Multi-Layer",
+      "color": "#C0C0C0",
+      "visible": true
+    },
+    {
+      "id": 12,
+      "name": "Document",
+      "color": "#FFFFFF",
+      "visible": true
+    }
+  ],
+  "footprints": [
+    {
+      "name": "J1",
+      "package": "MICRO-USB-SMD_MICRO-USB-A4",
+      "x": 4053,
+      "y": 3187,
+      "rotation": 0,
+      "pads": 9,
+      "uuid": "3ea728f8cf1a4f0c9938de8d61d84f12",
+      "xMm": 1029.462,
+      "yMm": 809.498
+    },
+    {
+      "name": "U2",
+      "package": "AMS1117-5.0",
+      "x": 4147,
+      "y": 3157,
+      "rotation": 0,
+      "pads": 4,
+      "uuid": "e53d86d1247a4cb3a88f1c29e4daf267",
+      "xMm": 1053.338,
+      "yMm": 801.878
+    },
+    {
+      "name": "C1",
+      "package": "CASE-A_3216",
+      "x": 4223,
+      "y": 3098,
+      "rotation": 0,
+      "pads": 2,
+      "uuid": "ab21ffa666a44df2982dcd96cc423465",
+      "xMm": 1072.642,
+      "yMm": 786.892
+    },
+    {
+      "name": "C2",
+      "package": "CASE-A_3216",
+      "x": 4232,
+      "y": 3029,
+      "rotation": 0,
+      "pads": 2,
+      "uuid": "ab21ffa666a44df2982dcd96cc423465",
+      "xMm": 1074.928,
+      "yMm": 769.366
+    },
+    {
+      "name": "C3",
+      "package": "C0603",
+      "x": 4254,
+      "y": 3013,
+      "rotation": 0,
+      "pads": 2,
+      "uuid": "66301b0eadf64898b24d560a47e1279b",
+      "xMm": 1080.516,
+      "yMm": 765.302
+    },
+    {
+      "name": "U3",
+      "package": "CH340G",
+      "x": 4186,
+      "y": 3193,
+      "rotation": 0,
+      "pads": 16,
+      "uuid": "1493334947e64f2080f5b671a74d57f5",
+      "xMm": 1063.244,
+      "yMm": 811.022
+    },
+    {
+      "name": "C9",
+      "package": "C0603",
+      "x": 4016,
+      "y": 3200,
+      "rotation": 0,
+      "pads": 2,
+      "uuid": "66301b0eadf64898b24d560a47e1279b",
+      "xMm": 1020.064,
+      "yMm": 812.8
+    },
+    {
+      "name": "Y2",
+      "package": "晶振HC-49S",
+      "x": 4035,
+      "y": 3153,
+      "rotation": 0,
+      "pads": 2,
+      "uuid": "0c20b7f8b50d45a987a15b72cdfc3baa",
+      "xMm": 1024.89,
+      "yMm": 800.862
+    },
+    {
+      "name": "C6",
+      "package": "C0603",
+      "x": 4281,
+      "y": 3082,
+      "rotation": 0,
+      "pads": 2,
+      "uuid": "66301b0eadf64898b24d560a47e1279b",
+      "xMm": 1087.374,
+      "yMm": 782.828
+    },
+    {
+      "name": "C7",
+      "package": "C0603",
+      "x": 4299,
+      "y": 3082,
+      "rotation": 0,
+      "pads": 2,
+      "uuid": "66301b0eadf64898b24d560a47e1279b",
+      "xMm": 1091.946,
+      "yMm": 782.828
+    },
+    {
+      "name": "U1",
+      "package": "STC89C52RC",
+      "x": 4113,
+      "y": 3248,
+      "rotation": 0,
+      "pads": 40,
+      "uuid": "bd2c4def558d4f1997ced1089bc7e7e1",
+      "xMm": 1044.702,
+      "yMm": 824.992
+    },
+    {
+      "name": "Y1",
+      "package": "晶振HC-49S",
+      "x": 4288,
+      "y": 3122,
+      "rotation": 0,
+      "pads": 2,
+      "uuid": "0c20b7f8b50d45a987a15b72cdfc3baa",
+      "xMm": 1089.152,
+      "yMm": 792.988
+    },
+    {
+      "name": "C4",
+      "package": "C0603",
+      "x": 4245,
+      "y": 3082,
+      "rotation": 0,
+      "pads": 2,
+      "uuid": "66301b0eadf64898b24d560a47e1279b",
+      "xMm": 1078.23,
+      "yMm": 782.828
+    },
+    {
+      "name": "C5",
+      "package": "C0603",
+      "x": 4263,
+      "y": 3082,
+      "rotation": 0,
+      "pads": 2,
+      "uuid": "66301b0eadf64898b24d560a47e1279b",
+      "xMm": 1082.802,
+      "yMm": 782.828
+    },
+    {
+      "name": "C10",
+      "package": "C0603",
+      "x": 4272,
+      "y": 3013,
+      "rotation": 0,
+      "pads": 2,
+      "uuid": "66301b0eadf64898b24d560a47e1279b",
+      "xMm": 1085.088,
+      "yMm": 765.302
+    },
+    {
+      "name": "C11",
+      "package": "CASE-A_3216",
+      "x": 4294,
+      "y": 3014,
+      "rotation": 0,
+      "pads": 2,
+      "uuid": "ab21ffa666a44df2982dcd96cc423465",
+      "xMm": 1090.676,
+      "yMm": 765.556
+    },
+    {
+      "name": "SW1",
+      "package": "TS-1187A-B-A-B",
+      "x": 4119,
+      "y": 3092,
+      "rotation": 0,
+      "pads": 4,
+      "uuid": "8529f36bb43b45c89a45b5f0a81e03c8",
+      "xMm": 1046.226,
+      "yMm": 785.368
+    },
+    {
+      "name": "C8",
+      "package": "CASE-A_3216",
+      "x": 4020,
+      "y": 3185,
+      "rotation": 0,
+      "pads": 2,
+      "uuid": "ab21ffa666a44df2982dcd96cc423465",
+      "xMm": 1021.08,
+      "yMm": 808.99
+    },
+    {
+      "name": "R1",
+      "package": "R0603",
+      "x": 4080,
+      "y": 3136,
+      "rotation": 0,
+      "pads": 2,
+      "uuid": "f906dda371d74b94a3ee4ffbd702c513",
+      "xMm": 1036.32,
+      "yMm": 796.544
+    },
+    {
+      "name": "R2",
+      "package": "R0603",
+      "x": 4097,
+      "y": 3081,
+      "rotation": 0,
+      "pads": 2,
+      "uuid": "f906dda371d74b94a3ee4ffbd702c513",
+      "xMm": 1040.638,
+      "yMm": 782.574
+    },
+    {
+      "name": "D1",
+      "package": "CHIPLED-0603-TTW",
+      "x": 4030,
+      "y": 3116,
+      "rotation": 0,
+      "pads": 4,
+      "uuid": "d995c451b7574b678b1ff4439018ebe3",
+      "xMm": 1023.62,
+      "yMm": 791.464
+    },
+    {
+      "name": "J2",
+      "package": "HDR-M-2.54_1X5",
+      "x": 4061,
+      "y": 3084,
+      "rotation": 0,
+      "pads": 5,
+      "uuid": "05a75c7d824a4124a05db48a66df50b6",
+      "xMm": 1031.494,
+      "yMm": 783.336
+    },
+    {
+      "name": "J3",
+      "package": "HDR-M-2.54_1X8",
+      "x": 4131,
+      "y": 3292,
+      "rotation": 0,
+      "pads": 8,
+      "uuid": "324a3fe439384af6998cab2c71419c8b",
+      "xMm": 1049.274,
+      "yMm": 836.168
+    },
+    {
+      "name": "J4",
+      "package": "HDR-M-2.54_1X8",
+      "x": 4217,
+      "y": 3117,
+      "rotation": 0,
+      "pads": 8,
+      "uuid": "324a3fe439384af6998cab2c71419c8b",
+      "xMm": 1071.118,
+      "yMm": 791.718
+    }
+  ],
+  "nets": [
+    "+5V",
+    "GND",
+    "N$1",
+    "N$10",
+    "N$11",
+    "N$12",
+    "N$13",
+    "N$14",
+    "N$15",
+    "N$16",
+    "N$17",
+    "N$18",
+    "N$19",
+    "N$2",
+    "N$20",
+    "N$21",
+    "N$22",
+    "N$23",
+    "N$3",
+    "N$4",
+    "N$5",
+    "N$6",
+    "N$7",
+    "N$8",
+    "N$9",
+    "P1.0",
+    "P1.1",
+    "P1.2",
+    "P1.3",
+    "P1.4",
+    "P1.5",
+    "P1.6",
+    "P1.7",
+    "P2.0",
+    "P2.1",
+    "P2.2",
+    "P2.3",
+    "P2.4",
+    "P2.5",
+    "P2.6",
+    "P2.7",
+    "PWR_LED",
+    "RST",
+    "RXD",
+    "TXD",
+    "USB_D+",
+    "USB_D-",
+    "V3",
+    "VBUS",
+    "XI",
+    "XO",
+    "XTAL1",
+    "XTAL2"
+  ]
+}

@@ -729,7 +729,8 @@ const TOOLS = [
     async execute(args, ctx, exec) {
       const cwd = await ctx.workingDirectory.ensure(exec.agent, exec.signal);
       const board = await resolvePath(ctx, exec, args.path);
-      const argv = ['pcb', 'drc', board, '--json'];
+      // --no-fail: a board with violations must still come back as a report
+      const argv = ['pcb', 'drc', board, '--json', '--no-fail'];
       const checks = asArray(args.checks);
       if (checks.length) argv.push('--checks', checks.join(','));
       const files = [];

@@ -168,7 +168,12 @@ export function rulePlace(entries, opts = {}) {
   if (!items.length) return { positions: new Map(), board: { minX: 0, minY: 0, maxX: 0, maxY: 0, widthMm: 0, heightMm: 0 }, notes, quality: null };
 
   const clustered = clusterOrder(items, opts.netlist);
+  // Reading order of the schematic: the sheet was laid out by function, so
+  // packing in that order keeps the USB/LDO/CH340 block next to the MCU instead
+  // of scattering the parts and leaving the UART and crystal nets unroutable.
+  const schematicOrder = [...items].sort((a, b) => (a.schX ?? 0) - (b.schX ?? 0) || (a.schY ?? 0) - (b.schY ?? 0));
   const orders = [
+    ...(opts.useSchematicOrder ? [{ name: 'schematic', order: schematicOrder }] : []),
     { name: 'cluster', order: clustered },
     { name: 'cluster-rev', order: [...clustered].reverse() },
     { name: 'pins', order: [...items].sort(byPinsDesc) },

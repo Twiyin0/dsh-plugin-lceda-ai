@@ -54,6 +54,66 @@ const rectDistance = (a, b) => {
   return Math.hypot(dx, dy);
 };
 
+const pointRectDistance = (p, r) => {
+  const dx = Math.max(r.minX - p.x, 0, p.x - r.maxX);
+  const dy = Math.max(r.minY - p.y, 0, p.y - r.maxY);
+  return Math.hypot(dx, dy);
+};
+
+/**
+ * A circular piece of copper, or null.
+ *
+ * Vias and round pads are discs; measuring them as axis-aligned boxes makes their
+ * corners stick out and reported clearances that are too small - the demo board
+ * came back with ten "errors" that were all this artefact (0.84 mm measured on a
+ * box against 1.14 mm for the real circle-to-rectangle distance). Oblong pads are
+ * deliberately NOT treated as circles: a box is the conservative choice there.
+ */
+const circleOf = (item) => {
+  if (item.kind === 'via' || item.kind === 'hole') {
+    const d = item.diameter ?? (item.holeR ?? 0) * 2;
+    return { x: item.x, y: item.y, r: d / 2 };
+  }
+  if (item.kind === 'pad' && !(item.points?.length) && Math.abs((item.width ?? 0) - (item.height ?? 0)) < 0.01) {
+    return { x: item.x, y: item.y, r: (item.width ?? 0) / 2 };
+  }
+  return null;
+};
+
+/** Edge-to-edge gap between two copper items, using circles where they apply. */
+export function copperGap(a, b) {
+  const ca = circleOf(a), cb = circleOf(b);
+  if (ca && cb) return Math.hypot(ca.x - cb.x, ca.y - cb.y) - ca.r - cb.r;
+  if (a.kind === 'track' && b.kind === 'track') {
+    let gap = Infinity;
+    for (let k = 0; k + 1 < a.points.length; k++) {
+      for (let m = 0; m + 1 < b.points.length; m++) {
+        gap = Math.min(gap, segmentDistance(a.points[k], a.points[k + 1], b.points[m], b.points[m + 1]));
+      }
+    }
+    return gap - ((a.width ?? 1) + (b.width ?? 1)) / 2;
+  }
+  if (a.kind === 'track' || b.kind === 'track') {
+    const track = a.kind === 'track' ? a : b;
+    const other = a.kind === 'track' ? b : a;
+    const half = (track.width ?? 1) / 2;
+    const oc = circleOf(other);
+    let gap = Infinity;
+    for (let k = 0; k + 1 < track.points.length; k++) {
+      const d = oc
+        ? pointSegDistance(oc, track.points[k], track.points[k + 1])
+        : segmentRectDistance(track.points[k], track.points[k + 1], rectOf(other));
+      gap = Math.min(gap, d);
+    }
+    return gap - half - (oc ? oc.r : 0);
+  }
+  if (ca || cb) {
+    const c = ca ?? cb;
+    return pointRectDistance(c, rectOf(ca ? b : a)) - c.r;
+  }
+  return rectDistance(rectOf(a), rectOf(b));
+}
+
 const pointSegDistance = (p, a, b) => {
   const dx = b.x - a.x, dy = b.y - a.y;
   const l2 = dx * dx + dy * dy;
@@ -127,32 +187,15 @@ export function runDrc(model, opts = {}) {
     const clearanceBetween = (a, b) => {
       if (sameNet(a, b)) return null;
       if (!layerOverlap(a, b)) return null;
+      // Two pads of the SAME footprint sit at the spacing the package dictates -
+      // a SOT-223 has 0.1 mm between neighbouring pads and that is normal. The
+      // board house rule is about different nets on different parts, so this is
+      // skipped unless checkSameFootprint is asked for.
+      if (!opts.checkSameFootprint && a.kind === 'pad' && b.kind === 'pad'
+        && a.footprint && a.footprint === b.footprint) return null;
       const rules = opts.rules ?? rulesFor(model, { net: a.net || b.net });
       const need = rules.clearance;
-      let gap;
-      if (a.kind === 'track' && b.kind === 'track') {
-        // track against track: segment to segment, minus both half widths
-        gap = Infinity;
-        for (let k = 0; k + 1 < a.points.length; k++) {
-          for (let m = 0; m + 1 < b.points.length; m++) {
-            gap = Math.min(gap, segmentDistance(a.points[k], a.points[k + 1], b.points[m], b.points[m + 1]));
-          }
-        }
-        gap -= ((a.width ?? 1) + (b.width ?? 1)) / 2;
-      } else if (a.kind === 'track' || b.kind === 'track') {
-        const track = a.kind === 'track' ? a : b;
-        const other = a.kind === 'track' ? b : a;
-        const half = (track.width ?? 1) / 2;
-        const rect = rectOf(other);
-        gap = Infinity;
-        for (let k = 0; k + 1 < track.points.length; k++) {
-          gap = Math.min(gap, segmentRectDistance(track.points[k], track.points[k + 1], rect));
-        }
-        gap -= half;
-      } else {
-        const ra = rectOf(a), rb = rectOf(b);
-        gap = rectDistance(ra, rb);
-      }
+      const gap = copperGap(a, b);
       if (gap < need - 0.01) {
         return { type: 'clearance', severity: 'error', net: a.net || b.net, otherNet: (a.net === (a.net || b.net) ? b.net : a.net), layer: a.layer ?? b.layer, at: { x: Math.round(((a.x ?? a.points?.[0]?.x ?? 0) + (b.x ?? b.points?.[0]?.x ?? 0)) / 2), y: Math.round(((a.y ?? a.points?.[0]?.y ?? 0) + (b.y ?? b.points?.[0]?.y ?? 0)) / 2) }, measuredMm: +(gap * UNIT_MM).toFixed(3), requiredMm: +(need * UNIT_MM).toFixed(3) };
       }

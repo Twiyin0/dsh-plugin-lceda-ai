@@ -1,0 +1,82 @@
+{
+  "generator": "lceda-ai pcb gerber 1.0",
+  "source": "board-stitched.json",
+  "files": [
+    {
+      "file": "stc89c52rc-usb-isp-F_Cu.gbr",
+      "layer": "1",
+      "bytes": 41417
+    },
+    {
+      "file": "stc89c52rc-usb-isp-B_Cu.gbr",
+      "layer": "2",
+      "bytes": 15287
+    },
+    {
+      "file": "stc89c52rc-usb-isp-F_SilkS.gbr",
+      "layer": "3",
+      "bytes": 37856
+    },
+    {
+      "file": "stc89c52rc-usb-isp-B_SilkS.gbr",
+      "layer": "4",
+      "bytes": 118
+    },
+    {
+      "file": "stc89c52rc-usb-isp-F_Mask.gbr",
+      "layer": "7",
+      "bytes": 4073
+    },
+    {
+      "file": "stc89c52rc-usb-isp-B_Mask.gbr",
+      "layer": "8",
+      "bytes": 2030
+    },
+    {
+      "file": "stc89c52rc-usb-isp-Edge_Cuts.gbr",
+      "layer": "10",
+      "bytes": 220
+    },
+    {
+      "file": "stc89c52rc-usb-isp.drl",
+      "layer": "drill",
+      "bytes": 4261
+    }
+  ],
+  "check": {
+    "ok": true,
+    "checks": [
+      {
+        "name": "top-copper-flashes",
+        "expected": 347,
+        "actual": 347
+      },
+      {
+        "name": "top-copper-segments",
+        "expected": 1147,
+        "actual": 1147
+      },
+      {
+        "name": "top-copper-apertures",
+        "expected": 21,
+        "actual": 21
+      },
+      {
+        "name": "top-copper-flash-positions",
+        "expected": 347,
+        "actual": 347
+      },
+      {
+        "name": "drill-hits",
+        "expected": 284,
+        "actual": 284
+      },
+      {
+        "name": "outline-size",
+        "expected": "81.95x77.93",
+        "actual": "81.95x77.93"
+      }
+    ],
+    "problems": []
+  }
+}

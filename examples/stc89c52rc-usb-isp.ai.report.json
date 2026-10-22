@@ -1,0 +1,1490 @@
+{
+  "meta": {
+    "sheet": "stc89c52rc-usb-isp",
+    "editorVersion": "6.5.51",
+    "uuid": "4ddef658888c87352d3f65d02abaf91d",
+    "warnings": [],
+    "statistics": {
+      "components": 24,
+      "pins": 121,
+      "wires": 80,
+      "junctions": 2,
+      "netLabels": 59,
+      "netFlags": 29,
+      "nets": 53,
+      "namedNets": 30,
+      "conflicts": 0
+    }
+  },
+  "components": [
+    {
+      "ref": "C1",
+      "name": "C_Tan_SMD_A_US",
+      "value": "10uF",
+      "package": "CASE-A_3216",
+      "mfrPart": "C_Tan_SMD_A_US",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "C2",
+      "name": "C_Tan_SMD_A_US",
+      "value": "10uF",
+      "package": "CASE-A_3216",
+      "mfrPart": "C_Tan_SMD_A_US",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "C3",
+      "name": "C_0603_US",
+      "value": "100nF",
+      "package": "C0603",
+      "mfrPart": "C_0603_US",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "C4",
+      "name": "C_0603_US",
+      "value": "30pF",
+      "package": "C0603",
+      "mfrPart": "C_0603_US",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "C5",
+      "name": "C_0603_US",
+      "value": "30pF",
+      "package": "C0603",
+      "mfrPart": "C_0603_US",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "C6",
+      "name": "C_0603_US",
+      "value": "22pF",
+      "package": "C0603",
+      "mfrPart": "C_0603_US",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "C7",
+      "name": "C_0603_US",
+      "value": "22pF",
+      "package": "C0603",
+      "mfrPart": "C_0603_US",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "C8",
+      "name": "C_Tan_SMD_A_US",
+      "value": "10uF",
+      "package": "CASE-A_3216",
+      "mfrPart": "C_Tan_SMD_A_US",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "C9",
+      "name": "C_0603_US",
+      "value": "100nF",
+      "package": "C0603",
+      "mfrPart": "C_0603_US",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "C10",
+      "name": "C_0603_US",
+      "value": "100nF",
+      "package": "C0603",
+      "mfrPart": "C_0603_US",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "C11",
+      "name": "C_Tan_SMD_A_US",
+      "value": "10uF",
+      "package": "CASE-A_3216",
+      "mfrPart": "C_Tan_SMD_A_US",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "D1",
+      "name": "LEDCHIPLED-0603-TTW",
+      "value": "RED",
+      "package": "CHIPLED-0603-TTW",
+      "mfrPart": "LEDCHIPLED-0603-TTW",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "A@1",
+          "name": "A",
+          "type": "bidirectional"
+        },
+        {
+          "number": "C@1",
+          "name": "C",
+          "type": "bidirectional"
+        }
+      ]
+    },
+    {
+      "ref": "J1",
+      "name": "Micro_USB",
+      "value": "USB-MICRO",
+      "package": "MICRO-USB-SMD_MICRO-USB-A4",
+      "mfrPart": "Micro_USB",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "VCC",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "D-",
+          "type": "unspecified"
+        },
+        {
+          "number": "3",
+          "name": "D+",
+          "type": "unspecified"
+        },
+        {
+          "number": "4",
+          "name": "ID",
+          "type": "unspecified"
+        },
+        {
+          "number": "5",
+          "name": "GND",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "J2",
+      "name": "HDR-M-2.54_1x5",
+      "value": "ISP",
+      "package": "HDR-M-2.54_1X5",
+      "mfrPart": "HDR-M-2.54_1x5",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        },
+        {
+          "number": "3",
+          "name": "3",
+          "type": "unspecified"
+        },
+        {
+          "number": "4",
+          "name": "4",
+          "type": "unspecified"
+        },
+        {
+          "number": "5",
+          "name": "5",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "J3",
+      "name": "HDR-M-2.54_1X8",
+      "value": "P1.0-P1.7",
+      "package": "HDR-M-2.54_1X8",
+      "mfrPart": "HDR-M-2.54_1X8",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        },
+        {
+          "number": "3",
+          "name": "3",
+          "type": "unspecified"
+        },
+        {
+          "number": "4",
+          "name": "4",
+          "type": "unspecified"
+        },
+        {
+          "number": "5",
+          "name": "5",
+          "type": "unspecified"
+        },
+        {
+          "number": "6",
+          "name": "6",
+          "type": "unspecified"
+        },
+        {
+          "number": "7",
+          "name": "7",
+          "type": "unspecified"
+        },
+        {
+          "number": "8",
+          "name": "8",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "J4",
+      "name": "HDR-M-2.54_1X8",
+      "value": "P2.0-P2.7",
+      "package": "HDR-M-2.54_1X8",
+      "mfrPart": "HDR-M-2.54_1X8",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        },
+        {
+          "number": "3",
+          "name": "3",
+          "type": "unspecified"
+        },
+        {
+          "number": "4",
+          "name": "4",
+          "type": "unspecified"
+        },
+        {
+          "number": "5",
+          "name": "5",
+          "type": "unspecified"
+        },
+        {
+          "number": "6",
+          "name": "6",
+          "type": "unspecified"
+        },
+        {
+          "number": "7",
+          "name": "7",
+          "type": "unspecified"
+        },
+        {
+          "number": "8",
+          "name": "8",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "R1",
+      "name": "R_0603_US",
+      "value": "10k",
+      "package": "R0603",
+      "mfrPart": "R_0603_US",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "R2",
+      "name": "R_0603_US",
+      "value": "1k",
+      "package": "R0603",
+      "mfrPart": "R_0603_US",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "SW1",
+      "name": "TS-1187A-B-A-B",
+      "value": "RESET",
+      "package": "TS-1187A-B-A-B",
+      "mfrPart": "TS-1187A-B-A-B",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "1",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "type": "unspecified"
+        },
+        {
+          "number": "3",
+          "name": "3",
+          "type": "unspecified"
+        },
+        {
+          "number": "4",
+          "name": "4",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "U1",
+      "name": "STC89C52RC",
+      "value": "STC89C52RC-40I",
+      "package": "STC89C52RC",
+      "mfrPart": "STC89C52RC",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "P1.0",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "P1.1",
+          "type": "unspecified"
+        },
+        {
+          "number": "3",
+          "name": "P1.2",
+          "type": "unspecified"
+        },
+        {
+          "number": "4",
+          "name": "P1.3",
+          "type": "unspecified"
+        },
+        {
+          "number": "5",
+          "name": "P1.4",
+          "type": "unspecified"
+        },
+        {
+          "number": "6",
+          "name": "P1.5",
+          "type": "unspecified"
+        },
+        {
+          "number": "7",
+          "name": "P1.6",
+          "type": "unspecified"
+        },
+        {
+          "number": "8",
+          "name": "P1.7",
+          "type": "unspecified"
+        },
+        {
+          "number": "9",
+          "name": "RST",
+          "type": "unspecified"
+        },
+        {
+          "number": "10",
+          "name": "P3.0(RXD)",
+          "type": "unspecified"
+        },
+        {
+          "number": "11",
+          "name": "P3.1(TXD)",
+          "type": "unspecified"
+        },
+        {
+          "number": "12",
+          "name": "P3.2(INT0)",
+          "type": "unspecified"
+        },
+        {
+          "number": "13",
+          "name": "P3.3(INT1)",
+          "type": "unspecified"
+        },
+        {
+          "number": "14",
+          "name": "P3.4(T0)",
+          "type": "unspecified"
+        },
+        {
+          "number": "15",
+          "name": "P3.5(T1)",
+          "type": "unspecified"
+        },
+        {
+          "number": "16",
+          "name": "P3.6",
+          "type": "unspecified"
+        },
+        {
+          "number": "17",
+          "name": "P3.7",
+          "type": "unspecified"
+        },
+        {
+          "number": "18",
+          "name": "XTAL2",
+          "type": "unspecified"
+        },
+        {
+          "number": "19",
+          "name": "XTAL1",
+          "type": "unspecified"
+        },
+        {
+          "number": "20",
+          "name": "GND",
+          "type": "unspecified"
+        },
+        {
+          "number": "21",
+          "name": "P2.0",
+          "type": "unspecified"
+        },
+        {
+          "number": "22",
+          "name": "P2.1",
+          "type": "unspecified"
+        },
+        {
+          "number": "23",
+          "name": "P2.2",
+          "type": "unspecified"
+        },
+        {
+          "number": "24",
+          "name": "P2.3",
+          "type": "unspecified"
+        },
+        {
+          "number": "25",
+          "name": "P2.4",
+          "type": "unspecified"
+        },
+        {
+          "number": "26",
+          "name": "P2.5",
+          "type": "unspecified"
+        },
+        {
+          "number": "27",
+          "name": "P2.6",
+          "type": "unspecified"
+        },
+        {
+          "number": "28",
+          "name": "P2.7",
+          "type": "unspecified"
+        },
+        {
+          "number": "29",
+          "name": "PSEN",
+          "type": "unspecified"
+        },
+        {
+          "number": "30",
+          "name": "ALE/PROG",
+          "type": "unspecified"
+        },
+        {
+          "number": "31",
+          "name": "EA/VDD",
+          "type": "unspecified"
+        },
+        {
+          "number": "32",
+          "name": "P0.7",
+          "type": "unspecified"
+        },
+        {
+          "number": "33",
+          "name": "P0.6",
+          "type": "unspecified"
+        },
+        {
+          "number": "34",
+          "name": "P0.5",
+          "type": "unspecified"
+        },
+        {
+          "number": "35",
+          "name": "P0.4",
+          "type": "unspecified"
+        },
+        {
+          "number": "36",
+          "name": "P0.3",
+          "type": "unspecified"
+        },
+        {
+          "number": "37",
+          "name": "P0.2",
+          "type": "unspecified"
+        },
+        {
+          "number": "38",
+          "name": "P0.1",
+          "type": "unspecified"
+        },
+        {
+          "number": "39",
+          "name": "P0.0",
+          "type": "unspecified"
+        },
+        {
+          "number": "40",
+          "name": "VCC",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "U2",
+      "name": "AMS1117-5.0",
+      "value": "AMS1117-5.0",
+      "package": "AMS1117-5.0",
+      "mfrPart": "AMS1117-5.0",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "GND",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "VOUT",
+          "type": "unspecified"
+        },
+        {
+          "number": "3",
+          "name": "VIN",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "U3",
+      "name": "CH340G",
+      "value": "CH340G",
+      "package": "CH340G",
+      "mfrPart": "CH340G",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "GND",
+          "type": "unspecified"
+        },
+        {
+          "number": "2",
+          "name": "TXD",
+          "type": "unspecified"
+        },
+        {
+          "number": "3",
+          "name": "RXD",
+          "type": "unspecified"
+        },
+        {
+          "number": "4",
+          "name": "V3",
+          "type": "unspecified"
+        },
+        {
+          "number": "5",
+          "name": "UD+",
+          "type": "unspecified"
+        },
+        {
+          "number": "6",
+          "name": "UD-",
+          "type": "unspecified"
+        },
+        {
+          "number": "7",
+          "name": "XI",
+          "type": "unspecified"
+        },
+        {
+          "number": "8",
+          "name": "XO",
+          "type": "unspecified"
+        },
+        {
+          "number": "9",
+          "name": "CTS#",
+          "type": "unspecified"
+        },
+        {
+          "number": "10",
+          "name": "DSR#",
+          "type": "unspecified"
+        },
+        {
+          "number": "11",
+          "name": "RI#",
+          "type": "unspecified"
+        },
+        {
+          "number": "12",
+          "name": "DCR#",
+          "type": "unspecified"
+        },
+        {
+          "number": "13",
+          "name": "DTR#",
+          "type": "unspecified"
+        },
+        {
+          "number": "14",
+          "name": "RTS#",
+          "type": "unspecified"
+        },
+        {
+          "number": "15",
+          "name": "R232",
+          "type": "unspecified"
+        },
+        {
+          "number": "16",
+          "name": "VCC",
+          "type": "unspecified"
+        }
+      ]
+    },
+    {
+      "ref": "Y1",
+      "name": "hc-49s",
+      "value": "11.0592MHz",
+      "package": "晶振HC-49S",
+      "mfrPart": "hc-49s",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "OSC1",
+          "type": "input"
+        },
+        {
+          "number": "2",
+          "name": "OSC2",
+          "type": "input"
+        }
+      ]
+    },
+    {
+      "ref": "Y2",
+      "name": "hc-49s",
+      "value": "12MHz",
+      "package": "晶振HC-49S",
+      "mfrPart": "hc-49s",
+      "lcsc": "",
+      "manufacturer": "",
+      "pins": [
+        {
+          "number": "1",
+          "name": "OSC1",
+          "type": "input"
+        },
+        {
+          "number": "2",
+          "name": "OSC2",
+          "type": "input"
+        }
+      ]
+    }
+  ],
+  "nets": [
+    {
+      "name": "+5V",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "C2.1",
+        "C3.1",
+        "C8.1",
+        "C10.1",
+        "C11.1",
+        "J2.1",
+        "R2.1",
+        "SW1.1",
+        "SW1.2",
+        "U1.31(EA/VDD)",
+        "U1.40(VCC)",
+        "U2.2(VOUT)",
+        "U3.16(VCC)"
+      ],
+      "wireCount": 12
+    },
+    {
+      "name": "GND",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "C1.2",
+        "C2.2",
+        "C3.2",
+        "C4.2",
+        "C5.2",
+        "C6.2",
+        "C7.2",
+        "C9.1",
+        "C10.2",
+        "C11.2",
+        "D1.C@1(C)",
+        "J1.5(GND)",
+        "J2.2",
+        "R1.2",
+        "U1.20(GND)",
+        "U2.1(GND)",
+        "U3.1(GND)",
+        "U3.15(R232)"
+      ],
+      "wireCount": 7
+    },
+    {
+      "name": "N$1",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J1.4(ID)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$2",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U3.9(CTS#)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$3",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U3.10(DSR#)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$4",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U3.11(RI#)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$5",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U3.12(DCR#)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$6",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U3.13(DTR#)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$7",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U3.14(RTS#)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$8",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.12(P3.2(INT0))"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$9",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.13(P3.3(INT1))"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$10",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.14(P3.4(T0))"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$11",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.15(P3.5(T1))"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$12",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.16(P3.6)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$13",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.17(P3.7)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$14",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.29(PSEN)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$15",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.30(ALE/PROG)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$16",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.32(P0.7)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$17",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.33(P0.6)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$18",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.34(P0.5)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$19",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.35(P0.4)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$20",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.36(P0.3)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$21",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.37(P0.2)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$22",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.38(P0.1)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "N$23",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "U1.39(P0.0)"
+      ],
+      "wireCount": 0
+    },
+    {
+      "name": "P1.0",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J3.1",
+        "U1.1(P1.0)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "P1.1",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J3.2",
+        "U1.2(P1.1)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "P1.2",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J3.3",
+        "U1.3(P1.2)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "P1.3",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J3.4",
+        "U1.4(P1.3)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "P1.4",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J3.5",
+        "U1.5(P1.4)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "P1.5",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J3.6",
+        "U1.6(P1.5)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "P1.6",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J3.7",
+        "U1.7(P1.6)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "P1.7",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J3.8",
+        "U1.8(P1.7)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "P2.0",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J4.1",
+        "U1.21(P2.0)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "P2.1",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J4.2",
+        "U1.22(P2.1)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "P2.2",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J4.3",
+        "U1.23(P2.2)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "P2.3",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J4.4",
+        "U1.24(P2.3)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "P2.4",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J4.5",
+        "U1.25(P2.4)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "P2.5",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J4.6",
+        "U1.26(P2.5)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "P2.6",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J4.7",
+        "U1.27(P2.6)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "P2.7",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J4.8",
+        "U1.28(P2.7)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "PWR_LED",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "D1.A@1(A)",
+        "R2.2"
+      ],
+      "wireCount": 1
+    },
+    {
+      "name": "RST",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "C8.2",
+        "J2.5",
+        "R1.1",
+        "SW1.3",
+        "SW1.4",
+        "U1.9(RST)"
+      ],
+      "wireCount": 5
+    },
+    {
+      "name": "RXD",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J2.3",
+        "U1.10(P3.0(RXD))",
+        "U3.3(RXD)"
+      ],
+      "wireCount": 3
+    },
+    {
+      "name": "TXD",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J2.4",
+        "U1.11(P3.1(TXD))",
+        "U3.2(TXD)"
+      ],
+      "wireCount": 3
+    },
+    {
+      "name": "USB_D-",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J1.2(D-)",
+        "U3.6(UD-)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "USB_D+",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "J1.3(D+)",
+        "U3.5(UD+)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "V3",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "C9.2",
+        "U3.4(V3)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "VBUS",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "C1.1",
+        "J1.1(VCC)",
+        "U2.3(VIN)"
+      ],
+      "wireCount": 3
+    },
+    {
+      "name": "XI",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "C6.1",
+        "U3.7(XI)",
+        "Y2.1(OSC1)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "XO",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "C7.1",
+        "U3.8(XO)",
+        "Y2.2(OSC2)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "XTAL1",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "C4.1",
+        "U1.19(XTAL1)",
+        "Y1.1(OSC1)"
+      ],
+      "wireCount": 2
+    },
+    {
+      "name": "XTAL2",
+      "named": true,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "C5.1",
+        "U1.18(XTAL2)",
+        "Y1.2(OSC2)"
+      ],
+      "wireCount": 2
+    }
+  ]
+}
