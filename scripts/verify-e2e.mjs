@@ -310,6 +310,18 @@ await check('pcb:schematic -> board carries the netlist onto pads', async () => 
   assert([...names].some((n) => /^N\$/.test(n)), 'auto nets missing');
   return `${res.stats.components} parts, ${names.size} nets`;
 });
+await check('pcb:rule placement beats shelf order and stays clean', async () => {
+  const { boardFromSchematic } = await import('../src/pcb/fromSchematic.js');
+  const sch = path.join(root, 'examples/stc89c52rc-minimal-v3.esch');
+  const shelf = await boardFromSchematic(sch, { placement: 'shelf' });
+  const rule = await boardFromSchematic(sch, { placement: 'rule' });
+  assert(rule.quality.overlaps === 0, `overlaps ${rule.quality.overlaps}`);
+  assert(rule.quality.outside === 0, `outside ${rule.quality.outside}`);
+  assert(rule.quality.ratsnestMm < shelf.quality.ratsnestMm,
+    `ratsnest ${rule.quality.ratsnestMm} !< ${shelf.quality.ratsnestMm}`);
+  assert(rule.board.widthMm * rule.board.heightMm < 6000, `area ${rule.board.widthMm * rule.board.heightMm}`);
+  return `ratsnest ${shelf.quality.ratsnestMm} -> ${rule.quality.ratsnestMm} mm`;
+});
 await check('cli:pcb read/render', async () => {
   const { stdout } = await run(process.execPath, [bin, 'pcb', 'read', path.join(root, 'test/fixtures/pcb/mini-board.pcb.json'), '--json'], { cwd: root });
   const summary = JSON.parse(stdout);

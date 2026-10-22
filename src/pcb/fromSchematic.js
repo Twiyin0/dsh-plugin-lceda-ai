@@ -13,6 +13,7 @@ import { extractNetlist } from '../netlist.js';
 import { mmToUnit, toMm, parsePcb } from './parser.js';
 import { fetchFootprintForLcsc, resolveFootprintByPackage, footprintRefOf } from './footprint.js';
 import { boardDocument, libRecord, boardOutlineRecord, genGid, resetGid, DEFAULT_DRC, DEFAULT_LAYERS, footprintAnchor, footprintExtent } from './writer.js';
+import { rulePlace, layoutQuality } from './place.js';
 
 /** Pin number -> net name, from a schematic netlist. */
 export function netByPin(netlist) {
@@ -91,7 +92,7 @@ export async function boardFromSchematic(input, opts = {}) {
   const {
     refresh = false, pitchMm = 12.7, columns = 8,
     originX = 4000, originY = 3000, positions = null, marginMm = 5, drc = DEFAULT_DRC,
-    outlineWidth = 10, onProgress = null,
+    outlineWidth = 10, onProgress = null, placement = 'rule',
   } = opts;
 
   const doc = typeof input === 'string' ? parseDocument(await (await import('node:fs/promises')).readFile(input, 'utf8')) : input;
@@ -144,11 +145,34 @@ export async function boardFromSchematic(input, opts = {}) {
   }
 
   // 2. positions
-  const auto = shelfPositions(placed.map((p) => ({
-    ref: p.component.designator,
-    rotation: 0,
-    extent: footprintExtent(p.footprint.model),
-  })), { originX, originY, maxWidthMm: opts.maxWidthMm ?? 120, gapMm: opts.gapMm ?? 2.5 });
+  const layoutNotes = [];
+  let auto;
+  let ruleBoard = null;
+  if (placement === 'rule') {
+    const entries = placed.map((p) => ({
+      ref: p.component.designator,
+      package: p.component.package ?? '',
+      pins: p.component.pins ?? [],
+      netsByPad: p.netsByPad,
+      extent: footprintExtent(p.footprint.model),
+    }));
+    const ruled = rulePlace(entries, { netlist, boardWidthMm: opts.boardWidthMm, gapMm: opts.gapMm ?? 1.5, edgeMm: opts.edgeMm ?? 2.5 });
+    layoutNotes.push(...ruled.notes);
+    if (ruled.strategy) layoutNotes.push(`布局策略:${ruled.strategy.order} 顺序 / 行宽 ${ruled.strategy.rowWidthMm}mm(试了 ${ruled.strategy.tried} 种)`);
+    ruleBoard = ruled.board;
+    // rulePlace already returns file units starting near 0: shift the whole
+    // board so its top-left lands on originX/originY (no unit conversion here -
+    // converting twice is what once produced a 370 mm board)
+    const dx = originX - ruleBoard.minX;
+    const dy = originY - ruleBoard.minY;
+    auto = new Map([...ruled.positions].map(([ref, p]) => [ref, { x: Math.round(p.x + dx), y: Math.round(p.y + dy), rotation: p.rotation }]));
+  } else {
+    auto = shelfPositions(placed.map((p) => ({
+      ref: p.component.designator,
+      rotation: 0,
+      extent: footprintExtent(p.footprint.model),
+    })), { originX, originY, maxWidthMm: opts.maxWidthMm ?? 120, gapMm: opts.gapMm ?? 2.5 });
+  }
   for (const p of placed) {
     const want = positions?.[p.component.designator];
     if (Array.isArray(want)) {
@@ -194,10 +218,16 @@ export async function boardFromSchematic(input, opts = {}) {
 
   // 4. board outline around the placements
   const margin = mmToUnit(marginMm);
-  const outline = {
-    minX: bounds.minX - margin, minY: bounds.minY - margin,
-    maxX: bounds.maxX + margin, maxY: bounds.maxY + margin,
-  };
+  const outline = placement === 'rule' && ruleBoard
+    ? {
+      minX: originX, minY: originY,
+      maxX: originX + (ruleBoard.maxX - ruleBoard.minX),
+      maxY: originY + (ruleBoard.maxY - ruleBoard.minY),
+    }
+    : {
+      minX: bounds.minX - margin, minY: bounds.minY - margin,
+      maxX: bounds.maxX + margin, maxY: bounds.maxY + margin,
+    };
   shape.push(boardOutlineRecord({ ...outline, width: outlineWidth }));
 
   const centerX = (outline.minX + outline.maxX) / 2;
@@ -212,6 +242,14 @@ export async function boardFromSchematic(input, opts = {}) {
   });
 
   const model = parsePcb(board);
+  const quality = layoutQuality(
+    placed.map((p) => ({
+      ref: p.component.designator, x: p.pos.x, y: p.pos.y,
+      extent: footprintExtent(p.footprint.model),
+    })),
+    netlist,
+    { minX: outline.minX, minY: outline.minY, maxX: outline.maxX, maxY: outline.maxY },
+  );
   return {
     doc: board,
     text: JSON.stringify(board),
@@ -226,7 +264,8 @@ export async function boardFromSchematic(input, opts = {}) {
       byNumber: p.pairing.byNumber,
     })),
     failed,
-    warnings,
+    warnings: [...warnings, ...layoutNotes],
+    quality,
     board: {
       minX: outline.minX, minY: outline.minY, maxX: outline.maxX, maxY: outline.maxY,
       widthMm: +toMm(outline.maxX - outline.minX).toFixed(2),
