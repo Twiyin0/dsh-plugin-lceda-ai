@@ -386,6 +386,11 @@ export function copperItems(model) {
       out.push({
         kind: 'pad', net: pad.net, layer: pad.layer, x: pad.x, y: pad.y,
         width: bbox.width, height: bbox.height, bbox,
+        // the pad's own shape and drill matter downstream: the Gerber writer needs
+        // the shape (an oval written as a rectangle is wrong) and the drill file
+        // needs holeR (through-hole pads were silently missing from it)
+        shape: pad.shape, holeR: pad.holeR ?? 0, points: pad.points ?? [],
+        plated: pad.plated, locked: pad.locked,
         number: pad.number, footprint: fp.name, rotation: pad.rotation, anchor: { x: fp.x, y: fp.y },
       });
     }

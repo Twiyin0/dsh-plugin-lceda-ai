@@ -13,6 +13,7 @@ import { routeBoard, verifyRouting } from '../../src/pcb/route.js';
 import { pourBoard, pourNet, verifyPour, defaultPourNet } from '../../src/pcb/pour.js';
 import { viaBoard, stitchVias, verifyVias } from '../../src/pcb/via.js';
 import { runDrc, drcMarkdown } from '../../src/pcb/drc.js';
+import { exportGerber, verifyGerber } from '../../src/pcb/gerber.js';
 import { renderPcbFiles } from '../../src/pcb/render.js';
 import { readPcbFile } from '../../src/pcb/parser.js';
 
@@ -54,9 +55,24 @@ console.log(`  布线:${routed.stats.routed}/${routed.stats.nets} 网络 | 走�
 console.log(`  铺铜:${pourOpts.net} ${pourNet(routedModel, pourOpts).stats.areaMm2} mm² | 多边形 ${poured.stats.polygons} | 越界 ${pourCheck.count}`);
 console.log(`  缝合孔:${stitched.stats.placed} 个 | 盘 ${stitched.stats.diameterMm}mm/孔 ${stitched.stats.drillMm}mm | 违规 ${viaCheck.count}`);
 
+// fabrication data: Gerber + Excellon, then the export self check
+const finalModel0 = await readPcbFile(path.join(here, 'board-stitched.json'));
+const gerberDir = path.join(here, 'gerber');
+const exported = exportGerber(finalModel0, { name: 'stc89c52rc-minimal' });
+await fs.mkdir(gerberDir, { recursive: true });
+for (const f of exported.files) await fs.writeFile(path.join(gerberDir, f.name), f.text, 'utf8');
+const gerberCheck = verifyGerber(finalModel0, exported);
+await fs.writeFile(path.join(gerberDir, 'gerber.manifest.json'), JSON.stringify({
+  generator: 'lceda-ai pcb gerber 1.0',
+  source: 'board-stitched.json',
+  files: exported.files.map((f) => ({ file: f.name, layer: String(f.layer), bytes: f.text.length })),
+  check: { ok: gerberCheck.ok, checks: gerberCheck.checks, problems: gerberCheck.problems },
+}, null, 2), 'utf8');
+
 // final design rule check on the finished board
 const finalModel = await readPcbFile(path.join(here, 'board-stitched.json'));
 const drc = runDrc(finalModel);
 await fs.writeFile(path.join(here, 'drc.md'), drcMarkdown(drc, { file: 'board-stitched.json' }), 'utf8');
+console.log(`  Gerber:${exported.files.length} 个文件(${exported.files.map((f) => f.name).join(', ')}) | 自检 ${gerberCheck.ok ? 'PASS' : 'FAIL'}`);
 console.log(`  DRC:${drc.ok ? 'PASS' : 'FAIL'} — ${drc.summary}${Object.keys(drc.counts).length ? ' | ' + Object.entries(drc.counts).map(([k, v]) => `${k}:${v}`).join(' ') : ''}`);
 for (const w of placed.warnings) console.log('  !', w);

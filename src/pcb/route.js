@@ -99,6 +99,9 @@ export function buildGrid(model, opts = {}) {
         if (!blocked.has(layer)) continue;
         padTerminals.push({
           net: item.net || '', layer, x: item.x, y: item.y,
+          // a layer-11 pad is through-hole: it appears once per routing layer but
+          // is a single drilled hole
+          through: item.layer === 11,
           width: item.width ?? 0, height: item.height ?? 0, bbox: bb,
           i: snap(item.x, minX, cell), j: snap(item.y, minY, cell),
           number: item.number, footprint: item.footprint,
@@ -185,8 +188,14 @@ export function routeCells(grid, start, goal, opts = {}) {
   return null;
 }
 
-/** Turn a cell path into tracks and vias, merging straight runs. */
-export function pathToCopper(grid, path, { net, width }) {
+/**
+ * Turn a cell path into tracks and vias, merging straight runs.
+ *
+ * `skipVia(i, j)` suppresses the via at a layer change: a through-hole pad
+ * already connects every layer, so drilling a via into it produced two
+ * overlapping holes at the same coordinate (the DRC caught 47 of them).
+ */
+export function pathToCopper(grid, path, { net, width, skipVia = null }) {
   const tracks = [];
   const vias = [];
   let run = [{ x: grid.toBoard(path[0].i, path[0].j).x, y: grid.toBoard(path[0].i, path[0].j).y }];
@@ -201,7 +210,7 @@ export function pathToCopper(grid, path, { net, width }) {
       const here = grid.toBoard(p.i, p.j);
       run.push({ x: here.x, y: here.y });
       flush();
-      vias.push({ x: here.x, y: here.y, net });
+      if (!skipVia || !skipVia(p.i, p.j)) vias.push({ x: here.x, y: here.y, net });
       layer = p.layer;
       run = [{ x: here.x, y: here.y }];
       continue;
@@ -289,6 +298,12 @@ export function autoroute(model, opts = {}) {
     return best;
   };
   const needed = clearance + width / 2;
+
+  // cells of through-hole pads: a layer change there needs no via
+  const throughHoleCells = new Set(
+    grid.padTerminals.filter((p) => p.through).map((p) => `${p.i}:${p.j}`),
+  );
+  const skipVia = (i, j) => throughHoleCells.has(`${i}:${j}`);
 
   /**
    * Cells covered by pads, per net. Reserving routed copper must skip them: a
@@ -394,7 +409,7 @@ export function autoroute(model, opts = {}) {
         failed.push({ net, from: `${a.footprint}.${a.number}`, to: `${b.footprint}.${b.number}` });
         continue;
       }
-      const produced = pathToCopper(grid, path, { net, width });
+      const produced = pathToCopper(grid, path, { net, width, skipVia });
       netTracks.push(...produced.tracks);
       netVias.push(...produced.vias);
       // reserve the new copper so later nets keep their distance

@@ -1,0 +1,82 @@
+{
+  "generator": "lceda-ai pcb gerber 1.0",
+  "source": "board-stitched.json",
+  "files": [
+    {
+      "file": "stc89c52rc-minimal-F_Cu.gbr",
+      "layer": "1",
+      "bytes": 14021
+    },
+    {
+      "file": "stc89c52rc-minimal-B_Cu.gbr",
+      "layer": "2",
+      "bytes": 4426
+    },
+    {
+      "file": "stc89c52rc-minimal-F_SilkS.gbr",
+      "layer": "3",
+      "bytes": 20384
+    },
+    {
+      "file": "stc89c52rc-minimal-B_SilkS.gbr",
+      "layer": "4",
+      "bytes": 118
+    },
+    {
+      "file": "stc89c52rc-minimal-F_Mask.gbr",
+      "layer": "7",
+      "bytes": 2412
+    },
+    {
+      "file": "stc89c52rc-minimal-B_Mask.gbr",
+      "layer": "8",
+      "bytes": 1553
+    },
+    {
+      "file": "stc89c52rc-minimal-Edge_Cuts.gbr",
+      "layer": "10",
+      "bytes": 220
+    },
+    {
+      "file": "stc89c52rc-minimal.drl",
+      "layer": "drill",
+      "bytes": 1883
+    }
+  ],
+  "check": {
+    "ok": true,
+    "checks": [
+      {
+        "name": "top-copper-flashes",
+        "expected": 145,
+        "actual": 145
+      },
+      {
+        "name": "top-copper-segments",
+        "expected": 299,
+        "actual": 299
+      },
+      {
+        "name": "top-copper-apertures",
+        "expected": 17,
+        "actual": 17
+      },
+      {
+        "name": "top-copper-flash-positions",
+        "expected": 145,
+        "actual": 145
+      },
+      {
+        "name": "drill-hits",
+        "expected": 121,
+        "actual": 121
+      },
+      {
+        "name": "outline-size",
+        "expected": "58.55x45.29",
+        "actual": "58.55x45.29"
+      }
+    ],
+    "problems": []
+  }
+}

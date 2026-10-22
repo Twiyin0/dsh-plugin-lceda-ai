@@ -392,6 +392,43 @@ await check('pcb:DRC passes the whole demo pipeline and catches a planted fault'
   assert(bad.errors > 0, 'planted clearance fault was not reported');
   return `4 stages clean, planted fault caught (${bad.errors})`;
 });
+await check('pcb:gerber export matches the board and parses independently', async () => {
+  const { readPcbFile } = await import('../src/pcb/parser.js');
+  const { exportGerber, verifyGerber } = await import('../src/pcb/gerber.js');
+  const fsMod = await import('node:fs/promises');
+  const model = await readPcbFile(path.join(root, 'examples/pcb-demo/board-stitched.json'));
+  const t0 = Date.now();
+  const exported = exportGerber(model, { name: 'e2e' });
+  assert(exported.files.length >= 8, `files ${exported.files.length}`);
+  const check = verifyGerber(model, exported);
+  assert(check.ok, `self check: ${check.problems.join('; ')}`);
+  // an independent parser must accept every file
+  const dir = path.join('/tmp', `gerber-e2e-${process.pid}`);
+  await fsMod.mkdir(dir, { recursive: true });
+  for (const f of exported.files) await fsMod.writeFile(path.join(dir, f.name), f.text, 'utf8');
+  const py = '/tmp/gerb-venv/bin/python';
+  const hasPy = await fsMod.access(py).then(() => true, () => false);
+  let objects = 0;
+  if (hasPy) {
+    const script = `
+import glob, sys
+from gerbonara import GerberFile, ExcellonFile
+n = 0
+for p in sorted(glob.glob(sys.argv[1] + '/*.gbr')) + sorted(glob.glob(sys.argv[1] + '/*.drl')):
+    f = ExcellonFile.open(p) if p.endswith('.drl') else GerberFile.open(p)
+    n += len(list(f.objects))
+print(n)
+`;
+    const { execFile } = await import('node:child_process');
+    const { promisify } = await import('node:util');
+    const run = promisify(execFile);
+    const { stdout } = await run(py, ['-c', script, dir], { timeout: 120000 });
+    objects = Number(stdout.trim());
+    assert(objects > 500, `gerbonara only saw ${objects} objects`);
+  }
+  await fsMod.rm(dir, { recursive: true, force: true });
+  return `${exported.files.length} files, ${objects || 'gerbonara skipped'} objects, ${Date.now() - t0}ms`;
+});
 await check('cli:pcb read/render', async () => {
   const { stdout } = await run(process.execPath, [bin, 'pcb', 'read', path.join(root, 'test/fixtures/pcb/mini-board.pcb.json'), '--json'], { cwd: root });
   const summary = JSON.parse(stdout);

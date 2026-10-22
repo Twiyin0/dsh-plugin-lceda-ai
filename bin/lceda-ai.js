@@ -49,6 +49,7 @@ Commands:
   pcb via <board.json> -o out    Stitching vias inside a pour (rule-checked) [--net GND] [--spacing 5] [--export]
   pcb drc <board.json>           Design rule check: width / clearance / via ring / hole-to-hole / edge / silk / connectivity
         [--checks a,b,c] [-o report.md]
+  pcb gerber <board.json> -o dir Export Gerber (RS-274X) + Excellon drill, then self-check [--name board] [--manifest]
   project <dir>                  Multi-sheet project overview (merged BOM, net classes); [-o out] [--render]
   export <sch.esch|json>         Write the LCEDA-importable JSON (文件 → 打开 → 嘉立创EDA)
         [-o out.json] [--project Dir] [--sheet-name Sheet_1] [--json]
@@ -150,6 +151,7 @@ async function main() {
     if (!what) what = flag('--std', null) ?? flag('--lcsc', null);
     if (!file || !what) return usage();
     const fsMod = await import('node:fs/promises');
+    const pathMod = await import('node:path');
     const doc = JSON.parse(await fsMod.readFile(file, 'utf8'));
     const at = (flag('--at', '400,400') || '').split(',').map(Number);
     const entry = { ref: flag('--ref', undefined), value: flag('--value', undefined), x: at[0], y: at[1], rot: parseFloat(flag('--rot', '0')) || 0 };
@@ -254,6 +256,34 @@ async function main() {
       }
       emit({ files: rows, totals });
       if (totals.missing || totals.mismatch) process.exitCode = 1;
+      return;
+    }
+    if (sub === 'gerber') {
+      const { readPcbFile: readPcb } = await import('../src/pcb/parser.js');
+      const { exportGerber, verifyGerber } = await import('../src/pcb/gerber.js');
+      const fsMod = await import('node:fs/promises');
+      const pathMod = await import('node:path');
+      const out = flag('-o', flag('--out', null));
+      if (!out) return usage();
+      const model = await readPcb(input);
+      const name = flag('--name', pathMod.basename(input).replace(/\.(json|epcb)$/i, '')) || 'board';
+      const t0 = Date.now();
+      const exported = exportGerber(model, { name });
+      await fsMod.mkdir(out, { recursive: true });
+      for (const f of exported.files) await fsMod.writeFile(pathMod.join(out, f.name), f.text, 'utf8');
+      const check = verifyGerber(model, exported);
+      const manifest = {
+        generator: 'lceda-ai pcb gerber 1.0',
+        source: input,
+        created: new Date().toISOString(),
+        files: exported.files.map((f) => ({ file: f.name, layer: String(f.layer), bytes: f.text.length })),
+        check: { ok: check.ok, checks: check.checks, problems: check.problems },
+      };
+      if (rest.includes('--manifest')) await fsMod.writeFile(pathMod.join(out, 'gerber.manifest.json'), JSON.stringify(manifest, null, 2), 'utf8');
+      emit({ dir: out, name, files: exported.files.map((f) => f.name), check, ms: Date.now() - t0 });
+      log(`gerber ${out}: ${exported.files.length} 个文件(${exported.files.map((f) => f.name).join(', ')}) | ${Date.now() - t0} ms`);
+      for (const c of check.checks) log(`  ${String(c.name).padEnd(26)} ${String(c.expected).padStart(6)} -> ${c.actual}`);
+      log(`  自检:${check.ok ? '全部一致' : check.problems.join('; ')}`);
       return;
     }
     if (sub === 'drc') {

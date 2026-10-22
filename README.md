@@ -71,6 +71,7 @@ npx lceda-ai export examples/stc89c52rc-minimal-v3.esch --project ./MyProject
 | `pcb pour <board.json> -o out` | 铺铜:洪泛填充 + 热焊盘 + 孤岛移除 + 自检(`--net/--layer/--no-thermal/--keep-island`) |
 | `pcb via <board.json> -o out` | 缝合孔:按规则在铜皮内铺过孔栅格 + 间距/孔到孔自检(`--net/--spacing`) |
 | `pcb drc <board.json>` | 设计规则检查:线宽/间距/过孔环/孔到孔/板边/丝印压盘/**连通性**(`-o report.md`) |
+| `pcb gerber <board.json> -o dir` | 导出 Gerber(RS-274X)+ Excellon 钻孔 + 自检(`--manifest`) |
 | `pcb fp <LCSC\|uuid\|封装名>` | 查器件对应的封装(焊盘数/间距/尺寸/层) |
 | `pcb map <sch\|dir>` | 把原理图每个器件映射到封装并校验 **引脚↔焊盘**(缺失=错误,多余=提示) |
 | `pcb from-sch <sch> -o board.json` | **原理图→PCB**:规则化布局 + 把网表写进焊盘(`--place rule\|shelf`,`--export` 顺带出图) |
@@ -268,12 +269,23 @@ docs/format.md       .esch 文件格式笔记(踩坑记录)
   顺带修掉「走线被写成 2.54mm 宽」这个影响全部布线结果的 bug。
 - **P-09 DRC**:`pcb drc` —— 7 类检查(含按铜连通分量判断的连通性),demo 四阶段全 PASS;
   它比布线自检更严,一次抓出 9 处走线压走线并促成 hard-blocking 修复。
+- **P-10 Gerber**:`pcb gerber` —— 自研 RS-274X + Excellon(含丝印笔画字体、G36/G37 铜皮、Y 轴翻转),
+  并用第三方 **gerbonara** 独立解析+渲染校验(1239 个对象全通过)。
 
 ## 路线图(未实现)
 
 PCB 方向(原理图转 PCB、封装管理、布局、布线、铺铜、过孔、DRC、Gerber、BOM/贴片坐标)的技术方案已写成
 [`docs/roadmap-pcb.md`](docs/roadmap-pcb.md):每个工作流给了 2–3 条可选路线、推荐路线与验证方式,
 并附 REA 得到的事实(文档类型、跨图纸用 **Net Port**、封装可从商城接口取)。
+
+## 校验(可选)
+
+Gerber 导出用第三方解析器 [gerbonara](https://pypi.org/project/gerbonara/) 做独立校验(测试在缺少它时会自动跳过):
+
+```bash
+python3 -m venv /tmp/gerb-venv && /tmp/gerb-venv/bin/pip install gerbonara
+npm test          # 会额外跑一遍“独立解析器接受这些文件”的用例
+```
 
 ## 开发
 
