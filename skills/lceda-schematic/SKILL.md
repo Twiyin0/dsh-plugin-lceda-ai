@@ -5,8 +5,11 @@ description: Work with 嘉立创EDA (LCEDA standard edition) schematics on this 
 
 # 立创EDA 原理图工具链(本机)
 
-仓库根目录:`/Volumes/UMIS1TB/Project/node/lcedaParser`。所有能力都走同一个 CLI,
-Harness 里还注册了 7 个工具(前缀 `lceda_`)。**优先用工具**,批量/脚本化时才用 CLI。
+仓库根目录:`/Volumes/980Pro2T/Project/node/dsh-plugin-lceda-ai`(本插件仓库自身)。
+所有能力都走同一个 CLI,Harness 里还注册了 **17 个工具**:8 个原理图(`lceda_read_schematic` /
+`lceda_render_schematic` / `lceda_create_schematic` / `lceda_edit_schematic` / `lceda_find_component` /
+`lceda_place_component` / `lceda_export_json` / `lceda_project_overview`)+ 9 个 PCB(`lceda_pcb_*`)。
+**优先用工具**,批量/脚本化时才用 CLI。
 
 ## 决策表
 
@@ -35,7 +38,7 @@ Harness 里还注册了 7 个工具(前缀 `lceda_`)。**优先用工具**,批�
 ## 标准流程
 
 ```bash
-cd /Volumes/UMIS1TB/Project/node/lcedaParser
+cd /Volumes/980Pro2T/Project/node/dsh-plugin-lceda-ai
 node bin/lceda-ai.js read  <sheet> --json          # 结构 + 网络表
 node bin/lceda-ai.js convert <sheet> -o out --formats svg,png,pdf,report
 node bin/lceda-ai.js export <sheet> --project ./MyProject   # 可导入的 json

@@ -5,12 +5,12 @@
     {
       "file": "stc89c52rc-minimal-F_Cu.gbr",
       "layer": "1",
-      "bytes": 14021
+      "bytes": 18750
     },
     {
       "file": "stc89c52rc-minimal-B_Cu.gbr",
       "layer": "2",
-      "bytes": 4426
+      "bytes": 7418
     },
     {
       "file": "stc89c52rc-minimal-F_SilkS.gbr",
@@ -40,7 +40,7 @@
     {
       "file": "stc89c52rc-minimal.drl",
       "layer": "drill",
-      "bytes": 1883
+      "bytes": 2126
     }
   ],
   "check": {
@@ -48,13 +48,13 @@
     "checks": [
       {
         "name": "top-copper-flashes",
-        "expected": 145,
-        "actual": 145
+        "expected": 161,
+        "actual": 161
       },
       {
         "name": "top-copper-segments",
-        "expected": 299,
-        "actual": 299
+        "expected": 481,
+        "actual": 481
       },
       {
         "name": "top-copper-apertures",
@@ -63,13 +63,13 @@
       },
       {
         "name": "top-copper-flash-positions",
-        "expected": 145,
-        "actual": 145
+        "expected": 161,
+        "actual": 161
       },
       {
         "name": "drill-hits",
-        "expected": 121,
-        "actual": 121
+        "expected": 137,
+        "actual": 137
       },
       {
         "name": "outline-size",
