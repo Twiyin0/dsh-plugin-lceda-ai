@@ -47,6 +47,8 @@ Commands:
   pcb pour <board.json> -o out   Copper pour (flood fill + thermal spokes + island removal) and self-check
         [--net GND] [--layer 1] [--cell 2] [--clearance 1] [--no-thermal] [--keep-island] [--export]
   pcb via <board.json> -o out    Stitching vias inside a pour (rule-checked) [--net GND] [--spacing 5] [--export]
+  pcb drc <board.json>           Design rule check: width / clearance / via ring / hole-to-hole / edge / silk / connectivity
+        [--checks a,b,c] [-o report.md]
   project <dir>                  Multi-sheet project overview (merged BOM, net classes); [-o out] [--render]
   export <sch.esch|json>         Write the LCEDA-importable JSON (文件 → 打开 → 嘉立创EDA)
         [-o out.json] [--project Dir] [--sheet-name Sheet_1] [--json]
@@ -252,6 +254,28 @@ async function main() {
       }
       emit({ files: rows, totals });
       if (totals.missing || totals.mismatch) process.exitCode = 1;
+      return;
+    }
+    if (sub === 'drc') {
+      const { readPcbFile: readPcb } = await import('../src/pcb/parser.js');
+      const { runDrc, drcMarkdown } = await import('../src/pcb/drc.js');
+      const checkList = flag('--checks', null);
+      const rows = [];
+      for (const f of files) {
+        const model = await readPcb(f);
+        const t0 = Date.now();
+        const result = runDrc(model, checkList ? { checks: String(checkList).split(',').map((x) => x.trim()) } : {});
+        rows.push({ file: f, ok: result.ok, summary: result.summary, counts: result.counts, rules: result.rules, ms: Date.now() - t0 });
+        log(`## ${f}`);
+        log(`   ${result.ok ? 'PASS' : 'FAIL'} — ${result.summary}${Object.keys(result.counts).length ? ' | ' + Object.entries(result.counts).map(([k, v]) => `${k}:${v}`).join(' ') : ''}`);
+        for (const v of result.violations.slice(0, 8)) {
+          log(`   - [${v.severity === 'error' ? '错误' : '提示'}] ${v.type} ${v.net || ''} ${v.at ? `@${v.at.x},${v.at.y}` : ''} 实测 ${v.measuredMm}mm / 要求 ${v.requiredMm}mm${v.detail ? ' — ' + v.detail : ''}`);
+        }
+        const out = flag('-o', flag('--out', null));
+        if (out) await fsMod.writeFile(files.length > 1 ? out.replace(/\.md$/, '') + '-' + f.replace(/[^\w.-]/g, '_') + '.md' : out, drcMarkdown(result, { file: f }), 'utf8');
+      }
+      emit({ files: rows });
+      if (rows.some((r) => !r.ok)) process.exitCode = 1;
       return;
     }
     if (sub === 'via') {

@@ -370,6 +370,28 @@ await check('pcb:stitching vias inside the pour pass every rule', async () => {
   assert(back.counts.vias >= stitched.vias.length, 'vias written to the board');
   return `${stitched.vias.length} vias, ring ${stitched.rules.annularRing}mm, ${Date.now() - t0}ms`;
 });
+await check('pcb:DRC passes the whole demo pipeline and catches a planted fault', async () => {
+  const { readPcbFile, parsePcb } = await import('../src/pcb/parser.js');
+  const { runDrc } = await import('../src/pcb/drc.js');
+  const { boardDocument, trackRecord } = await import('../src/pcb/writer.js');
+  for (const name of ['board.json', 'board-routed.json', 'board-poured.json', 'board-stitched.json']) {
+    const model = await readPcbFile(path.join(root, 'examples/pcb-demo', name));
+    const result = runDrc(model);
+    assert(result.errors === 0, `${name}: ${JSON.stringify(result.violations.slice(0, 2))}`);
+  }
+  // plant a short between two nets and make sure the engine says so
+  const clean = await readPcbFile(path.join(root, 'examples/pcb-demo/board-routed.json'));
+  const faulty = boardDocument({
+    shape: [
+      ...clean.rawShape,
+      trackRecord({ strokeWidth: 1, layer: 1, net: 'RXD', points: [{ x: 4100, y: 3100 }, { x: 4120, y: 3100 }] }),
+      trackRecord({ strokeWidth: 1, layer: 1, net: 'TXD', points: [{ x: 4100, y: 3101 }, { x: 4120, y: 3101 }] }),
+    ],
+  });
+  const bad = runDrc(parsePcb(faulty), { checks: ['clearance'] });
+  assert(bad.errors > 0, 'planted clearance fault was not reported');
+  return `4 stages clean, planted fault caught (${bad.errors})`;
+});
 await check('cli:pcb read/render', async () => {
   const { stdout } = await run(process.execPath, [bin, 'pcb', 'read', path.join(root, 'test/fixtures/pcb/mini-board.pcb.json'), '--json'], { cwd: root });
   const summary = JSON.parse(stdout);

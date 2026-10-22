@@ -42,20 +42,29 @@ export function buildGrid(model, opts = {}) {
   const rows = Math.max(2, Math.ceil((maxY - minY) / cell));
 
   const blocked = new Map();                          // layer -> Uint8Array
-  for (const l of layers) blocked.set(l, new Uint8Array(cols * rows));
+  // "hard" marks cells that may never be opened for a pad: foreign pads, the
+  // board edge, and copper that is already routed. Opening such a cell let a
+  // later net run straight through an earlier track (the DRC found it, the
+  // router's own pad-only check did not).
+  const hard = new Map();
+  for (const l of layers) { blocked.set(l, new Uint8Array(cols * rows)); hard.set(l, new Uint8Array(cols * rows)); }
   const idx = (i, j) => j * cols + i;
   const inBounds = (i, j) => i >= 0 && j >= 0 && i < cols && j < rows;
 
   /** Block every cell within `radius` of a rectangle. */
-  const blockRect = (layer, x0, y0, x1, y1, radius = inflate) => {
+  const blockRect = (layer, x0, y0, x1, y1, radius = inflate, isHard = false) => {
     const arr = blocked.get(layer);
     if (!arr) return;
+    const hardArr = hard.get(layer);
     const i0 = snap(Math.min(x0, x1) - radius, minX, cell);
     const i1 = snap(Math.max(x0, x1) + radius, minX, cell);
     const j0 = snap(Math.min(y0, y1) - radius, minY, cell);
     const j1 = snap(Math.max(y0, y1) + radius, minY, cell);
     for (let j = Math.max(0, j0); j <= Math.min(rows - 1, j1); j++) {
-      for (let i = Math.max(0, i0); i <= Math.min(cols - 1, i1); i++) arr[idx(i, j)] = 1;
+      for (let i = Math.max(0, i0); i <= Math.min(cols - 1, i1); i++) {
+        arr[idx(i, j)] = 1;
+        if (isHard) hardArr[idx(i, j)] = 1;
+      }
     }
   };
 
@@ -67,7 +76,7 @@ export function buildGrid(model, opts = {}) {
         for (let i = 0; i < cols; i++) {
           const x = minX + i * cell, y = minY + j * cell;
           if (x < outline.minX + inflate || x > outline.maxX - inflate
-            || y < outline.minY + inflate || y > outline.maxY - inflate) arr[idx(i, j)] = 1;
+            || y < outline.minY + inflate || y > outline.maxY - inflate) { arr[idx(i, j)] = 1; hard.get(layer)[idx(i, j)] = 1; }
         }
       }
     }
@@ -82,7 +91,9 @@ export function buildGrid(model, opts = {}) {
       const bb = item.bbox ?? { minX: item.x - item.width / 2, maxX: item.x + item.width / 2, minY: item.y - item.height / 2, maxY: item.y + item.height / 2 };
       for (const layer of layersForPad) {
         if (!blocked.has(layer)) continue;
-        blockRect(layer, bb.minX, bb.minY, bb.maxX, bb.maxY);
+        // pads stay "soft": a net may open its own pad area, while routed copper
+        // and the board edge are permanent
+        blockRect(layer, bb.minX, bb.minY, bb.maxX, bb.maxY, inflate, false);
       }
       for (const layer of layersForPad) {
         if (!blocked.has(layer)) continue;
@@ -100,20 +111,30 @@ export function buildGrid(model, opts = {}) {
         for (let s = 0; s <= steps; s++) {
           const x = a.x + ((b.x - a.x) * s) / steps;
           const y = a.y + ((b.y - a.y) * s) / steps;
-          blockRect(item.layer, x, y, x, y, (item.width ?? 1) / 2 + inflate);
+          blockRect(item.layer, x, y, x, y, (item.width ?? 1) / 2 + inflate, true);
         }
       }
     } else if (item.kind === 'via') {
-      for (const layer of layers) blockRect(layer, item.x, item.y, item.x, item.y, (item.diameter ?? 24) / 2 + inflate);
+      for (const layer of layers) blockRect(layer, item.x, item.y, item.x, item.y, (item.diameter ?? 24) / 2 + inflate, true);
     }
   }
 
   return {
-    cell, clearance, width, inflate, layers, cols, rows, minX, minY, maxX, maxY, blocked, idx, inBounds,
+    cell, clearance, width, inflate, layers, cols, rows, minX, minY, maxX, maxY, blocked, hard, idx, inBounds,
     toCell: (x, y) => ({ i: snap(x, minX, cell), j: snap(y, minY, cell) }),
     toBoard: (i, j) => ({ x: minX + i * cell, y: minY + j * cell }),
     isBlocked: (layer, i, j) => !inBounds(i, j) || blocked.get(layer)[idx(i, j)] === 1,
-    setBlocked: (layer, i, j, v = 1) => { if (inBounds(i, j) && blocked.has(layer)) blocked.get(layer)[idx(i, j)] = v; },
+    isHard: (layer, i, j) => !inBounds(i, j) || (hard.get(layer)?.[idx(i, j)] ?? 0) === 1,
+    setBlocked: (layer, i, j, v = 1) => {
+      if (!inBounds(i, j) || !blocked.has(layer)) return;
+      blocked.get(layer)[idx(i, j)] = v;
+      if (v === 1) hard.get(layer)[idx(i, j)] = 1;      // routed copper is permanent
+    },
+    /** Re-block a cell that was only soft-blocked (used when a pad opening ends). */
+    restoreSoft: (layer, i, j) => {
+      if (!inBounds(i, j) || !blocked.has(layer)) return;
+      blocked.get(layer)[idx(i, j)] = 1;
+    },
     padTerminals,
     model,
   };
@@ -269,6 +290,33 @@ export function autoroute(model, opts = {}) {
   };
   const needed = clearance + width / 2;
 
+  /**
+   * Cells covered by pads, per net. Reserving routed copper must skip them: a
+   * via dropped next to a pad otherwise marks the pad's own cells as hard, and
+   * the next edge of that net can never open the pad again.
+   */
+  const ownPadCells = new Map();          // `${net}|${layers}` -> Set of `${layer}:${i}:${j}`
+  for (const pad of grid.padTerminals) {
+    const bb = pad.bbox ?? { minX: pad.x - (pad.width ?? 0) / 2, maxX: pad.x + (pad.width ?? 0) / 2, minY: pad.y - (pad.height ?? 0) / 2, maxY: pad.y + (pad.height ?? 0) / 2 };
+    const layersForPad = pad.layer === 11 ? grid.layers : [pad.layer];
+    const key0 = `${pad.net}|${layersForPad.join(',')}`;
+    if (!ownPadCells.has(key0)) ownPadCells.set(key0, new Set());
+    const set = ownPadCells.get(key0);
+    const i0 = snap(bb.minX, grid.minX, grid.cell), i1 = snap(bb.maxX, grid.minX, grid.cell);
+    const j0 = snap(bb.minY, grid.minY, grid.cell), j1 = snap(bb.maxY, grid.minY, grid.cell);
+    for (let j = j0 - 1; j <= j1 + 1; j++) {
+      for (let i = i0 - 1; i <= i1 + 1; i++) for (const l of layersForPad) set.add(`${l}:${i}:${j}`);
+    }
+  }
+  const isOwnPadCell = (net, layer, i, j) => {
+    for (const [k, set] of ownPadCells) {
+      const [n, layers] = k.split('|');
+      if (n !== net || !layers.split(',').includes(String(layer))) continue;
+      if (set.has(`${layer}:${i}:${j}`)) return true;
+    }
+    return false;
+  };
+
   const openPad = (pad) => {
     const cells = [];
     // Open the pad's OWN rectangle (plus clearance), never a square of radius
@@ -283,8 +331,10 @@ export function autoroute(model, opts = {}) {
       for (let j = j0; j <= j1; j++) {
         for (let i = i0; i <= i1; i++) {
           if (!grid.isBlocked(layer, i, j)) continue;
+          // never open a cell that is blocked by foreign copper or the board edge
+          if (grid.isHard(layer, i, j)) continue;
           const at = grid.toBoard(i, j);
-          // never open a cell that would let the track violate a foreign pad
+          // ... nor one that would let the track violate a foreign pad
           if (nearestForeign(at.x, at.y, pad.net) < needed) continue;
           grid.setBlocked(layer, i, j, 0);
           cells.push([layer, i, j]);
@@ -293,7 +343,12 @@ export function autoroute(model, opts = {}) {
     }
     return cells;
   };
-  const closeCells = (cells) => { for (const [l, i, j] of cells) grid.setBlocked(l, i, j, 1); };
+  const closeCells = (cells) => {
+    for (const [l, i, j] of cells) {
+      if (grid.isHard(l, i, j)) continue;      // reserved copper stays reserved
+      grid.restoreSoft(l, i, j);
+    }
+  };
 
   // route short nets first: they are the ones that get boxed in
   const order = [...netOf.entries()]
@@ -322,6 +377,17 @@ export function autoroute(model, opts = {}) {
       // walkable while routing this net: the two pads' own areas
       const opened = [...openPad(a), ...openPad(b)];
       const path = routeCells(grid, { layer: a.layer, i: a.i, j: a.j }, { layer: b.layer, i: b.i, j: b.j }, { viaCost: opts.viaCost ?? 6 });
+      if (process.env.LCEDA_ROUTE_DEBUG) {
+        const hardNear = [];
+        for (let di = -6; di <= 6; di++) for (let dj = -6; dj <= 6; dj++) {
+          if (grid.isHard(a.layer, a.i + di, a.j + dj)) hardNear.push(`${a.i + di},${a.j + dj}`);
+        }
+        console.error(`[route] ${net} ${a.footprint}.${a.number}->${b.footprint}.${b.number}`,
+          `opened=${opened.length}`, `start=${a.layer}:${a.i},${a.j} blk=${grid.isBlocked(a.layer, a.i, a.j)}`,
+          `goal=${b.layer}:${b.i},${b.j} blk=${grid.isBlocked(b.layer, b.i, b.j)}`,
+          path ? `path=${path.length}` : 'FAIL',
+          hardNear.length ? `hardNear=${hardNear.slice(0, 8).join(' ')}` : '');
+      }
       closeCells(opened);
       if (!path) {
         ok = false;
@@ -341,14 +407,20 @@ export function autoroute(model, opts = {}) {
             const y = p0.y + ((p1.y - p0.y) * s) / steps;
             const c = grid.toCell(x, y);
             const radius = Math.ceil((width / 2 + grid.clearance) / grid.cell);
-            for (let di = -radius; di <= radius; di++) for (let dj = -radius; dj <= radius; dj++) grid.setBlocked(track.layer, c.i + di, c.j + dj, 1);
+            for (let di = -radius; di <= radius; di++) for (let dj = -radius; dj <= radius; dj++) {
+              if (isOwnPadCell(net, track.layer, c.i + di, c.j + dj)) continue;
+              grid.setBlocked(track.layer, c.i + di, c.j + dj, 1);
+            }
           }
         }
       }
       for (const via of produced.vias) {
         const c = grid.toCell(via.x, via.y);
         const radius = Math.ceil((viaDiameter / 2 + grid.clearance) / grid.cell);
-        for (const l of grid.layers) for (let di = -radius; di <= radius; di++) for (let dj = -radius; dj <= radius; dj++) grid.setBlocked(l, c.i + di, c.j + dj, 1);
+        for (const l of grid.layers) for (let di = -radius; di <= radius; di++) for (let dj = -radius; dj <= radius; dj++) {
+          if (isOwnPadCell(net, l, c.i + di, c.j + dj)) continue;
+          grid.setBlocked(l, c.i + di, c.j + dj, 1);
+        }
       }
     }
     if (netTracks.length || netVias.length) {

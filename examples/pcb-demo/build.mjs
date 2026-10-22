@@ -12,6 +12,7 @@ import { boardFromSchematic } from '../../src/pcb/fromSchematic.js';
 import { routeBoard, verifyRouting } from '../../src/pcb/route.js';
 import { pourBoard, pourNet, verifyPour, defaultPourNet } from '../../src/pcb/pour.js';
 import { viaBoard, stitchVias, verifyVias } from '../../src/pcb/via.js';
+import { runDrc, drcMarkdown } from '../../src/pcb/drc.js';
 import { renderPcbFiles } from '../../src/pcb/render.js';
 import { readPcbFile } from '../../src/pcb/parser.js';
 
@@ -52,4 +53,10 @@ console.log(`  布局:飞线 ${placed.quality.ratsnestMm} mm | 重叠 ${placed.q
 console.log(`  布线:${routed.stats.routed}/${routed.stats.nets} 网络 | 走线 ${routed.stats.tracks} 段 | 过孔 ${routed.stats.vias} | 长度 ${routed.stats.lengthMm} mm | 违规 ${check.count}`);
 console.log(`  铺铜:${pourOpts.net} ${pourNet(routedModel, pourOpts).stats.areaMm2} mm² | 多边形 ${poured.stats.polygons} | 越界 ${pourCheck.count}`);
 console.log(`  缝合孔:${stitched.stats.placed} 个 | 盘 ${stitched.stats.diameterMm}mm/孔 ${stitched.stats.drillMm}mm | 违规 ${viaCheck.count}`);
+
+// final design rule check on the finished board
+const finalModel = await readPcbFile(path.join(here, 'board-stitched.json'));
+const drc = runDrc(finalModel);
+await fs.writeFile(path.join(here, 'drc.md'), drcMarkdown(drc, { file: 'board-stitched.json' }), 'utf8');
+console.log(`  DRC:${drc.ok ? 'PASS' : 'FAIL'} — ${drc.summary}${Object.keys(drc.counts).length ? ' | ' + Object.entries(drc.counts).map(([k, v]) => `${k}:${v}`).join(' ') : ''}`);
 for (const w of placed.warnings) console.log('  !', w);

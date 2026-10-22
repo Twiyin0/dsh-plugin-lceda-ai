@@ -70,6 +70,7 @@ npx lceda-ai export examples/stc89c52rc-minimal-v3.esch --project ./MyProject
 | `pcb route <board.json> -o out` | 网格 A* 自动布线(两层 + 换层过孔)+ 间距自检(`--cell/--clearance/--width`) |
 | `pcb pour <board.json> -o out` | 铺铜:洪泛填充 + 热焊盘 + 孤岛移除 + 自检(`--net/--layer/--no-thermal/--keep-island`) |
 | `pcb via <board.json> -o out` | 缝合孔:按规则在铜皮内铺过孔栅格 + 间距/孔到孔自检(`--net/--spacing`) |
+| `pcb drc <board.json>` | 设计规则检查:线宽/间距/过孔环/孔到孔/板边/丝印压盘/**连通性**(`-o report.md`) |
 | `pcb fp <LCSC\|uuid\|封装名>` | 查器件对应的封装(焊盘数/间距/尺寸/层) |
 | `pcb map <sch\|dir>` | 把原理图每个器件映射到封装并校验 **引脚↔焊盘**(缺失=错误,多余=提示) |
 | `pcb from-sch <sch> -o board.json` | **原理图→PCB**:规则化布局 + 把网表写进焊盘(`--place rule\|shelf`,`--export` 顺带出图) |
@@ -263,8 +264,10 @@ docs/format.md       .esch 文件格式笔记(踩坑记录)
   顺带修掉 POLYGON 焊盘被当成点、以及封装择优误配 LQFP 两个真 bug(现在支持 `--footprint U1=DIP-40`)。
 - **P-07 铺铜**:`pcb pour` —— 栅格洪泛 + 热焊盘辐条 + 孤岛移除,输出 `COPPERAREA`;
   实测 GND 铜 **1979mm² / 23 个多边形 / 0 越界**,编辑器识别出 23 个铜皮区域。
-- **P-08 过孔**:`pcb via` —— 规则模型 + 缝合孔栅格(5mm → 54 个,0 违规);
+- **P-08 过孔**:`pcb via` —— 规则模型 + 缝合孔栅格(5mm → 60 个,0 违规);
   顺带修掉「走线被写成 2.54mm 宽」这个影响全部布线结果的 bug。
+- **P-09 DRC**:`pcb drc` —— 7 类检查(含按铜连通分量判断的连通性),demo 四阶段全 PASS;
+  它比布线自检更严,一次抓出 9 处走线压走线并促成 hard-blocking 修复。
 
 ## 路线图(未实现)
 
