@@ -351,6 +351,25 @@ await check('pcb:copper pour on the routed board is clean and connected', async 
   assert(poured.stats.polygons > 1, `polygons ${poured.stats.polygons}`);
   return `${net} ${pour.stats.areaMm2}mm2, ${pour.stats.polygons} polys, ${Date.now() - t0}ms`;
 });
+await check('pcb:stitching vias inside the pour pass every rule', async () => {
+  const { readPcbFile, parsePcb } = await import('../src/pcb/parser.js');
+  const { routeBoard } = await import('../src/pcb/route.js');
+  const { pourBoard } = await import('../src/pcb/pour.js');
+  const { stitchVias, verifyVias, viaBoard } = await import('../src/pcb/via.js');
+  const placed = await readPcbFile(path.join(root, 'examples/pcb-demo/board.json'));
+  const routed = parsePcb(routeBoard(placed, { cell: 2, clearance: 1, width: 1 }).doc);
+  const poured = parsePcb(pourBoard(routed, { net: 'GND', cell: 2, clearance: 1 }).doc);
+  const t0 = Date.now();
+  const stitched = stitchVias(poured, { net: 'GND', spacingMm: 5, cell: 2 });
+  assert(stitched.vias.length > 10, `only ${stitched.vias.length} vias`);
+  const check = verifyVias(poured, stitched.vias, { rules: stitched.rules });
+  assert(check.count === 0, `${check.count} via violations`);
+  assert(stitched.rules.annularRing > 0.04, `annular ring ${stitched.rules.annularRing}`);
+  const doc = viaBoard(poured, { net: 'GND', spacingMm: 5 }).doc;
+  const back = parsePcb(doc);
+  assert(back.counts.vias >= stitched.vias.length, 'vias written to the board');
+  return `${stitched.vias.length} vias, ring ${stitched.rules.annularRing}mm, ${Date.now() - t0}ms`;
+});
 await check('cli:pcb read/render', async () => {
   const { stdout } = await run(process.execPath, [bin, 'pcb', 'read', path.join(root, 'test/fixtures/pcb/mini-board.pcb.json'), '--json'], { cwd: root });
   const summary = JSON.parse(stdout);

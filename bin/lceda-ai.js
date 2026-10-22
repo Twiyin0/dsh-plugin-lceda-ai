@@ -46,6 +46,7 @@ Commands:
         [--cell 2] [--clearance 1] [--width 1] [--layers 2] [--export]
   pcb pour <board.json> -o out   Copper pour (flood fill + thermal spokes + island removal) and self-check
         [--net GND] [--layer 1] [--cell 2] [--clearance 1] [--no-thermal] [--keep-island] [--export]
+  pcb via <board.json> -o out    Stitching vias inside a pour (rule-checked) [--net GND] [--spacing 5] [--export]
   project <dir>                  Multi-sheet project overview (merged BOM, net classes); [-o out] [--render]
   export <sch.esch|json>         Write the LCEDA-importable JSON (文件 → 打开 → 嘉立创EDA)
         [-o out.json] [--project Dir] [--sheet-name Sheet_1] [--json]
@@ -251,6 +252,31 @@ async function main() {
       }
       emit({ files: rows, totals });
       if (totals.missing || totals.mismatch) process.exitCode = 1;
+      return;
+    }
+    if (sub === 'via') {
+      const { readPcbFile: readPcb } = await import('../src/pcb/parser.js');
+      const { viaBoard, stitchVias, verifyVias, viaRules } = await import('../src/pcb/via.js');
+      const { defaultPourNet } = await import('../src/pcb/pour.js');
+      const out = flag('-o', flag('--out', null));
+      if (!out) return usage();
+      const board = await readPcb(input);
+      const net = flag('--net', null) ?? defaultPourNet(board);
+      const opts = { net, spacingMm: Number(flag('--spacing', 5)) || 5, edgeMm: Number(flag('--edge', 1)) || 1, cell: Number(flag('--cell', 2)) || 2 };
+      const t0 = Date.now();
+      const stitched = viaBoard(board, opts);
+      await fsMod.writeFile(out, JSON.stringify(stitched.doc), 'utf8');
+      const check = verifyVias(board, stitched.vias, { rules: stitched.rules });
+      emit({ file: out, net, stats: stitched.stats, rules: stitched.rules, check, ms: Date.now() - t0 });
+      log(`stitched ${out}: ${net} 网络 ${stitched.stats.placed} 个缝合孔 | 间距 ${opts.spacingMm}mm | 盘 ${stitched.stats.diameterMm}mm / 孔 ${stitched.stats.drillMm}mm / 环 ${stitched.stats.annularRingMm}mm | ${Date.now() - t0} ms`);
+      log(`  自检:${check.ok ? '间距与孔到孔均合格' : check.count + ' 处违规'}`);
+      for (const v of check.violations.slice(0, 5)) log(`    - ${v.kind} ${v.gapMm}mm`);
+      if (rest.includes('--export')) {
+        const { renderPcbFiles } = await import('../src/pcb/render.js');
+        const dir = out.replace(/\.(json|epcb)$/i, '') + '.render';
+        const results = await renderPcbFiles([out], { outDir: dir, formats: ['png', 'svg', 'report'], scale: 8 });
+        for (const r of results) for (const [k, v] of Object.entries(r.outputs)) log(`  ${k}: ${v}`);
+      }
       return;
     }
     if (sub === 'pour') {

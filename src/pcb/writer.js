@@ -122,7 +122,11 @@ export function holeRecord(hole, { gid = genGid() } = {}) {
 
 export function trackRecord(track, { map = (p) => p, net = null, layer = null, gid = genGid() } = {}) {
   const points = (track.points ?? []).map(map);
-  return ['TRACK', fmt(track.strokeWidth ?? 10), String(layer ?? track.layer ?? 1), net ?? track.net ?? '', pts(points), gid, '0'].join('~');
+  // `width` is what the router and the DRC use; `strokeWidth` is the file's name
+  // for it. Reading only one of them silently wrote every routed track at the
+  // 10-unit default while every check measured 1 unit.
+  const width = track.strokeWidth ?? track.width ?? 10;
+  return ['TRACK', fmt(width), String(layer ?? track.layer ?? 1), net ?? track.net ?? '', pts(points), gid, '0'].join('~');
 }
 
 export function textRecord(text, { map = (p) => p, gid = genGid(), layer = null, body = null, display = null } = {}) {

@@ -139,6 +139,9 @@ export function buildPourGrid(model, opts = {}) {
 
   return {
     net, layer, cell, clearance, edge, thermal, spokeWidth,
+    // exposed so other steps (via stitching) can measure exact distances instead
+    // of relying on cell granularity
+    foreignRects,
     cols, rows, minX, minY, free, padCells, idx, toCell, toBoard,
     region, sameNetPads,
     at: (i, j) => (i < 0 || j < 0 || i >= cols || j >= rows ? 0 : free[idx(i, j)]),
