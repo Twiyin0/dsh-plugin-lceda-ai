@@ -83,7 +83,7 @@ test('layoutQuality counts ratsnest, overlaps and parts outside', () => {
 
 test('rulePlace beats plain shelf order on a real board', async () => {
   const { boardFromSchematic } = await import('../src/pcb/fromSchematic.js');
-  const schematic = path.join(here, '..', 'examples', 'stc89c52rc-minimal-v3.esch');
+  const schematic = path.join(here, 'fixtures', 'minimal-v3.esch');
   const shelf = await boardFromSchematic(schematic, { placement: 'shelf' });
   const rule = await boardFromSchematic(schematic, { placement: 'rule' });
   assert.equal(rule.quality.overlaps, 0, 'no overlaps');

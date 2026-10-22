@@ -14,7 +14,7 @@ import { boardDocument, padRecord, trackRecord, viaRecord } from '../src/pcb/wri
 
 const execFileAsync = promisify(execFile);
 const here = path.dirname(fileURLToPath(import.meta.url));
-const demo = path.join(here, '..', 'examples', 'pcb-demo');
+const demo = path.join(here, 'fixtures', 'pcb-demo');
 
 function toyBoard() {
   const pad = (x, y, net, number, shape = 'RECT') => padRecord({ shape, x, y, width: 6, height: 6, layer: 1, net, number, holeR: 0, rotation: 0, points: [] }, {});

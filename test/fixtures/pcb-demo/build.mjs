@@ -1,6 +1,6 @@
 // Schematic -> PCB demo: place, then route the v3 minimal system.
 //
-//   node examples/pcb-demo/build.mjs
+//   node test/fixtures/pcb-demo/build.mjs
 //
 // U1 is pinned to a DIP-40 footprint explicitly: the standard library's
 // footprint search for "STC89C52RC" only finds an LQFP-44 (0.8 mm pitch), which
@@ -8,19 +8,19 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { boardFromSchematic } from '../../src/pcb/fromSchematic.js';
-import { routeBoard, verifyRouting } from '../../src/pcb/route.js';
-import { pourBoard, pourNet, verifyPour, defaultPourNet } from '../../src/pcb/pour.js';
-import { viaBoard, stitchVias, verifyVias } from '../../src/pcb/via.js';
-import { runDrc, drcMarkdown } from '../../src/pcb/drc.js';
-import { exportGerber, verifyGerber } from '../../src/pcb/gerber.js';
-import { exportBom, verifyBom } from '../../src/pcb/bom.js';
-import { renderPcbFiles } from '../../src/pcb/render.js';
-import { readPcbFile } from '../../src/pcb/parser.js';
-import { parseDocument } from '../../src/parser.js';
+import { boardFromSchematic } from '../../../src/pcb/fromSchematic.js';
+import { routeBoard, verifyRouting } from '../../../src/pcb/route.js';
+import { pourBoard, pourNet, verifyPour, defaultPourNet } from '../../../src/pcb/pour.js';
+import { viaBoard, stitchVias, verifyVias } from '../../../src/pcb/via.js';
+import { runDrc, drcMarkdown } from '../../../src/pcb/drc.js';
+import { exportGerber, verifyGerber } from '../../../src/pcb/gerber.js';
+import { exportBom, verifyBom } from '../../../src/pcb/bom.js';
+import { renderPcbFiles } from '../../../src/pcb/render.js';
+import { readPcbFile } from '../../../src/pcb/parser.js';
+import { parseDocument } from '../../../src/parser.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const schematic = path.join(here, '..', 'stc89c52rc-minimal-v3.esch');
+const schematic = path.join(here, '..', 'minimal-v3.esch');
 
 const placed = await boardFromSchematic(schematic, {
   title: 'STC89C52RC minimal — PCB',

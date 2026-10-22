@@ -11,7 +11,7 @@ import { routeBoard } from '../src/pcb/route.js';
 import { pourBoard } from '../src/pcb/pour.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const demo = path.join(here, '..', 'examples', 'pcb-demo');
+const demo = path.join(here, 'fixtures', 'pcb-demo');
 
 function toyBoard() {
   const pad = (x, y, net, number) => padRecord({ shape: 'RECT', x, y, width: 8, height: 8, layer: 1, net, number, holeR: 0, rotation: 0, points: [] }, {});

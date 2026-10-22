@@ -41,7 +41,7 @@ test('build runs place → route → pour → stitch → gerber → bom in one c
   await fs.mkdir(out, { recursive: true });
   const board = path.join(out, 'board.json');
   const res = await run('lceda_pcb_build', {
-    path: path.join(root, 'examples', 'stc89c52rc-minimal-v3.esch'),
+    path: path.join(root, 'test', 'fixtures', 'minimal-v3.esch'),
     outPath: board,
     placement: 'rule',
     footprint: ['U1=STC89C52RC-DIP-40'],
@@ -113,7 +113,7 @@ test('gerber and bom write fabrication data with the expected files', async () =
   const bomDir = path.join(out, 'bom');
   const b = await run('lceda_pcb_bom', {
     path: board, outDir: bomDir,
-    schPath: path.join(root, 'examples', 'stc89c52rc-minimal-v3.esch'),
+    schPath: path.join(root, 'test', 'fixtures', 'minimal-v3.esch'),
   });
   assert.match(b.text, /BOM lines covering 13 parts/);
   assert.match(b.text, /every part appears exactly once/);

@@ -109,7 +109,7 @@ test('pourBoard adds COPPERAREA records that parse back', () => {
 });
 
 test('a real routed board pours cleanly and stays clear of other nets', async () => {
-  const demo = path.join(here, '..', 'examples', 'pcb-demo', 'board-routed.json');
+  const demo = path.join(here, 'fixtures', 'pcb-demo', 'board-routed.json');
   const model = await readPcbFile(demo);
   const pour = pourNet(model, { net: 'GND', cell: 2 });
   assert.ok(pour.stats.areaMm2 > 500, `copper produced (${pour.stats.areaMm2} mm2)`);

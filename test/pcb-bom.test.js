@@ -32,7 +32,7 @@ import { boardDocument, padRecord, trackRecord } from '../src/pcb/writer.js';
 
 const execFileAsync = promisify(execFile);
 const here = path.dirname(fileURLToPath(import.meta.url));
-const demo = path.join(here, '..', 'examples', 'pcb-demo');
+const demo = path.join(here, 'fixtures', 'pcb-demo');
 const BUNDLED_PY = '/Users/movsa/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/python/bin/python3';
 
 function toyBoard() {
@@ -139,7 +139,7 @@ print(ws.max_row, ws.max_column, ws['A2'].value, ws['C2'].value)
 
 test('the demo board produces a consistent BOM and placement file', async () => {
   const model = await readPcbFile(path.join(demo, 'board-stitched.json'));
-  const schematic = parseDocument(await fs.readFile(path.join(here, '..', 'examples', 'stc89c52rc-minimal-v3.esch'), 'utf8'));
+  const schematic = parseDocument(await fs.readFile(path.join(here, 'fixtures', 'minimal-v3.esch'), 'utf8'));
   const exported = exportBom(model, { name: 'demo', schematic });
   const check = verifyBom(model, exported);
   assert.equal(check.ok, true, JSON.stringify(check.problems));

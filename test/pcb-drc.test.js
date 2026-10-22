@@ -9,7 +9,7 @@ import { readPcbFile, parsePcb, UNIT_MM } from '../src/pcb/parser.js';
 import { boardDocument, padRecord, trackRecord, viaRecord } from '../src/pcb/writer.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const demo = path.join(here, '..', 'examples', 'pcb-demo');
+const demo = path.join(here, 'fixtures', 'pcb-demo');
 
 /** Board with two nets, a thin track, a fat via hole and a tight pair. */
 function board(shape) {

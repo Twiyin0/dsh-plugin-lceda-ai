@@ -26,3 +26,24 @@ Thumbs.db
 
 # local verification symlink
 node_modules
+
+# ---- 示例的生成物(全部可由 build.mjs 重建,不纳入版本管理)----------------
+examples/*.ai.png
+examples/*.ai.svg
+examples/*.ai.pdf
+examples/*.ai.report.json
+examples/*.ai.report.md
+examples/*.report.md
+examples/stc89c52rc-usb-isp/bom/
+examples/stc89c52rc-usb-isp/gerber/
+examples/stc89c52rc-usb-isp/pcb-placed/
+examples/stc89c52rc-usb-isp/pcb-routed/
+examples/stc89c52rc-usb-isp/pcb-final/
+examples/stc89c52rc-usb-isp/schematic/
+examples/stc89c52rc-usb-isp/sch/
+examples/stc89c52rc-usb-isp/board-routed.json
+examples/stc89c52rc-usb-isp/board-poured.json
+examples/stc89c52rc-usb-isp/board-stitched.json
+examples/stc89c52rc-usb-isp/drc.md
+examples/stc89c52rc-usb-isp/stc89c52rc-usb-isp.json
+examples/stc89c52rc-usb-isp/如何导入立创EDA.txt

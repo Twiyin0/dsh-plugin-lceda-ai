@@ -36,7 +36,7 @@ const check = async (name, fn) => {
 };
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
-const doc3 = path.join(root, 'examples', 'stc89c52rc-minimal-v3.esch');
+const doc3 = path.join(root, 'test', 'fixtures', 'minimal-v3.esch');
 // a real project sheet, kept out of the repository (private sample)
 const k11c = path.join(root, 'examples', 'private', 'K11C_Sheet_1.json');
 
@@ -286,7 +286,7 @@ await check('pcb:footprint lookup by LCSC number validates pin<->pad', async () 
 await check('pcb:map resolves a whole schematic by package name', async () => {
   const { mapSchematic } = await import('../src/pcb/footprint.js');
   const { parseDocument } = await import('../src/parser.js');
-  const doc = parseDocument(await fs.readFile(path.join(root, 'examples/stc89c52rc-minimal-v3.esch'), 'utf8'));
+  const doc = parseDocument(await fs.readFile(path.join(root, 'test/fixtures/minimal-v3.esch'), 'utf8'));
   doc.components = doc.components.filter((c) => c.designator);
   const { summary } = await mapSchematic(doc);
   assert(summary.missing === 0, `${summary.missing} components without a footprint`);
@@ -296,7 +296,7 @@ await check('pcb:map resolves a whole schematic by package name', async () => {
 });
 await check('pcb:schematic -> board carries the netlist onto pads', async () => {
   const { boardFromSchematic } = await import('../src/pcb/fromSchematic.js');
-  const res = await boardFromSchematic(path.join(root, 'examples/stc89c52rc-minimal-v3.esch'));
+  const res = await boardFromSchematic(path.join(root, 'test/fixtures/minimal-v3.esch'));
   assert(res.stats.components >= 13, `components ${res.stats.components}`);
   assert(res.stats.pads >= 70, `pads ${res.stats.pads}`);
   assert(res.stats.nets >= 35, `nets ${res.stats.nets}`);
@@ -312,7 +312,7 @@ await check('pcb:schematic -> board carries the netlist onto pads', async () => 
 });
 await check('pcb:rule placement beats shelf order and stays clean', async () => {
   const { boardFromSchematic } = await import('../src/pcb/fromSchematic.js');
-  const sch = path.join(root, 'examples/stc89c52rc-minimal-v3.esch');
+  const sch = path.join(root, 'test/fixtures/minimal-v3.esch');
   const shelf = await boardFromSchematic(sch, { placement: 'shelf' });
   const rule = await boardFromSchematic(sch, { placement: 'rule' });
   assert(rule.quality.overlaps === 0, `overlaps ${rule.quality.overlaps}`);
@@ -325,7 +325,7 @@ await check('pcb:rule placement beats shelf order and stays clean', async () => 
 await check('pcb:autoroute the demo board and stay clearance clean', async () => {
   const { readPcbFile } = await import('../src/pcb/parser.js');
   const { routeBoard, verifyRouting } = await import('../src/pcb/route.js');
-  const model = await readPcbFile(path.join(root, 'examples/pcb-demo/board.json'));
+  const model = await readPcbFile(path.join(root, 'test/fixtures/pcb-demo/board.json'));
   assert(model.counts.pads >= 60, `pads ${model.counts.pads}`);
   const t0 = Date.now();
   const routed = routeBoard(model, { cell: 2, clearance: 1, width: 1 });
@@ -338,7 +338,7 @@ await check('pcb:autoroute the demo board and stay clearance clean', async () =>
 await check('pcb:copper pour on the routed board is clean and connected', async () => {
   const { readPcbFile } = await import('../src/pcb/parser.js');
   const { pourBoard, pourNet, verifyPour, defaultPourNet } = await import('../src/pcb/pour.js');
-  const model = await readPcbFile(path.join(root, 'examples/pcb-demo/board-routed.json'));
+  const model = await readPcbFile(path.join(root, 'test/fixtures/pcb-demo/board-routed.json'));
   const net = defaultPourNet(model);
   assert(net === 'GND', `default pour net ${net}`);
   const t0 = Date.now();
@@ -356,7 +356,7 @@ await check('pcb:stitching vias inside the pour pass every rule', async () => {
   const { routeBoard } = await import('../src/pcb/route.js');
   const { pourBoard } = await import('../src/pcb/pour.js');
   const { stitchVias, verifyVias, viaBoard } = await import('../src/pcb/via.js');
-  const placed = await readPcbFile(path.join(root, 'examples/pcb-demo/board.json'));
+  const placed = await readPcbFile(path.join(root, 'test/fixtures/pcb-demo/board.json'));
   const routed = parsePcb(routeBoard(placed, { cell: 2, clearance: 1, width: 1 }).doc);
   const poured = parsePcb(pourBoard(routed, { net: 'GND', cell: 2, clearance: 1 }).doc);
   const t0 = Date.now();
@@ -375,12 +375,12 @@ await check('pcb:DRC passes the whole demo pipeline and catches a planted fault'
   const { runDrc } = await import('../src/pcb/drc.js');
   const { boardDocument, trackRecord } = await import('../src/pcb/writer.js');
   for (const name of ['board.json', 'board-routed.json', 'board-poured.json', 'board-stitched.json']) {
-    const model = await readPcbFile(path.join(root, 'examples/pcb-demo', name));
+    const model = await readPcbFile(path.join(root, 'test/fixtures/pcb-demo', name));
     const result = runDrc(model);
     assert(result.errors === 0, `${name}: ${JSON.stringify(result.violations.slice(0, 2))}`);
   }
   // plant a short between two nets and make sure the engine says so
-  const clean = await readPcbFile(path.join(root, 'examples/pcb-demo/board-routed.json'));
+  const clean = await readPcbFile(path.join(root, 'test/fixtures/pcb-demo/board-routed.json'));
   const faulty = boardDocument({
     shape: [
       ...clean.rawShape,
@@ -396,7 +396,7 @@ await check('pcb:gerber export matches the board and parses independently', asyn
   const { readPcbFile } = await import('../src/pcb/parser.js');
   const { exportGerber, verifyGerber } = await import('../src/pcb/gerber.js');
   const fsMod = await import('node:fs/promises');
-  const model = await readPcbFile(path.join(root, 'examples/pcb-demo/board-stitched.json'));
+  const model = await readPcbFile(path.join(root, 'test/fixtures/pcb-demo/board-stitched.json'));
   const t0 = Date.now();
   const exported = exportGerber(model, { name: 'e2e' });
   assert(exported.files.length >= 8, `files ${exported.files.length}`);
@@ -434,8 +434,8 @@ await check('pcb:bom and pick-and-place export, xlsx readable by openpyxl', asyn
   const { parseDocument } = await import('../src/parser.js');
   const { exportBom, verifyBom } = await import('../src/pcb/bom.js');
   const fsMod = await import('node:fs/promises');
-  const model = await readPcbFile(path.join(root, 'examples/pcb-demo/board-stitched.json'));
-  const schematic = parseDocument(await fsMod.readFile(path.join(root, 'examples', 'stc89c52rc-minimal-v3.esch'), 'utf8'));
+  const model = await readPcbFile(path.join(root, 'test/fixtures/pcb-demo/board-stitched.json'));
+  const schematic = parseDocument(await fsMod.readFile(path.join(root, 'test', 'fixtures', 'minimal-v3.esch'), 'utf8'));
   const t0 = Date.now();
   const exported = exportBom(model, { name: 'e2e', schematic });
   const check = verifyBom(model, exported);

@@ -76,16 +76,16 @@ const COMPONENTS = [
   { part: parts.ch340, ref: 'U3', value: 'CH340G', x: 470, y: 330 },
   { part: parts.c, ref: 'C9', value: '100nF', x: 620, y: 250, rot: 90 },      // V3 regulator
   { part: parts.xtal, ref: 'Y2', value: '12MHz', x: 380, y: 600 },
-  { part: parts.c, ref: 'C6', value: '22pF', x: 320, y: 660, rot: 90 },
-  { part: parts.c, ref: 'C7', value: '22pF', x: 440, y: 660, rot: 90 },
+  { part: parts.c, ref: 'C6', value: '22pF', x: 330, y: 660, rot: 90 },
+  { part: parts.c, ref: 'C7', value: '22pF', x: 430, y: 660, rot: 90 },
   // --- MCU and its decoupling -------------------------------------------
   { part: parts.mcu, ref: 'U1', value: 'STC89C52RC-40I', x: 800, y: 380 },
   { part: parts.c, ref: 'C10', value: '100nF', x: 555, y: 545, rot: 90 },     // ) parallel
   { part: parts.cp, ref: 'C11', value: '10uF', x: 630, y: 545, rot: 90 },    // )
   // --- MCU clock (wired to the XTAL pins by label) -----------------------
   { part: parts.xtal, ref: 'Y1', value: '11.0592MHz', x: 170, y: 675 },
-  { part: parts.c, ref: 'C4', value: '30pF', x: 110, y: 735, rot: 90 },
-  { part: parts.c, ref: 'C5', value: '30pF', x: 230, y: 735, rot: 90 },
+  { part: parts.c, ref: 'C4', value: '30pF', x: 120, y: 735, rot: 90 },
+  { part: parts.c, ref: 'C5', value: '30pF', x: 220, y: 735, rot: 90 },
   // --- reset -------------------------------------------------------------
   { part: parts.sw, ref: 'SW1', value: 'RESET', x: 640, y: 150, rot: 90 },
   { part: parts.cp, ref: 'C8', value: '10uF', x: 750, y: 150, rot: 90 },
@@ -220,21 +220,22 @@ flagOut('U3.16', '+5V', 'part_netLabel_+5V');
   labels.push({ text: 'V3', at: bottom, anchor: 'start' });
 }
 
-// ---- 12 MHz crystal + load caps ------------------------------------------
-labelOut('Y2.1', 'XI', 34);
-labelOut('Y2.2', 'XO', 34);
-labelOut('C6.1', 'XI', 24);
-labelOut('C7.1', 'XO', 24);
-flagOut('C6.2', 'GND', 'part_netLabel_gnD', 24);
-flagOut('C7.2', 'GND', 'part_netLabel_gnD', 24);
-
-// ---- 11.0592 MHz crystal + load caps -------------------------------------
-labelOut('Y1.1', 'XTAL1', 34);
-labelOut('Y1.2', 'XTAL2', 34);
-labelOut('C4.1', 'XTAL1', 24);
-labelOut('C5.1', 'XTAL2', 24);
-flagOut('C4.2', 'GND', 'part_netLabel_gnD', 24);
-flagOut('C5.2', 'GND', 'part_netLabel_gnD', 24);
+// ---- crystals + their load capacitors ------------------------------------
+// The capacitor is wired straight to its crystal pin (a small jog keeps the two
+// value texts apart) instead of being tied by a second label with the same name:
+// two labels on one net look like two nets and mislead whoever reads the sheet.
+function crystalBlock(crystal, capA, capB, nameA, nameB) {
+  const [pinA, pinB] = [`${crystal}.1`, `${crystal}.2`];
+  const jogA = P(pinA).y + 28, jogB = P(pinB).y + 28;
+  wires.push({ points: [P(pinA), { x: P(pinA).x, y: jogA }, { x: P(`${capA}.1`).x, y: jogA }, P(`${capA}.1`)] });
+  wires.push({ points: [P(pinB), { x: P(pinB).x, y: jogB }, { x: P(`${capB}.1`).x, y: jogB }, P(`${capB}.1`)] });
+  labelOut(pinA, nameA, 34);
+  labelOut(pinB, nameB, 34);
+  flagOut(`${capA}.2`, 'GND', 'part_netLabel_gnD', 24);
+  flagOut(`${capB}.2`, 'GND', 'part_netLabel_gnD', 24);
+}
+crystalBlock('Y2', 'C6', 'C7', 'XI', 'XO');
+crystalBlock('Y1', 'C4', 'C5', 'XTAL1', 'XTAL2');
 
 // ---- MCU ------------------------------------------------------------------
 for (let i = 0; i < 8; i++) labelOut(`U1.${i + 1}`, `P1.${i}`);          // P1.0-P1.7

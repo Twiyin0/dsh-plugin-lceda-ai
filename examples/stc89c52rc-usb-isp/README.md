@@ -23,17 +23,27 @@ STC89C52RC 的 UART ISP 下载,并把 P1/P2 两组 IO 引出到 2.54mm 排针。
 
 ## 文件说明
 
+仓库里只保留**源文件**,其余全部由脚本生成(生成物已在 `.gitignore` 中):
+
 | 路径 | 内容 |
 |---|---|
-| `../stc89c52rc-usb-isp.esch` | 原理图(嘉立创EDA 格式,可直接打开) |
-| `stc89c52rc-usb-isp.json` / `sch/Sheet_1.json` | 立创EDA 可导入的工程 JSON |
-| `schematic/` | 原理图渲染:png / svg / pdf / 报告 |
-| `board.json` → `board-routed.json` → `board-poured.json` → `board-stitched.json` | PCB 四个阶段(布局 / 布线 / 铺铜 / 缝合孔) |
-| `pcb-placed/` `pcb-routed/` `pcb-final/` | 各阶段 PCB 渲染 |
-| `gerber/` | **Gerber(RS-274X)7 个 + Excellon 钻孔 1 个** + `gerber.manifest.json` 自检结果 |
-| `bom/` | BOM 与贴片坐标(CSV + XLSX,两个工作表) |
-| `drc.md` | 设计规则检查报告(逐条列出违规与位置) |
-| `build.mjs` | 一键重建整条流水线 |
+| `../stc89c52rc-usb-isp.esch` | **原理图**(嘉立创EDA 直接打开) |
+| `../stc89c52rc-usb-isp.json` | **原理图**(立创EDA 可导入的 JSON) |
+| `board.json` | **PCB**(24 器件 / 128 焊盘 / 53 网络,113.06 × 78.69 mm) |
+| `../build-stc89c52rc-usb-isp.mjs` | 生成原理图 |
+| `build.mjs` | 生成 PCB 全流程 |
+| `README.md` | 本文件 |
+
+### 重新生成
+
+```bash
+node examples/build-stc89c52rc-usb-isp.mjs     # 原理图 + 渲染 + 报告
+node examples/stc89c52rc-usb-isp/build.mjs     # PCB:布局→布线→铺铜→缝合孔→DRC→Gerber→BOM→渲染
+```
+
+跑完 `build.mjs` 会在本目录下生成:`board-routed.json` / `board-poured.json` / `board-stitched.json`(各阶段)、
+`gerber/`(7 个 Gerber + Excellon 钻孔 + 自检清单)、`bom/`(BOM 与贴片坐标 CSV/XLSX)、
+`drc.md`(逐条违规与坐标)、`pcb-placed|routed|final/`(渲染图)、`schematic/`(原理图渲染)、`sch/`(可导入工程)。
 
 ## 布局:按功能分区
 
