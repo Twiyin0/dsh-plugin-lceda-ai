@@ -245,3 +245,208 @@ export function layoutQuality(placements, netlist, outline) {
     components: placements.length,
   };
 }
+
+/**
+ * Functional placement: keep each functional block together and put the
+ * connectors on the board edge they need.
+ *
+ * The rule placer optimises a single global shelf, which scatters a design: on
+ * the USB download board the micro-USB connector ended up in the middle of the
+ * board (where it cannot be plugged in) and the CH340G sat away from its crystal
+ * and its decoupling. This placer works one level up - it packs each declared
+ * group into its own block, shelf-packs the blocks, and then slides the
+ * connector blocks onto the requested edge, rotating them so the mating side
+ * faces out.
+ *
+ * @param {Array} entries parts with `extent`, `pins`, `netsByPad`
+ * @param {object} opts
+ *   groups: [{ name, refs:[], edge?:'left'|'right'|'top'|'bottom', rot?:0|90|180|270,
+ *              maxWidthMm?:number }]
+ *   boardWidthMm, gapMm, edgeMm
+ */
+export function functionalPlace(entries, opts = {}) {
+  const gap = opts.gapMm ?? 1.5;
+  const edge = opts.edgeMm ?? 2.5;
+  const notes = [];
+  const items = entries.map((e) => ({ ...e, kind: classify(e), box: boxOf(e) }));
+  const byRef = new Map(items.map((i) => [i.ref, i]));
+  if (!items.length) return { positions: new Map(), board: { minX: 0, minY: 0, maxX: 0, maxY: 0, widthMm: 0, heightMm: 0 }, notes, quality: null };
+
+  const groups = (opts.groups ?? []).filter((g) => (g.refs ?? []).some((r) => byRef.has(r)));
+  const claimed = new Set(groups.flatMap((g) => g.refs));
+  const rest = items.filter((i) => !claimed.has(i.ref));
+  if (rest.length) groups.push({ name: 'rest', refs: rest.map((i) => i.ref) });
+
+  // ---- pack every group into a block of its own -------------------------
+  const blocks = [];
+  for (const g of groups) {
+    const members = g.refs.map((r) => byRef.get(r)).filter(Boolean);
+    const rot = g.rot ?? 0;
+    if (rot % 180 === 90) for (const m of members) m.box = { ...m.box, w: m.box.h, h: m.box.w };
+    const inner = packShelf(members, { maxWidthMm: g.maxWidthMm ?? 55, gapMm: gap, edgeMm: 0 });
+    const boxes = [...inner.placed.values()].map((p) => p.box);
+    const minX = Math.min(...boxes.map((b) => b.minX)), minY = Math.min(...boxes.map((b) => b.minY));
+    const maxX = Math.max(...boxes.map((b) => b.maxX)), maxY = Math.max(...boxes.map((b) => b.maxY));
+    blocks.push({ name: g.name, edge: g.edge ?? null, rot, members, inner, minX, minY, w: maxX - minX, h: maxY - minY });
+  }
+
+  // ---- shelf-pack the interior blocks -----------------------------------
+  const left = blocks.filter((b) => b.edge === 'left');
+  const right = blocks.filter((b) => b.edge === 'right');
+  const interior = blocks.filter((b) => !b.edge);
+  const leftW = left.reduce((n, b) => Math.max(n, b.w), 0);
+  const rightW = right.reduce((n, b) => Math.max(n, b.w), 0);
+  const target = opts.boardWidthMm ?? 100;
+  // The interior row width must fit at least one whole block, otherwise every
+  // block lands on a row of its own and the board becomes a long strip (which is
+  // what a 20 mm interior did to a 24-part design: 127 x 41 mm instead of a
+  // usable rectangle).
+  const widest = interior.reduce((n, b) => Math.max(n, b.w), 0);
+  const innerWidth = Math.max(widest, target - leftW - rightW - gap * 4);
+  const packed = packShelf(interior.map((b) => ({ ref: b.name, kind: 'block', box: { minX: 0, minY: 0, maxX: b.w, maxY: b.h, w: b.w, h: b.h } })), { maxWidthMm: innerWidth, gapMm: gap * 2, edgeMm: 0 });
+  notes.push(`功能分区:${blocks.length} 个区块(左侧 ${left.length} / 内部 ${interior.length} / 右侧 ${right.length}),内部行宽 ${Math.round(innerWidth)}mm`);
+
+  // ---- assemble: interior first, then slide the edge blocks in ----------
+  const offsetX = leftW + gap * 2;
+  const offsetY = 0;
+  const placed = new Map();
+  for (const b of interior) {
+    const p = packed.placed.get(b.name);
+    for (const m of b.members) {
+      const q = b.inner.placed.get(m.ref);
+      placed.set(m.ref, { x: q.x - b.minX + p.x - b.w / 2 + offsetX, y: q.y - b.minY + p.y - b.h / 2 + offsetY, kind: m.kind, box: null, rotation: b.rot, entry: m });
+    }
+  }
+  const interiorBox = packed.board;
+  const boardH = Math.max(interiorBox.heightMm, ...left.map((b) => b.h), ...right.map((b) => b.h), 20);
+  let cursorY = 0;
+  for (const b of left) {
+    for (const m of b.members) {
+      const q = b.inner.placed.get(m.ref);
+      placed.set(m.ref, { x: q.x - b.minX + gap, y: q.y - b.minY + cursorY + (boardH - b.h) / 2, kind: m.kind, box: null, rotation: b.rot, entry: m });
+    }
+    cursorY += b.h + gap * 2;
+  }
+  cursorY = 0;
+  for (const b of right) {
+    for (const m of b.members) {
+      const q = b.inner.placed.get(m.ref);
+      placed.set(m.ref, { x: q.x - b.minX + offsetX + interiorBox.widthMm + gap * 2, y: q.y - b.minY + cursorY + (boardH - b.h) / 2, kind: m.kind, box: null, rotation: b.rot, entry: m });
+    }
+    cursorY += b.h + gap * 2;
+  }
+
+  // ---- normalise to (0,0) and rebuild the outline ------------------------
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const [ref, p] of placed) {
+    const m = byRef.get(ref);
+    const half = { w: m.box.w / 2, h: m.box.h / 2 };
+    minX = Math.min(minX, p.x - half.w); maxX = Math.max(maxX, p.x + half.w);
+    minY = Math.min(minY, p.y - half.h); maxY = Math.max(maxY, p.y + half.h);
+  }
+  const shiftX = edge - minX, shiftY = edge - minY;
+  const placements = [];
+  for (const [ref, p] of placed) {
+    const m = byRef.get(ref);
+    const x = p.x + shiftX, y = p.y + shiftY;
+    const box = { minX: x - m.box.w / 2, minY: y - m.box.h / 2, maxX: x + m.box.w / 2, maxY: y + m.box.h / 2 };
+    p.box = box;
+    placements.push({ ref, x: mmToUnit(x), y: mmToUnit(y), extent: m.extent });
+  }
+  const outline = {
+    minX: mmToUnit(0), minY: mmToUnit(0),
+    maxX: mmToUnit(maxX - minX + edge * 2), maxY: mmToUnit(maxY - minY + edge * 2),
+  };
+  const quality = layoutQuality(placements, opts.netlist ?? { nets: [] }, outline);
+  const positions = new Map();
+  for (const [ref, p] of placed) positions.set(ref, { x: Math.round(mmToUnit(p.x + shiftX)), y: Math.round(mmToUnit(p.y + shiftY)), rotation: p.rotation });
+  return {
+    positions,
+    board: {
+      minX: outline.minX, minY: outline.minY, maxX: outline.maxX, maxY: outline.maxY,
+      widthMm: (maxX - minX) + edge * 2, heightMm: (maxY - minY) + edge * 2,
+    },
+    quality,
+    strategy: { order: 'functional', groups: blocks.map((b) => ({ name: b.name, edge: b.edge, rot: b.rot })) },
+    notes,
+  };
+}
+
+/**
+ * Zoned placement: every part is placed inside a rectangle the caller names.
+ *
+ * Automatic packing optimises area, and area is not what makes a board readable.
+ * On the USB download board the reference design (and every hand-made board) puts
+ * the micro-USB on the edge it plugs in from, the regulator next to its input
+ * connector, the USB-serial chip next to its crystal, and the MCU with its
+ * decoupling in one block. This placer takes those zones as data and packs each
+ * one locally, so the result is predictable and stays that way as parts change.
+ *
+ * @param {Array} entries parts with `extent`
+ * @param {object} opts zones: [{ name, refs:[], at:[xMm,yMm], maxWidthMm, rot? }]
+ */
+export function zonedPlace(entries, opts = {}) {
+  const gap = opts.gapMm ?? 1.5;
+  const edge = opts.edgeMm ?? 2.5;
+  const notes = [];
+  const items = entries.map((e) => ({ ...e, kind: classify(e), box: boxOf(e) }));
+  const byRef = new Map(items.map((i) => [i.ref, i]));
+  if (!items.length) return { positions: new Map(), board: { minX: 0, minY: 0, maxX: 0, maxY: 0, widthMm: 0, heightMm: 0 }, notes, quality: null };
+
+  const zones = (opts.zones ?? []).filter((z) => (z.refs ?? []).some((r) => byRef.has(r)));
+  const claimed = new Set(zones.flatMap((z) => z.refs));
+  const rest = items.filter((i) => !claimed.has(i.ref));
+  if (rest.length) {
+    const maxY = Math.max(0, ...zones.map((z) => z.at[1]));
+    zones.push({ name: 'rest', refs: rest.map((i) => i.ref), at: [opts.restAt?.[0] ?? 4, opts.restAt?.[1] ?? maxY + 20], maxWidthMm: opts.restWidthMm ?? 40 });
+  }
+
+  const placed = new Map();
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const z of zones) {
+    const members = z.refs.map((r) => byRef.get(r)).filter(Boolean);
+    const rot = z.rot ?? 0;
+    if (rot % 180 === 90) for (const m of members) m.box = { ...m.box, w: m.box.h, h: m.box.w };
+    const packed = packShelf(members, { maxWidthMm: z.maxWidthMm ?? 40, gapMm: z.gapMm ?? gap, edgeMm: 0 });
+    for (const m of members) {
+      const p = packed.placed.get(m.ref);
+      const x = z.at[0] + p.x - packed.board.minX;
+      const y = z.at[1] + p.y - packed.board.minY;
+      placed.set(m.ref, { x, y, rotation: rot, entry: m });
+      minX = Math.min(minX, x - m.box.w / 2); maxX = Math.max(maxX, x + m.box.w / 2);
+      minY = Math.min(minY, y - m.box.h / 2); maxY = Math.max(maxY, y + m.box.h / 2);
+    }
+    notes.push(`${z.name}: ${members.length} 个器件 @ ${z.at[0]},${z.at[1]}mm${rot ? ` rot${rot}` : ''}`);
+  }
+
+  const shiftX = edge - minX, shiftY = edge - minY;
+  const placements = [];
+  const boxes = new Map();
+  for (const [ref, p] of placed) {
+    const m = byRef.get(ref);
+    const x = p.x + shiftX, y = p.y + shiftY;
+    p.x = x; p.y = y;
+    boxes.set(ref, { minX: x - m.box.w / 2, minY: y - m.box.h / 2, maxX: x + m.box.w / 2, maxY: y + m.box.h / 2 });
+    placements.push({ ref, x: mmToUnit(x), y: mmToUnit(y), extent: m.extent });
+  }
+  const widthMm = (maxX - minX) + edge * 2, heightMm = (maxY - minY) + edge * 2;
+  const outline = { minX: 0, minY: 0, maxX: mmToUnit(widthMm), maxY: mmToUnit(heightMm) };
+  const quality = layoutQuality(placements, opts.netlist ?? { nets: [] }, outline);
+  // zoned placement is explicit, so an overlap is a mistake in the zone data:
+  // report it rather than silently nudging parts around
+  let overlaps = 0;
+  const refs = [...boxes.keys()];
+  for (let i = 0; i < refs.length; i++) for (let j = i + 1; j < refs.length; j++) {
+    const a = boxes.get(refs[i]), b = boxes.get(refs[j]);
+    if (a.minX < b.maxX && b.minX < a.maxX && a.minY < b.maxY && b.minY < a.maxY) overlaps++;
+  }
+  const positions = new Map();
+  for (const [ref, p] of placed) positions.set(ref, { x: Math.round(mmToUnit(p.x)), y: Math.round(mmToUnit(p.y)), rotation: p.rotation });
+  return {
+    positions,
+    board: { minX: 0, minY: 0, maxX: outline.maxX, maxY: outline.maxY, widthMm, heightMm },
+    quality: { ...quality, overlaps },
+    strategy: { order: 'zoned', zones: zones.map((z) => ({ name: z.name, at: z.at, refs: z.refs.length })) },
+    notes,
+  };
+}

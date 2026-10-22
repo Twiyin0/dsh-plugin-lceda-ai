@@ -56,37 +56,49 @@ for (const [k, p] of Object.entries(parts)) {
   console.log(`  ${k.padEnd(6)} ${String(p.doc.head?.c_para?.name ?? '').padEnd(14)} ${String(p.doc.head?.c_para?.package ?? '').padEnd(22)} pins=${pins} quality=${symbolQuality(p.doc)}`);
 }
 
+// ---------------------------------------------------------------------------
+// Placement, drawn the way a readable schematic is drawn:
+//   * every net label sits OUTSIDE the symbol body, on the side the pin leaves
+//   * power flags point away from the part (0 = up, 90 = right, 180 = down, 270 = left)
+//   * blocks are wired locally; signals between blocks travel by label, so no wire
+//     ever crosses another part or another pin
+//   * decoupling pairs sit side by side on shared +5V / GND rails
+// ---------------------------------------------------------------------------
 const COMPONENTS = [
-  // --- USB + power -------------------------------------------------------
+  // --- USB input ---------------------------------------------------------
   { part: parts.usb, ref: 'J1', value: 'USB-MICRO', x: 150, y: 250 },
+  // --- LDO and its input/output capacitors -------------------------------
   { part: parts.ldo, ref: 'U2', value: 'AMS1117-5.0', x: 170, y: 470 },
-  { part: parts.cp, ref: 'C1', value: '10uF', x: 90, y: 560, rot: 90 },     // LDO input
-  { part: parts.cp, ref: 'C2', value: '10uF', x: 250, y: 560, rot: 90 },    // LDO output bulk
-  { part: parts.c, ref: 'C3', value: '100nF', x: 250, y: 640, rot: 90 },    // LDO output HF
+  { part: parts.cp, ref: 'C1', value: '10uF', x: 90, y: 560, rot: 90 },       // VBUS bulk
+  { part: parts.cp, ref: 'C2', value: '10uF', x: 250, y: 560, rot: 90 },      // +5V bulk  )
+  { part: parts.c, ref: 'C3', value: '100nF', x: 330, y: 560, rot: 90 },      // +5V HF    ) parallel
   // --- USB to serial -----------------------------------------------------
   { part: parts.ch340, ref: 'U3', value: 'CH340G', x: 470, y: 330 },
-  { part: parts.c, ref: 'C9', value: '100nF', x: 620, y: 250, rot: 90 },    // V3 regulator
+  { part: parts.c, ref: 'C9', value: '100nF', x: 620, y: 250, rot: 90 },      // V3 regulator
   { part: parts.xtal, ref: 'Y2', value: '12MHz', x: 380, y: 600 },
   { part: parts.c, ref: 'C6', value: '22pF', x: 320, y: 660, rot: 90 },
   { part: parts.c, ref: 'C7', value: '22pF', x: 440, y: 660, rot: 90 },
-  // --- MCU ---------------------------------------------------------------
+  // --- MCU and its decoupling -------------------------------------------
   { part: parts.mcu, ref: 'U1', value: 'STC89C52RC-40I', x: 800, y: 380 },
-  { part: parts.xtal, ref: 'Y1', value: '11.0592MHz', x: 120, y: 650 },
-  { part: parts.c, ref: 'C4', value: '30pF', x: 70, y: 720, rot: 90 },
-  { part: parts.c, ref: 'C5', value: '30pF', x: 190, y: 720, rot: 90 },
-  { part: parts.c, ref: 'C10', value: '100nF', x: 900, y: 545, rot: 90 },   // MCU decoupling
-  { part: parts.cp, ref: 'C11', value: '10uF', x: 960, y: 545, rot: 90 },
+  { part: parts.c, ref: 'C10', value: '100nF', x: 555, y: 545, rot: 90 },     // ) parallel
+  { part: parts.cp, ref: 'C11', value: '10uF', x: 630, y: 545, rot: 90 },    // )
+  // --- MCU clock (wired to the XTAL pins by label) -----------------------
+  { part: parts.xtal, ref: 'Y1', value: '11.0592MHz', x: 170, y: 675 },
+  { part: parts.c, ref: 'C4', value: '30pF', x: 110, y: 735, rot: 90 },
+  { part: parts.c, ref: 'C5', value: '30pF', x: 230, y: 735, rot: 90 },
   // --- reset -------------------------------------------------------------
   { part: parts.sw, ref: 'SW1', value: 'RESET', x: 640, y: 150, rot: 90 },
   { part: parts.cp, ref: 'C8', value: '10uF', x: 750, y: 150, rot: 90 },
   { part: parts.r, ref: 'R1', value: '10k', x: 850, y: 205, rot: 90 },
-  // --- indicator + download header ---------------------------------------
-  { part: parts.r, ref: 'R2', value: '1k', x: 1020, y: 200, rot: 90 },
-  { part: parts.led, ref: 'D1', value: 'RED', x: 1020, y: 280 },
-  { part: parts.hdr5, ref: 'J2', value: 'ISP', x: 1060, y: 430, rot: 90 },
-  // IO breakouts: P1 and P2 on 2.54 mm headers, so the board is usable as a dev board
-  { part: parts.hdr8, ref: 'J3', value: 'P1.0-P1.7', x: 560, y: 210 },
-  { part: parts.hdr8, ref: 'J4', value: 'P2.0-P2.7', x: 1050, y: 520 },
+  // --- power indicator ----------------------------------------------------
+  { part: parts.r, ref: 'R2', value: '1k', x: 300, y: 262, rot: 90 },
+  { part: parts.led, ref: 'D1', value: 'RED', x: 300, y: 332 },
+  // --- headers on the right edge -----------------------------------------
+  // headers are rotated so their pins stack VERTICALLY: side by side, the power
+  // flag graphics of adjacent pins overlap and silently short the nets
+  { part: parts.hdr8, ref: 'J3', value: 'P1', x: 1030, y: 240, rot: 90 },
+  { part: parts.hdr8, ref: 'J4', value: 'P2', x: 1030, y: 360, rot: 90 },
+  { part: parts.hdr5, ref: 'J2', value: 'ISP', x: 1030, y: 500, rot: 90 },
 ];
 
 const probe = new SchematicBuilder({ title: 'probe' });
@@ -96,180 +108,206 @@ const P = (ref) => {
   if (!p) throw new Error(`unknown pin ${ref}`);
   return { x: p.x, y: p.y };
 };
-const stub = (ref, dx = 26, dy = 0) => ({ x: P(ref).x + dx, y: P(ref).y + dy });
-// CH340G pins 1-8 sit on the left edge and 9-16 on the right edge, so a stub has
-// to leave the symbol on the correct side (an inward stub draws over the body).
-const lStub = (ref) => stub(ref, -26);
-const rStub = (ref) => stub(ref, 26);
+/**
+ * Which way a pin leaves its symbol: 0 up, 90 right, 180 down, 270 left.
+ *
+ * Read from the pin's own `path`, not from `orient`: the library is not
+ * consistent about that field (a CH340G pin carries the outward direction, a
+ * capacitor pin carries the stub direction), and trusting it put both crystal
+ * pins on one net and hung the load capacitors off GND. The path is unambiguous -
+ * it runs from the connection point into the symbol, so outward is the opposite.
+ */
+const OUT = (ref) => {
+  const p = probe.pins().get(ref);
+  if (!p) throw new Error(`unknown pin ${ref}`);
+  const path = String(p.path ?? '');
+  let dx = 0, dy = 0;
+  const h = /h\s*(-?[\d.]+)/i.exec(path);
+  const v = /v\s*(-?[\d.]+)/i.exec(path);
+  const L = /L\s*(-?[\d.]+)\s+(-?[\d.]+)/i.exec(path);
+  const M = /M\s*(-?[\d.]+)\s+(-?[\d.]+)/i.exec(path);
+  if (h) dx = Number(h[1]);
+  else if (v) dy = Number(v[1]);
+  else if (L && M) { dx = Number(L[1]) - Number(M[1]); dy = Number(L[2]) - Number(M[2]); }
+  if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? 270 : 90;   // stub right -> out left
+  return dy > 0 ? 0 : 180;                                     // stub down  -> out up
+};
+// 0 up, 90 right, 180 down, 270 left - in screen coordinates (y grows downward)
+const DIRV = { 0: [0, -1], 90: [1, 0], 180: [0, 1], 270: [-1, 0] };
+const step = (ref, dist = 10) => {
+  const p = P(ref);
+  const [dx, dy] = DIRV[OUT(ref)] ?? [0, 1];
+  return { x: Math.round(p.x + dx * dist), y: Math.round(p.y + dy * dist) };
+};
+const wires = [];
+/** Stub a pin outward and return the point where a label/flag should sit. */
+const stubOut = (ref, dist = 22) => {
+  const end = step(ref, dist);
+  wires.push({ points: [P(ref), end] });
+  return end;
+};
+const labels = [];
+const flags = [];
+const junctions = [];
+/** Net label just outside the pin (never over the symbol body). */
+const labelOut = (ref, text, dist = 22) => {
+  const end = stubOut(ref, dist);
+  const d = OUT(ref);
+  labels.push({ text, at: end, anchor: d === 270 ? 'end' : d === 90 ? 'start' : 'start' });
+};
+/** Power flag outside the pin, graphic pointing away from the part. */
+const flagOut = (ref, text, kind, dist = 22) => {
+  const end = stubOut(ref, dist);
+  flags.push({ text, kind, at: end, rot: OUT(ref) });
+};
+/** Flag placed directly on a pin that already has a wire (no extra stub). */
+const flagAt = (point, text, kind, rot) => flags.push({ text, kind, at: point, rot });
 
-// rails for the reset block (kept identical in style to the minimal-system sheet)
-const railTop = 90;
-const railRst = 190;
-const mcuStub = P('U1.9').x - 46;
 
-const spec = {
-  title: 'STC89C52RC + AMS1117-5.0 + CH340G USB 下载板',
-  company: 'lceda-ai',
-  rev: '1.0',
-  date: new Date().toISOString().slice(0, 10),
-  drawnBy: 'AI Agent',
-  components: COMPONENTS,
-  wires: [
-    // ---- USB connector to the LDO input ---------------------------------
-    { points: [P('J1.1'), { x: P('J1.1').x - 30, y: P('J1.1').y }] },
-    { points: [P('J1.2'), { x: P('J1.2').x - 30, y: P('J1.2').y }] },
-    { points: [P('J1.3'), { x: P('J1.3').x - 30, y: P('J1.3').y }] },
-    { points: [P('J1.5'), { x: P('J1.5').x - 30, y: P('J1.5').y }] },
-    // ---- LDO in / out ----------------------------------------------------
-    { points: [P('U2.3'), { x: P('U2.3').x + 30, y: P('U2.3').y }] },
-    { points: [P('U2.2'), { x: P('U2.2').x + 30, y: P('U2.2').y }] },
-    { points: [P('U2.1'), { x: P('U2.1').x - 30, y: P('U2.1').y }] },
-    { points: [P('C1.1'), { x: P('C1.1').x, y: P('C1.1').y - 24 }] },
-    { points: [P('C2.1'), { x: P('C2.1').x, y: P('C2.1').y - 24 }] },
-    { points: [P('C3.1'), { x: P('C3.1').x, y: P('C3.1').y - 24 }] },
-    // ---- CH340G: V3 regulator cap ---------------------------------------
-    // A wire from V3 to C9 would run straight through the symbol body and touch
-    // DTR# (same y on the right edge), so V3 is carried by a label instead.
-    { points: [P('U3.4'), lStub('U3.4')] },
-    { points: [P('C9.2'), { x: P('C9.2').x, y: P('C9.2').y + 26 }] },
-    { points: [P('C9.1'), { x: P('C9.1').x, y: P('C9.1').y - 22 }] },
-    // ---- CH340G: 12 MHz crystal + load caps ------------------------------
-    // Crystal and its caps are wired locally; XI/XO reach the chip by label, so
-    // the two nets cannot short against each other along the pin column.
-    { points: [P('Y2.1'), { x: P('C6.1').x, y: P('Y2.1').y }, P('C6.1')] },
-    { points: [P('Y2.2'), { x: P('C7.1').x, y: P('Y2.2').y }, P('C7.1')] },
-    { points: [P('U3.7'), lStub('U3.7')] },
-    { points: [P('U3.8'), lStub('U3.8')] },
-    // ---- CH340G: serial + USB data + R232 --------------------------------
-    { points: [P('U3.2'), lStub('U3.2')] },
-    { points: [P('U3.3'), lStub('U3.3')] },
-    { points: [P('U3.5'), lStub('U3.5')] },
-    { points: [P('U3.6'), lStub('U3.6')] },
-    { points: [P('U3.15'), rStub('U3.15')] },
-    { points: [P('U3.16'), rStub('U3.16')] },
-    { points: [P('U3.1'), lStub('U3.1')] },
-    // ---- MCU clock -------------------------------------------------------
-    { points: [P('U1.19'), { x: mcuStub, y: P('U1.19').y }] },
-    { points: [P('U1.18'), { x: mcuStub, y: P('U1.18').y }] },
-    { points: [P('U1.10'), { x: mcuStub, y: P('U1.10').y }] },
-    { points: [P('U1.11'), { x: mcuStub, y: P('U1.11').y }] },
-    { points: [P('Y1.1'), { x: P('Y1.1').x, y: P('C4.1').y }, P('C4.1')] },
-    { points: [P('Y1.2'), { x: P('Y1.2').x, y: P('C5.1').y }, P('C5.1')] },
-    // ---- MCU power pins ---------------------------------------------------
-    { points: [P('U1.40'), { x: P('U1.40').x + 24, y: P('U1.40').y }] },
-    { points: [P('U1.31'), { x: P('U1.31').x + 24, y: P('U1.31').y }] },
-    { points: [P('U1.20'), { x: P('U1.20').x - 24, y: P('U1.20').y }] },
-    { points: [P('C10.1'), { x: P('C10.1').x, y: P('C10.1').y - 22 }] },
-    { points: [P('C11.1'), { x: P('C11.1').x, y: P('C11.1').y - 22 }] },
-    // ---- reset network ----------------------------------------------------
+// ---- USB input ------------------------------------------------------------
+labelOut('J1.1', 'VBUS');
+labelOut('J1.2', 'USB_D-');
+labelOut('J1.3', 'USB_D+');
+flagOut('J1.5', 'GND', 'part_netLabel_gnD');
+
+// ---- LDO: VIN / VOUT / GND ------------------------------------------------
+labelOut('U2.3', 'VBUS');
+flagOut('U2.2', '+5V', 'part_netLabel_+5V');
+flagOut('U2.1', 'GND', 'part_netLabel_gnD');
+
+// ---- input bulk cap -------------------------------------------------------
+{
+  const top = step('C1.1', 26), bottom = step('C1.2', 26);
+  wires.push({ points: [P('C1.1'), top] }, { points: [P('C1.2'), bottom] });
+  labels.push({ text: 'VBUS', at: top, anchor: 'start' });
+  flagAt(bottom, 'GND', 'part_netLabel_gnD', OUT('C1.2'));
+}
+
+// ---- output caps in parallel on shared rails ------------------------------
+for (const [left, right] of [['C2', 'C3'], ['C10', 'C11']]) {
+  const railTop = P(`${left}.1`).y - 30;
+  const railBottom = P(`${left}.2`).y + 30;
+  wires.push(
+    { points: [P(`${left}.1`), { x: P(`${left}.1`).x, y: railTop }] },
+    { points: [P(`${right}.1`), { x: P(`${right}.1`).x, y: railTop }] },
+    { points: [{ x: P(`${left}.1`).x, y: railTop }, { x: P(`${right}.1`).x, y: railTop }] },
+    { points: [P(`${left}.2`), { x: P(`${left}.2`).x, y: railBottom }] },
+    { points: [P(`${right}.2`), { x: P(`${right}.2`).x, y: railBottom }] },
+    { points: [{ x: P(`${left}.2`).x, y: railBottom }, { x: P(`${right}.2`).x, y: railBottom }] },
+  );
+  flagAt({ x: P(`${left}.1`).x, y: railTop }, '+5V', 'part_netLabel_+5V', 0);
+  flagAt({ x: P(`${left}.2`).x, y: railBottom }, 'GND', 'part_netLabel_gnD', 180);
+  junctions.push({ at: [P(`${left}.1`).x, railTop] }, { at: [P(`${left}.2`).x, railBottom] });
+}
+
+// ---- CH340G ---------------------------------------------------------------
+flagOut('U3.1', 'GND', 'part_netLabel_gnD');
+labelOut('U3.2', 'TXD');
+labelOut('U3.3', 'RXD');
+labelOut('U3.4', 'V3');
+labelOut('U3.5', 'USB_D+');
+labelOut('U3.6', 'USB_D-');
+labelOut('U3.7', 'XI');
+labelOut('U3.8', 'XO');
+flagOut('U3.15', 'GND', 'part_netLabel_gnD');   // R232 low = TTL levels
+flagOut('U3.16', '+5V', 'part_netLabel_+5V');
+
+// ---- CH340G V3 regulator cap ---------------------------------------------
+{
+  const top = step('C9.1', 24), bottom = step('C9.2', 24);
+  wires.push({ points: [P('C9.1'), top] }, { points: [P('C9.2'), bottom] });
+  flagAt(top, 'GND', 'part_netLabel_gnD', OUT('C9.1'));
+  labels.push({ text: 'V3', at: bottom, anchor: 'start' });
+}
+
+// ---- 12 MHz crystal + load caps ------------------------------------------
+labelOut('Y2.1', 'XI', 34);
+labelOut('Y2.2', 'XO', 34);
+labelOut('C6.1', 'XI', 24);
+labelOut('C7.1', 'XO', 24);
+flagOut('C6.2', 'GND', 'part_netLabel_gnD', 24);
+flagOut('C7.2', 'GND', 'part_netLabel_gnD', 24);
+
+// ---- 11.0592 MHz crystal + load caps -------------------------------------
+labelOut('Y1.1', 'XTAL1', 34);
+labelOut('Y1.2', 'XTAL2', 34);
+labelOut('C4.1', 'XTAL1', 24);
+labelOut('C5.1', 'XTAL2', 24);
+flagOut('C4.2', 'GND', 'part_netLabel_gnD', 24);
+flagOut('C5.2', 'GND', 'part_netLabel_gnD', 24);
+
+// ---- MCU ------------------------------------------------------------------
+for (let i = 0; i < 8; i++) labelOut(`U1.${i + 1}`, `P1.${i}`);          // P1.0-P1.7
+labelOut('U1.9', 'RST');
+labelOut('U1.10', 'RXD');
+labelOut('U1.11', 'TXD');
+labelOut('U1.18', 'XTAL2');
+labelOut('U1.19', 'XTAL1');
+flagOut('U1.20', 'GND', 'part_netLabel_gnD', 12);  // short: C10's +5V flag sits nearby
+for (let i = 0; i < 8; i++) labelOut(`U1.${i + 21}`, `P2.${i}`);         // P2.0-P2.7
+flagOut('U1.31', '+5V', 'part_netLabel_+5V');                            // /EA high = internal ROM
+flagOut('U1.40', '+5V', 'part_netLabel_+5V');
+
+// ---- reset: local wiring, RST reaches the MCU by label --------------------
+{
+  const railTop = 90;
+  const railRst = 190;
+  wires.push(
     { points: [P('SW1.2'), P('SW1.1')] },
     { points: [P('SW1.2'), { x: P('SW1.2').x, y: railTop }, { x: P('C8.1').x, y: railTop }, P('C8.1')] },
     { points: [P('SW1.4'), P('SW1.3')] },
     { points: [P('SW1.4'), { x: P('SW1.4').x, y: railRst }, { x: P('R1.1').x, y: railRst }, P('R1.1')] },
     { points: [P('C8.2'), { x: P('C8.2').x, y: railRst }] },
-    { points: [{ x: P('R1.1').x, y: railRst }, { x: mcuStub - 12, y: railRst }, { x: mcuStub - 12, y: P('U1.9').y }, P('U1.9')] },
-    // ---- power indicator ---------------------------------------------------
-    { points: [P('R2.2'), P('D1.A@1')] },
-    { points: [P('R2.1'), { x: P('R2.1').x, y: P('R2.1').y - 22 }] },
-    // ---- ISP header stubs --------------------------------------------------
-    { points: [P('J2.1'), { x: P('J2.1').x - 24, y: P('J2.1').y }] },
-    { points: [P('J2.2'), { x: P('J2.2').x - 24, y: P('J2.2').y }] },
-    { points: [P('J2.3'), { x: P('J2.3').x - 24, y: P('J2.3').y }] },
-    { points: [P('J2.4'), { x: P('J2.4').x - 24, y: P('J2.4').y }] },
-    { points: [P('J2.5'), { x: P('J2.5').x - 24, y: P('J2.5').y }] },
-    // IO breakout stubs: the MCU pin column and the header both get a short stub,
-    // the net is carried by a P1.x / P2.x label
-    ...Array.from({ length: 8 }, (_, i) => ({ points: [P(`U1.${i + 1}`), { x: mcuStub, y: P(`U1.${i + 1}`).y }] })),
-    ...Array.from({ length: 8 }, (_, i) => ({ points: [P(`U1.${i + 21}`), { x: P(`U1.${i + 21}`).x + 24, y: P(`U1.${i + 21}`).y }] })),
-    ...Array.from({ length: 8 }, (_, i) => ({ points: [P(`J3.${i + 1}`), { x: P(`J3.${i + 1}`).x - 22, y: P(`J3.${i + 1}`).y }] })),
-    ...Array.from({ length: 8 }, (_, i) => ({ points: [P(`J4.${i + 1}`), { x: P(`J4.${i + 1}`).x + 22, y: P(`J4.${i + 1}`).y }] })),
-  ],
-  labels: [
-    // USB side
-    { text: 'VBUS', at: { x: P('J1.1').x - 30, y: P('J1.1').y }, anchor: 'end' },
-    { text: 'USB_D-', at: { x: P('J1.2').x - 30, y: P('J1.2').y }, anchor: 'end' },
-    { text: 'USB_D+', at: { x: P('J1.3').x - 30, y: P('J1.3').y }, anchor: 'end' },
-    { text: 'VBUS', at: { x: P('U2.3').x + 30, y: P('U2.3').y }, anchor: 'start' },
-    { text: 'VBUS', at: { x: P('C1.1').x, y: P('C1.1').y - 24 }, anchor: 'start' },
-    // CH340G signals
-    { text: 'TXD', at: lStub('U3.2'), anchor: 'end' },
-    { text: 'RXD', at: lStub('U3.3'), anchor: 'end' },
-    { text: 'USB_D+', at: lStub('U3.5'), anchor: 'end' },
-    { text: 'USB_D-', at: lStub('U3.6'), anchor: 'end' },
-    { text: 'V3', at: lStub('U3.4'), anchor: 'end' },
-    { text: 'V3', at: { x: P('C9.2').x, y: P('C9.2').y + 26 }, anchor: 'start' },
-    { text: 'XI', at: lStub('U3.7'), anchor: 'end' },
-    { text: 'XO', at: lStub('U3.8'), anchor: 'end' },
-    { text: 'XI', at: { x: (P('Y2.1').x + P('C6.1').x) / 2, y: P('Y2.1').y }, anchor: 'middle' },
-    { text: 'XO', at: { x: (P('Y2.2').x + P('C7.1').x) / 2, y: P('Y2.2').y }, anchor: 'middle' },
-    // MCU side
-    { text: 'XTAL1', at: { x: mcuStub, y: P('U1.19').y }, anchor: 'end' },
-    { text: 'XTAL2', at: { x: mcuStub, y: P('U1.18').y }, anchor: 'end' },
-    { text: 'RXD', at: { x: mcuStub, y: P('U1.10').y }, anchor: 'end' },
-    { text: 'TXD', at: { x: mcuStub, y: P('U1.11').y }, anchor: 'end' },
-    { text: 'RST', at: { x: mcuStub, y: P('U1.9').y }, anchor: 'end' },
-    // labels must sit exactly ON the wire, otherwise the net silently breaks
-    { text: 'XTAL1', at: { x: P('Y1.1').x, y: (P('Y1.1').y + P('C4.1').y) / 2 }, anchor: 'end' },
-    { text: 'XTAL2', at: { x: P('Y1.2').x, y: (P('Y1.2').y + P('C5.1').y) / 2 }, anchor: 'start' },
-    { text: 'RST', at: { x: P('SW1.4').x + 22, y: railRst }, anchor: 'start' },
-    { text: 'PWR_LED', at: { x: P('D1.A@1').x, y: (P('R2.2').y + P('D1.A@1').y) / 2 }, anchor: 'start' },
-    // ISP header
-    { text: 'RXD', at: { x: P('J2.3').x - 24, y: P('J2.3').y }, anchor: 'end' },
-    { text: 'TXD', at: { x: P('J2.4').x - 24, y: P('J2.4').y }, anchor: 'end' },
-    { text: 'RST', at: { x: P('J2.5').x - 24, y: P('J2.5').y }, anchor: 'end' },
-    // P1.0-P1.7 and P2.0-P2.7 breakouts
-    ...Array.from({ length: 8 }, (_, i) => ({ text: `P1.${i}`, at: { x: mcuStub, y: P(`U1.${i + 1}`).y }, anchor: 'end' })),
-    ...Array.from({ length: 8 }, (_, i) => ({ text: `P2.${i}`, at: { x: P(`U1.${i + 21}`).x + 24, y: P(`U1.${i + 21}`).y }, anchor: 'start' })),
-    ...Array.from({ length: 8 }, (_, i) => ({ text: `P1.${i}`, at: { x: P(`J3.${i + 1}`).x - 22, y: P(`J3.${i + 1}`).y }, anchor: 'end' })),
-    ...Array.from({ length: 8 }, (_, i) => ({ text: `P2.${i}`, at: { x: P(`J4.${i + 1}`).x + 22, y: P(`J4.${i + 1}`).y }, anchor: 'start' })),
-  ],
-  flags: [
-    // +5V rail
-    { text: '+5V', kind: 'part_netLabel_+5V', at: { x: P('U2.2').x + 30, y: P('U2.2').y }, rot: 90 },
-    { text: '+5V', kind: 'part_netLabel_+5V', at: { x: P('C2.1').x, y: P('C2.1').y - 24 }, rot: 0 },
-    { text: '+5V', kind: 'part_netLabel_+5V', at: { x: P('C3.1').x, y: P('C3.1').y - 24 }, rot: 0 },
-    { text: '+5V', kind: 'part_netLabel_+5V', at: rStub('U3.16'), rot: 90 },
-    { text: '+5V', kind: 'part_netLabel_+5V', at: { x: P('U1.40').x + 24, y: P('U1.40').y }, rot: 90 },
-    { text: '+5V', kind: 'part_netLabel_+5V', at: { x: P('U1.31').x + 24, y: P('U1.31').y }, rot: 90 },
-    { text: '+5V', kind: 'part_netLabel_+5V', at: { x: P('SW1.2').x, y: railTop }, rot: 0 },
-    { text: '+5V', kind: 'part_netLabel_+5V', at: { x: P('R2.1').x, y: P('R2.1').y - 22 }, rot: 0 },
-    { text: '+5V', kind: 'part_netLabel_+5V', at: { x: P('C10.1').x, y: P('C10.1').y - 22 }, rot: 0 },
-    { text: '+5V', kind: 'part_netLabel_+5V', at: { x: P('C11.1').x, y: P('C11.1').y - 22 }, rot: 0 },
-    { text: '+5V', kind: 'part_netLabel_+5V', at: { x: P('J2.1').x - 24, y: P('J2.1').y }, rot: 270 },
-    // GND
-    { text: 'GND', kind: 'part_netLabel_gnD', at: { x: P('J1.5').x - 30, y: P('J1.5').y }, rot: 270 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: { x: P('U2.1').x - 30, y: P('U2.1').y }, rot: 270 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: P('C1.2'), rot: 180 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: P('C2.2'), rot: 180 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: P('C3.2'), rot: 180 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: { x: P('C9.1').x, y: P('C9.1').y - 22 }, rot: 0 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: P('C6.2'), rot: 180 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: P('C7.2'), rot: 180 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: lStub('U3.1'), rot: 90 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: rStub('U3.15'), rot: 270 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: { x: P('U1.20').x - 24, y: P('U1.20').y }, rot: 270 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: P('C4.2'), rot: 180 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: P('C5.2'), rot: 180 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: P('C10.2'), rot: 180 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: P('C11.2'), rot: 180 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: P('R1.2'), rot: 180 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: P('D1.C@1'), rot: 180 },
-    { text: 'GND', kind: 'part_netLabel_gnD', at: { x: P('J2.2').x - 24, y: P('J2.2').y }, rot: 270 },
-  ],
-  junctions: [
-    { at: [P('R1.1').x, railRst] },
-    { at: [P('C8.2').x, railRst] },
-  ],
+  );
+  junctions.push({ at: [P('R1.1').x, railRst] }, { at: [P('C8.2').x, railRst] });
+  flagAt({ x: P('SW1.2').x, y: railTop }, '+5V', 'part_netLabel_+5V', 0);
+  labels.push({ text: 'RST', at: { x: P('C8.2').x, y: railRst }, anchor: 'start' });
+  flagOut('R1.2', 'GND', 'part_netLabel_gnD');
+}
+
+// ---- power indicator ------------------------------------------------------
+flagOut('R2.1', '+5V', 'part_netLabel_+5V');
+wires.push({ points: [P('R2.2'), P('D1.A@1')] });
+flagOut('D1.C@1', 'GND', 'part_netLabel_gnD');
+
+// ---- ISP header -----------------------------------------------------------
+// the two power flags get different stub lengths so their symbols do not touch
+flagOut('J2.1', '+5V', 'part_netLabel_+5V', 44);
+flagOut('J2.2', 'GND', 'part_netLabel_gnD', 62);
+labelOut('J2.3', 'RXD', 26);
+labelOut('J2.4', 'TXD', 44);
+labelOut('J2.5', 'RST', 62);
+
+// ---- IO breakouts ---------------------------------------------------------
+// A 1xN header's pins are always in one row 10 units apart, so neighbouring
+// label texts would overlap (and overlapping labels merge nets). Fan them out:
+// alternate short and long stubs, which puts adjacent labels 18 units apart.
+// four stub lengths, so labels sharing a row are 40 units apart (wider than the
+// text) and neighbouring rows are 18 apart - two levels still ran together
+for (let i = 0; i < 8; i++) labelOut(`J3.${i + 1}`, `P1.${i}`, 26 + (i % 4) * 18);
+for (let i = 0; i < 8; i++) labelOut(`J4.${i + 1}`, `P2.${i}`, 26 + (i % 4) * 18);
+
+const spec = {
+  title: 'STC89C52RC + AMS1117-5.0 + CH340G USB 下载板',
+  company: 'lceda-ai',
+  rev: '1.1',
+  date: new Date().toISOString().slice(0, 10),
+  drawnBy: 'AI Agent',
+  components: COMPONENTS,
+  wires,
+  labels,
+  flags,
+  junctions,
   texts: [
-    { text: 'STC89C52RC + AMS1117-5.0 + CH340G USB 下载板', at: [40, 40], size: 13, color: '#000080' },
-    { text: '符号全部取自立创EDA标准库;CH340G 引脚依据数据手册 16/16 校验通过', at: [40, 58], size: 7, color: '#000080' },
-    { text: '设计要点:', at: [40, 84], size: 8, color: '#004080' },
-    { text: '· 电源:USB 5V → AMS1117-5.0 → VCC(带载约 4.4V,STC89C52RC 规定 3.4~5.5V)', at: [40, 100], size: 7, color: '#404040' },
-    { text: '· 下载:CH340G TXD→P3.0(RXD),RXD←P3.1(TXD);STC89C52RC 走 UART ISP,不是 SPI', at: [40, 114], size: 7, color: '#404040' },
-    { text: '· 冷启动:按 SW1 复位或重新插拔 USB,配合 STC-ISP 等待上电', at: [40, 128], size: 7, color: '#404040' },
-    { text: '· CH340G 的 CTS#/DSR#/RI#/DCD#/DTR#/RTS# 与 USB 的 ID 脚悬空', at: [40, 142], size: 7, color: '#404040' },
-    { text: '· P1.0~P1.7 / P2.0~P2.7 引出到 J3 / J4;P0、P3 其余引脚本板未引出', at: [40, 156], size: 7, color: '#404040' },
-    { text: '· 12MHz(CH340G)+2×22pF;11.0592MHz(MCU)+2×30pF,波特率精确', at: [40, 170], size: 7, color: '#404040' },
+    { text: 'STC89C52RC + AMS1117-5.0 + CH340G USB 下载板', at: [70, 60], size: 13, color: '#000080' },
+    { text: '符号全部取自立创EDA标准库,CH340G 引脚依据数据手册 16/16 校验通过', at: [70, 78], size: 7, color: '#000080' },
+    { text: '设计要点:', at: [70, 104], size: 8, color: '#004080' },
+    { text: '· 电源:USB 5V → AMS1117-5.0 → VCC ≈4.4V(STC89C52RC 允许 3.4-5.5V)', at: [70, 120], size: 7, color: '#404040' },
+    { text: '· 下载:CH340G ↔ P3.0/P3.1;STC89C52RC 走 UART ISP,不是 SPI', at: [70, 134], size: 7, color: '#404040' },
+    { text: '· 冷启动:按 SW1 复位或重插 USB,配合 STC-ISP 等待上电', at: [70, 148], size: 7, color: '#404040' },
+    { text: '· CH340G 未用调制解调器引脚与 USB 的 ID 脚悬空', at: [70, 162], size: 7, color: '#404040' },
+    { text: '· 去耦电容成对并联:C2/C3 在 LDO 输出,C10/C11 在 MCU', at: [70, 176], size: 7, color: '#404040' },
+    { text: '· P1.0-P1.7 引出到 J3;P2.0-P2.7 引出到 J4;ISP 下载口引出到 J2', at: [70, 190], size: 7, color: '#404040' },
   ],
 };
 
@@ -277,12 +315,12 @@ const { doc, text, netlist, warnings } = buildFromSpec(spec);
 await writeDocument(`${base}.esch`, text);
 const { markdown } = buildReport(doc, netlist, { sheetName: 'STC89C52RC USB 下载板' });
 await fs.writeFile(`${base}.report.md`, markdown, 'utf8');
-await exportJson(`${base}.esch`, { out: `${base}.json`, projectDir: path.join(here, 'STC89C52RC-USB-ISP') });
+await exportJson(`${base}.esch`, { out: `${base}.json`, projectDir: path.join(here, 'stc89c52rc-usb-isp') });
 const results = await convert(`${base}.esch`, { formats: ['svg', 'png', 'pdf', 'report'], scale: 3 });
 
 console.log('--- warnings ---');
 for (const w of warnings) console.log(' !', w);
 console.log('--- nets ---');
-for (const n of netlist.nets) console.log(n.name.padEnd(10), n.pins.map((p) => `${p.ref}.${p.pin}`).join(' '));
+for (const n of netlist.nets.filter((x) => x.pins.length > 1)) console.log(n.name.padEnd(10), n.pins.map((p) => `${p.ref}.${p.pin}`).join(' '));
 console.log('stats:', JSON.stringify(netlist.statistics));
 for (const r of results) console.log('rendered:', r.input, Object.keys(r.outputs ?? {}).join(','));

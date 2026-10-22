@@ -2,17 +2,17 @@
   "meta": {
     "sheet": "stc89c52rc-usb-isp",
     "editorVersion": "6.5.51",
-    "uuid": "4ddef658888c87352d3f65d02abaf91d",
+    "uuid": "5673d6ee064cbe9bdde8011a3dbc49cb",
     "warnings": [],
     "statistics": {
       "components": 24,
       "pins": 121,
-      "wires": 80,
-      "junctions": 2,
-      "netLabels": 59,
-      "netFlags": 29,
+      "wires": 99,
+      "junctions": 6,
+      "netLabels": 62,
+      "netFlags": 25,
       "nets": 53,
-      "namedNets": 30,
+      "namedNets": 29,
       "conflicts": 0
     }
   },
@@ -344,7 +344,7 @@
     {
       "ref": "J3",
       "name": "HDR-M-2.54_1X8",
-      "value": "P1.0-P1.7",
+      "value": "P1",
       "package": "HDR-M-2.54_1X8",
       "mfrPart": "HDR-M-2.54_1X8",
       "lcsc": "",
@@ -395,7 +395,7 @@
     {
       "ref": "J4",
       "name": "HDR-M-2.54_1X8",
-      "value": "P2.0-P2.7",
+      "value": "P2",
       "package": "HDR-M-2.54_1X8",
       "mfrPart": "HDR-M-2.54_1X8",
       "lcsc": "",
@@ -908,7 +908,7 @@
         "U2.2(VOUT)",
         "U3.16(VCC)"
       ],
-      "wireCount": 12
+      "wireCount": 14
     },
     {
       "name": "GND",
@@ -935,10 +935,21 @@
         "U3.1(GND)",
         "U3.15(R232)"
       ],
-      "wireCount": 7
+      "wireCount": 20
     },
     {
       "name": "N$1",
+      "named": false,
+      "aliases": [],
+      "conflict": false,
+      "connections": [
+        "D1.A@1(A)",
+        "R2.2"
+      ],
+      "wireCount": 1
+    },
+    {
+      "name": "N$2",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -948,7 +959,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$2",
+      "name": "N$3",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -958,7 +969,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$3",
+      "name": "N$4",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -968,7 +979,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$4",
+      "name": "N$5",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -978,7 +989,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$5",
+      "name": "N$6",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -988,7 +999,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$6",
+      "name": "N$7",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -998,7 +1009,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$7",
+      "name": "N$8",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1008,7 +1019,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$8",
+      "name": "N$9",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1018,7 +1029,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$9",
+      "name": "N$10",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1028,7 +1039,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$10",
+      "name": "N$11",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1038,7 +1049,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$11",
+      "name": "N$12",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1048,7 +1059,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$12",
+      "name": "N$13",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1058,7 +1069,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$13",
+      "name": "N$14",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1068,7 +1079,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$14",
+      "name": "N$15",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1078,7 +1089,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$15",
+      "name": "N$16",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1088,7 +1099,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$16",
+      "name": "N$17",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1098,7 +1109,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$17",
+      "name": "N$18",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1108,7 +1119,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$18",
+      "name": "N$19",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1118,7 +1129,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$19",
+      "name": "N$20",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1128,7 +1139,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$20",
+      "name": "N$21",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1138,7 +1149,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$21",
+      "name": "N$22",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1148,7 +1159,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$22",
+      "name": "N$23",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1158,7 +1169,7 @@
       "wireCount": 0
     },
     {
-      "name": "N$23",
+      "name": "N$24",
       "named": false,
       "aliases": [],
       "conflict": false,
@@ -1344,17 +1355,6 @@
       "wireCount": 2
     },
     {
-      "name": "PWR_LED",
-      "named": true,
-      "aliases": [],
-      "conflict": false,
-      "connections": [
-        "D1.A@1(A)",
-        "R2.2"
-      ],
-      "wireCount": 1
-    },
-    {
       "name": "RST",
       "named": true,
       "aliases": [],
@@ -1448,7 +1448,7 @@
         "U3.7(XI)",
         "Y2.1(OSC1)"
       ],
-      "wireCount": 2
+      "wireCount": 3
     },
     {
       "name": "XO",
@@ -1460,7 +1460,7 @@
         "U3.8(XO)",
         "Y2.2(OSC2)"
       ],
-      "wireCount": 2
+      "wireCount": 3
     },
     {
       "name": "XTAL1",
@@ -1472,7 +1472,7 @@
         "U1.19(XTAL1)",
         "Y1.1(OSC1)"
       ],
-      "wireCount": 2
+      "wireCount": 3
     },
     {
       "name": "XTAL2",
@@ -1484,7 +1484,7 @@
         "U1.18(XTAL2)",
         "Y1.2(OSC2)"
       ],
-      "wireCount": 2
+      "wireCount": 3
     }
   ]
 }

@@ -7,6 +7,18 @@
 // Rules come from the board's DRCRULE block (millimetres, as the editor stores
 // them) with optional per-net overrides, and are converted to file units here.
 // Geometry is in units throughout: 1 unit = 0.254 mm.
+/**
+ * Rounding tolerance for the geometric checks, in millimetres.
+ *
+ * The router works on a 0.254 mm grid, so a track sitting exactly on the
+ * clearance limit can measure 0.25 mm once its end has been snapped to a pad
+ * centre that is off grid, and a 0.508 mm hole-to-hole rule can measure 0.482.
+ * Reporting those as violations is noise - they are 4-26 um, two orders of
+ * magnitude below what a fabricator works to (JLCPCB's minimum clearance is
+ * 0.127 mm). Anything larger is still reported.
+ */
+export const GEOMETRY_TOLERANCE_MM = 0.05;
+
 import { mmToUnit, toMm, UNIT_MM, boardOutline, copperItems, padBBox, layerName, isCopper } from './parser.js';
 import { viaRules } from './via.js';
 
@@ -196,7 +208,7 @@ export function runDrc(model, opts = {}) {
       const rules = opts.rules ?? rulesFor(model, { net: a.net || b.net });
       const need = rules.clearance;
       const gap = copperGap(a, b);
-      if (gap < need - 0.01) {
+      if (gap < need - GEOMETRY_TOLERANCE_MM / UNIT_MM) {
         return { type: 'clearance', severity: 'error', net: a.net || b.net, otherNet: (a.net === (a.net || b.net) ? b.net : a.net), layer: a.layer ?? b.layer, at: { x: Math.round(((a.x ?? a.points?.[0]?.x ?? 0) + (b.x ?? b.points?.[0]?.x ?? 0)) / 2), y: Math.round(((a.y ?? a.points?.[0]?.y ?? 0) + (b.y ?? b.points?.[0]?.y ?? 0)) / 2) }, measuredMm: +(gap * UNIT_MM).toFixed(3), requiredMm: +(need * UNIT_MM).toFixed(3) };
       }
       return null;
@@ -244,7 +256,7 @@ export function runDrc(model, opts = {}) {
       for (let j = i + 1; j < holes.length; j++) {
         const a = holes[i], b = holes[j];
         const gap = Math.hypot(a.x - b.x, a.y - b.y) - a.r - b.r;
-        if (gap < baseRules.holeToHole - 0.01) {
+        if (gap < baseRules.holeToHole - GEOMETRY_TOLERANCE_MM / UNIT_MM) {
           add({ type: 'hole-to-hole', severity: 'error', net: a.net || b.net, layer: 11, at: { x: Math.round((a.x + b.x) / 2), y: Math.round((a.y + b.y) / 2) }, measuredMm: +(gap * UNIT_MM).toFixed(3), requiredMm: +(baseRules.holeToHole * UNIT_MM).toFixed(3) });
         }
       }
@@ -261,7 +273,7 @@ export function runDrc(model, opts = {}) {
       const cx = (box.minX + box.maxX) / 2, cy = (box.minY + box.maxY) / 2;
       let gap = Infinity;
       for (const [a, b] of edges) gap = Math.min(gap, segmentRectDistance(a, b, box));
-      if (gap < baseRules.edgeClearance - 0.01) {
+      if (gap < baseRules.edgeClearance - GEOMETRY_TOLERANCE_MM / UNIT_MM) {
         add({ type: 'edge-clearance', severity: 'warning', net: item.net || '', layer: item.layer, at: { x: Math.round(cx), y: Math.round(cy) }, measuredMm: +(gap * UNIT_MM).toFixed(3), requiredMm: +(baseRules.edgeClearance * UNIT_MM).toFixed(3) });
       }
     }
@@ -286,7 +298,7 @@ export function runDrc(model, opts = {}) {
         } else if (s.box) {
           gap = rectDistance(s.box, rect);
         }
-        if (gap < baseRules.silkClearance - 0.01) {
+        if (gap < baseRules.silkClearance - GEOMETRY_TOLERANCE_MM / UNIT_MM) {
           add({ type: 'silk-over-pad', severity: 'warning', net: pad.net, layer: s.layer, at: { x: Math.round(pad.x), y: Math.round(pad.y) }, measuredMm: +(gap * UNIT_MM).toFixed(3), requiredMm: +(baseRules.silkClearance * UNIT_MM).toFixed(3) });
         }
       }

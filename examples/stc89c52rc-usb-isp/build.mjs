@@ -37,16 +37,33 @@ const FOOTPRINTS = {
   J1: 'MICRO-USB-SMD_5P',
 };
 
+// Functional zones, in mm from the board's top-left corner. Automatic packing
+// optimises area, which is not what makes a board usable: it put the micro-USB in
+// the middle of the board (where nothing can be plugged into it) and scattered the
+// regulator, the USB-serial chip and the MCU. Naming the zones keeps the blocks
+// together and puts every connector on the edge it is used from.
+const ZONES = [
+  { name: 'usb',   refs: ['J1'],                                 at: [7, 26],  maxWidthMm: 14, rot: 90 },
+  { name: 'power', refs: ['U2', 'C1', 'C2', 'C3', 'R2', 'D1'],    at: [20, 5],  maxWidthMm: 26 },
+  { name: 'uart',  refs: ['U3', 'C9', 'Y2', 'C6', 'C7'],          at: [20, 40], maxWidthMm: 28 },
+  { name: 'mcu',   refs: ['U1', 'C10', 'C11', 'Y1', 'C4', 'C5'],  at: [52, 5],  maxWidthMm: 26, rot: 90 },
+  { name: 'reset', refs: ['SW1', 'C8', 'R1'],                     at: [52, 62], maxWidthMm: 30 },
+  { name: 'io',    refs: ['J3', 'J4', 'J2'],                      at: [84, 5],  maxWidthMm: 14, rot: 270 },
+];
+
 const line = (s = '') => console.log(s);
 
 // ---------------------------------------------------------------- 1. PCB
 const placed = await boardFromSchematic(sch, {
   title: 'STC89C52RC USB download board',
   footprints: FOOTPRINTS,
+  placement: 'zoned',
+  zones: ZONES,
 });
 await fs.writeFile(path.join(out, 'board.json'), placed.text, 'utf8');
 line(`1. 布局  ${placed.stats.components} 器件 / ${placed.stats.pads} 焊盘 / ${placed.stats.nets} 网络 | 板框 ${placed.board.widthMm} x ${placed.board.heightMm} mm`);
 line(`   质量  飞线 ${placed.quality.ratsnestMm} mm | 重叠 ${placed.quality.overlaps} | 越界 ${placed.quality.outside}`);
+for (const n of (placed.warnings ?? []).filter((w) => /分区|布局/.test(w))) line(`   · ${n}`);
 for (const w of placed.warnings) line(`   ! ${w}`);
 
 // ---------------------------------------------------------------- 2. route

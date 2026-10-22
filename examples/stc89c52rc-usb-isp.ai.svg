@@ -6,7 +6,7 @@
 <text x="606" y="726" font-family="Arial" font-size="9" fill="#880000" text-anchor="start">TITLE:</text>
 <text x="660" y="726" font-family="Arial" font-size="12" fill="#0000FF" text-anchor="start">STC89C52RC + AMS1117-5.0 + CH340G USB 下载板</text>
 <text x="1058" y="726" font-family="Arial" font-size="9" fill="#880000" text-anchor="start">REV:</text>
-<text x="1090" y="726" font-family="Arial" font-size="9" fill="#0000FF" text-anchor="start">1.0</text>
+<text x="1090" y="726" font-family="Arial" font-size="9" fill="#0000FF" text-anchor="start">1.1</text>
 <text x="606" y="758" font-family="Arial" font-size="8" fill="#880000" text-anchor="start">Date:</text>
 <text x="646" y="758" font-family="Arial" font-size="8" fill="#0000FF" text-anchor="start">2026-10-22</text>
 <text x="770" y="758" font-family="Arial" font-size="8" fill="#880000" text-anchor="start">Drawn By:</text>
@@ -15,15 +15,15 @@
 <text x="1100" y="758" font-family="Arial" font-size="8" fill="#0000FF" text-anchor="start">1/1</text>
 <text x="606" y="788" font-family="Arial" font-size="8" fill="#880000" text-anchor="start">Company:</text>
 <text x="672" y="788" font-family="Arial" font-size="8" fill="#0000FF" text-anchor="start">lceda-ai</text>
-<text x="40" y="40" font-family="Arial" font-size="13" fill="#000080" text-anchor="start">STC89C52RC + AMS1117-5.0 + CH340G USB 下载板</text>
-<text x="40" y="58" font-family="Arial" font-size="7" fill="#000080" text-anchor="start">符号全部取自立创EDA标准库;CH340G 引脚依据数据手册 16/16 校验通过</text>
-<text x="40" y="84" font-family="Arial" font-size="8" fill="#004080" text-anchor="start">设计要点:</text>
-<text x="40" y="100" font-family="Arial" font-size="7" fill="#404040" text-anchor="start">· 电源:USB 5V → AMS1117-5.0 → VCC(带载约 4.4V,STC89C52RC 规定 3.4</text>
-<text x="40" y="114" font-family="Arial" font-size="7" fill="#404040" text-anchor="start">· 下载:CH340G TXD→P3.0(RXD),RXD←P3.1(TXD);STC89C52RC 走 UART ISP,不是 SPI</text>
-<text x="40" y="128" font-family="Arial" font-size="7" fill="#404040" text-anchor="start">· 冷启动:按 SW1 复位或重新插拔 USB,配合 STC-ISP 等待上电</text>
-<text x="40" y="142" font-family="Arial" font-size="7" fill="#404040" text-anchor="start">· CH340G 的 CTS#/DSR#/RI#/DCD#/DTR#/RTS# 与 USB 的 ID 脚悬空</text>
-<text x="40" y="156" font-family="Arial" font-size="7" fill="#404040" text-anchor="start">· P1.0</text>
-<text x="40" y="170" font-family="Arial" font-size="7" fill="#404040" text-anchor="start">· 12MHz(CH340G)+2×22pF;11.0592MHz(MCU)+2×30pF,波特率精确</text>
+<text x="70" y="60" font-family="Arial" font-size="13" fill="#000080" text-anchor="start">STC89C52RC + AMS1117-5.0 + CH340G USB 下载板</text>
+<text x="70" y="78" font-family="Arial" font-size="7" fill="#000080" text-anchor="start">符号全部取自立创EDA标准库,CH340G 引脚依据数据手册 16/16 校验通过</text>
+<text x="70" y="104" font-family="Arial" font-size="8" fill="#004080" text-anchor="start">设计要点:</text>
+<text x="70" y="120" font-family="Arial" font-size="7" fill="#404040" text-anchor="start">· 电源:USB 5V → AMS1117-5.0 → VCC ≈4.4V(STC89C52RC 允许 3.4-5.5V)</text>
+<text x="70" y="134" font-family="Arial" font-size="7" fill="#404040" text-anchor="start">· 下载:CH340G ↔ P3.0/P3.1;STC89C52RC 走 UART ISP,不是 SPI</text>
+<text x="70" y="148" font-family="Arial" font-size="7" fill="#404040" text-anchor="start">· 冷启动:按 SW1 复位或重插 USB,配合 STC-ISP 等待上电</text>
+<text x="70" y="162" font-family="Arial" font-size="7" fill="#404040" text-anchor="start">· CH340G 未用调制解调器引脚与 USB 的 ID 脚悬空</text>
+<text x="70" y="176" font-family="Arial" font-size="7" fill="#404040" text-anchor="start">· 去耦电容成对并联:C2/C3 在 LDO 输出,C10/C11 在 MCU</text>
+<text x="70" y="190" font-family="Arial" font-size="7" fill="#404040" text-anchor="start">· P1.0-P1.7 引出到 J3;P2.0-P2.7 引出到 J4;ISP 下载口引出到 J2</text>
 <rect x="8" y="8" width="1144" height="804" stroke="#880000" stroke-width="1" fill="none" />
 <rect x="22" y="22" width="1116" height="776" stroke="#880000" stroke-width="2" fill="none" />
 <polyline points="208,22 208,32" stroke="#880000" stroke-width="1" fill="none" />
@@ -112,14 +112,14 @@
 <text x="226" y="556" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">C2</text>
 <path d="M 250 540 L 250 557" stroke="#8D2323" stroke-width="1" fill="none" />
 <path d="M 250 580 L 250 561" stroke="#8D2323" stroke-width="1" fill="none" />
-<polyline points="242,638 258,638" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="250,650 250,642" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="258,642 242,642" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="250,638 250,630" stroke="#A00000" stroke-width="1" fill="none" />
-<text x="272" y="643" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">100nF</text>
-<text x="228" y="636" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">C3</text>
-<path d="M 250 625 L 250 630" stroke="#800" stroke-width="1" fill="none" />
-<path d="M 250 655 L 250 650" stroke="#800" stroke-width="1" fill="none" />
+<polyline points="322,558 338,558" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="330,570 330,562" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="338,562 322,562" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="330,558 330,550" stroke="#A00000" stroke-width="1" fill="none" />
+<text x="352" y="563" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">100nF</text>
+<text x="308" y="556" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">C3</text>
+<path d="M 330 545 L 330 550" stroke="#800" stroke-width="1" fill="none" />
+<path d="M 330 575 L 330 570" stroke="#800" stroke-width="1" fill="none" />
 <rect x="435" y="285" width="70" height="90" stroke="#000000" stroke-width="1" fill="none" />
 <text x="415" y="388" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">CH340G</text>
 <text x="415" y="279" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">U3</text>
@@ -332,50 +332,50 @@
 <path d="M 880 285 h -10" stroke="#FF0000" stroke-width="1" fill="none" />
 <text x="870.5" y="284" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">40</text>
 <text x="866.3" y="289" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">VCC</text>
-<polyline points="125,646 125,654" stroke="#880000" stroke-width="1" fill="none" />
-<polyline points="117,643 123,643" stroke="#880000" stroke-width="1" fill="none" />
-<polyline points="115,646 115,654" stroke="#880000" stroke-width="1" fill="none" />
-<polyline points="123,643 123,657 117,657 117,643" stroke="#880000" stroke-width="1" fill="none" />
-<polyline points="110,650 115,650" stroke="#880000" stroke-width="1" fill="none" />
-<polyline points="130,650 125,650" stroke="#880000" stroke-width="1" fill="none" />
-<polyline points="115,643 115,657" stroke="#880000" stroke-width="1" fill="none" />
-<polyline points="125,643 125,657" stroke="#880000" stroke-width="1" fill="none" />
-<polyline points="117,657 117,643 123,643 123,657 117,657" stroke="#880000" stroke-width="1" fill="none" />
-<text x="100" y="670" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">11.0592MHz</text>
-<text x="100" y="637" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">Y1</text>
-<path d="M 100 650 h 10" stroke="#000000" stroke-width="1" fill="none" />
-<path d="M 140 650 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="62,718 78,718" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="70,730 70,722" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="78,722 62,722" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="70,718 70,710" stroke="#A00000" stroke-width="1" fill="none" />
-<text x="92" y="723" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">30pF</text>
-<text x="48" y="716" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">C4</text>
-<path d="M 70 705 L 70 710" stroke="#800" stroke-width="1" fill="none" />
-<path d="M 70 735 L 70 730" stroke="#800" stroke-width="1" fill="none" />
-<polyline points="182,718 198,718" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="190,730 190,722" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="198,722 182,722" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="190,718 190,710" stroke="#A00000" stroke-width="1" fill="none" />
-<text x="212" y="723" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">30pF</text>
-<text x="168" y="716" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">C5</text>
-<path d="M 190 705 L 190 710" stroke="#800" stroke-width="1" fill="none" />
-<path d="M 190 735 L 190 730" stroke="#800" stroke-width="1" fill="none" />
-<polyline points="892,543 908,543" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="900,555 900,547" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="908,547 892,547" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="900,543 900,535" stroke="#A00000" stroke-width="1" fill="none" />
-<text x="922" y="548" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">100nF</text>
-<text x="878" y="541" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">C10</text>
-<path d="M 900 530 L 900 535" stroke="#800" stroke-width="1" fill="none" />
-<path d="M 900 560 L 900 555" stroke="#800" stroke-width="1" fill="none" />
-<polyline points="970,542 950,542" stroke="#8D2323" stroke-width="1" fill="none" />
-<path d="M 960 546 A 16.0836 16.0836 90 0 0 950 549" stroke="#000" stroke-width="1" stroke-dasharray="1" fill="none" />
-<path d="M 970 549 A 16.2917 16.2917 90 0 0 960 546" stroke="#000" stroke-width="1" stroke-dasharray="1" fill="none" />
-<text x="984" y="548" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">10uF</text>
-<text x="936" y="541" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">C11</text>
-<path d="M 960 525 L 960 542" stroke="#8D2323" stroke-width="1" fill="none" />
-<path d="M 960 565 L 960 546" stroke="#8D2323" stroke-width="1" fill="none" />
+<polyline points="547,543 563,543" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="555,555 555,547" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="563,547 547,547" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="555,543 555,535" stroke="#A00000" stroke-width="1" fill="none" />
+<text x="577" y="548" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">100nF</text>
+<text x="533" y="541" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">C10</text>
+<path d="M 555 530 L 555 535" stroke="#800" stroke-width="1" fill="none" />
+<path d="M 555 560 L 555 555" stroke="#800" stroke-width="1" fill="none" />
+<polyline points="640,542 620,542" stroke="#8D2323" stroke-width="1" fill="none" />
+<path d="M 630 546 A 16.0836 16.0836 90 0 0 620 549" stroke="#000" stroke-width="1" stroke-dasharray="1" fill="none" />
+<path d="M 640 549 A 16.2917 16.2917 90 0 0 630 546" stroke="#000" stroke-width="1" stroke-dasharray="1" fill="none" />
+<text x="654" y="548" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">10uF</text>
+<text x="606" y="541" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">C11</text>
+<path d="M 630 525 L 630 542" stroke="#8D2323" stroke-width="1" fill="none" />
+<path d="M 630 565 L 630 546" stroke="#8D2323" stroke-width="1" fill="none" />
+<polyline points="175,671 175,679" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="167,668 173,668" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="165,671 165,679" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="173,668 173,682 167,682 167,668" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="160,675 165,675" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="180,675 175,675" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="165,668 165,682" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="175,668 175,682" stroke="#880000" stroke-width="1" fill="none" />
+<polyline points="167,682 167,668 173,668 173,682 167,682" stroke="#880000" stroke-width="1" fill="none" />
+<text x="150" y="695" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">11.0592MHz</text>
+<text x="150" y="662" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">Y1</text>
+<path d="M 150 675 h 10" stroke="#000000" stroke-width="1" fill="none" />
+<path d="M 190 675 h -10" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="102,733 118,733" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="110,745 110,737" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="118,737 102,737" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="110,733 110,725" stroke="#A00000" stroke-width="1" fill="none" />
+<text x="132" y="738" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">30pF</text>
+<text x="88" y="731" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">C4</text>
+<path d="M 110 720 L 110 725" stroke="#800" stroke-width="1" fill="none" />
+<path d="M 110 750 L 110 745" stroke="#800" stroke-width="1" fill="none" />
+<polyline points="222,733 238,733" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="230,745 230,737" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="238,737 222,737" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="230,733 230,725" stroke="#A00000" stroke-width="1" fill="none" />
+<text x="252" y="738" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">30pF</text>
+<text x="208" y="731" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">C5</text>
+<path d="M 230 720 L 230 725" stroke="#800" stroke-width="1" fill="none" />
+<path d="M 230 750 L 230 745" stroke="#800" stroke-width="1" fill="none" />
 <polyline points="640,134.98 639.97,142.06" stroke="#990000" stroke-width="1" fill="none" />
 <polyline points="639.84,157.85 639.81,164.93" stroke="#990000" stroke-width="1" fill="none" />
 <ellipse cx="640" cy="144" rx="1.4" ry="1.4" stroke="#990000" stroke-width="1" fill="none" />
@@ -409,346 +409,356 @@
 <text x="831" y="201" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">R1</text>
 <path d="M 850 225 L 850 220" stroke="#800" stroke-width="1" fill="none" />
 <path d="M 850 185 L 850 190" stroke="#800" stroke-width="1" fill="none" />
-<polyline points="1020,215 1015,212" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="1025,207 1015,202" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="1015,212 1025,207" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="1015,193 1025,188" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="1015,202 1025,198" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="1025,198 1015,193" stroke="#A00000" stroke-width="1" fill="none" />
-<polyline points="1025,188 1020,185" stroke="#A00000" stroke-width="1" fill="none" />
-<text x="1039" y="203" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">1k</text>
-<text x="1001" y="196" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">R2</text>
-<path d="M 1020 220 L 1020 215" stroke="#800" stroke-width="1" fill="none" />
-<path d="M 1020 180 L 1020 185" stroke="#800" stroke-width="1" fill="none" />
-<polyline points="1025,275 1020,285" stroke="#A54B4B" stroke-width="1" fill="none" />
-<polyline points="1020,285 1015,275" stroke="#A54B4B" stroke-width="1" fill="none" />
-<polyline points="1025,285 1020,285" stroke="#A54B4B" stroke-width="1" fill="none" />
-<polyline points="1020,285 1015,285" stroke="#A54B4B" stroke-width="1" fill="none" />
-<polyline points="1025,275 1020,275" stroke="#A54B4B" stroke-width="1" fill="none" />
-<polyline points="1020,275 1015,275" stroke="#A54B4B" stroke-width="1" fill="none" />
-<polyline points="1020,275 1020,285" stroke="#A54B4B" stroke-width="1" fill="none" />
-<polyline points="1012,278 1006.5,283.5" stroke="#A54B4B" stroke-width="1" fill="none" />
-<polyline points="1012.5,282.5 1007,288" stroke="#A54B4B" stroke-width="1" fill="none" />
-<polygon points="1006.5,283.5 1008,280 1008,280 1010,282 1010,282 1006.5,283.5" stroke="#A54B4B" stroke-width="0.6" fill="#A54B4B" fill-opacity="0.5" />
-<polygon points="1007,288 1008.5,284.5 1008.5,284.5 1010.5,286.5 1010.5,286.5 1007,288" stroke="#A54B4B" stroke-width="0.6" fill="#A54B4B" fill-opacity="0.5" />
-<text x="1039" y="283" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">RED</text>
-<text x="992.5" y="276" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">D1</text>
-<path d="M 1020 295 v -9.842" stroke="#A54B4B" stroke-width="1" fill="none" />
-<path d="M 1020 265 v 9.842" stroke="#A54B4B" stroke-width="1" fill="none" />
-<rect x="1070" y="400" width="20" height="60" rx="2" ry="2" stroke="#880000" stroke-width="1" fill="none" />
-<text x="1104" y="433" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">ISP</text>
-<text x="1046" y="426" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">J2</text>
-<path d="M 1060 410 L 1070 410" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1073.7" y="414" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">1</text>
-<path d="M 1060 420 L 1070 420" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1073.7" y="424" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">2</text>
-<path d="M 1060 430 L 1070 430" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1073.7" y="434" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">3</text>
-<path d="M 1060 440 L 1070 440" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1073.7" y="444" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">4</text>
-<path d="M 1060 450 L 1070 450" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1073.7" y="454" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">5</text>
-<rect x="530" y="165" width="20" height="90" rx="2" ry="2" stroke="#880000" stroke-width="1" fill="none" />
-<text x="574" y="213" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">P1.0-P1.7</text>
-<text x="516" y="206" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">J3</text>
-<path d="M 560 175 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="542" y="177" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">1</text>
-<path d="M 560 185 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="542" y="187" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">2</text>
-<path d="M 560 195 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="542" y="197" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">3</text>
-<path d="M 560 205 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="542" y="207" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">4</text>
-<path d="M 560 215 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="542" y="217" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">5</text>
-<path d="M 560 225 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="542" y="227" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">6</text>
-<path d="M 560 235 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="542" y="237" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">7</text>
-<path d="M 560 245 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="542" y="247" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">8</text>
-<rect x="1020" y="475" width="20" height="90" rx="2" ry="2" stroke="#880000" stroke-width="1" fill="none" />
-<text x="1064" y="523" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">P2.0-P2.7</text>
-<text x="1006" y="516" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">J4</text>
-<path d="M 1050 485 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1032" y="487" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">1</text>
-<path d="M 1050 495 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1032" y="497" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">2</text>
-<path d="M 1050 505 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1032" y="507" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">3</text>
-<path d="M 1050 515 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1032" y="517" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">4</text>
-<path d="M 1050 525 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1032" y="527" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">5</text>
-<path d="M 1050 535 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1032" y="537" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">6</text>
-<path d="M 1050 545 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1032" y="547" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">7</text>
-<path d="M 1050 555 h -10" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1032" y="557" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end">8</text>
-<polyline points="150,230 120,230" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="150,240 120,240" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="150,250 120,250" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="150,270 120,270" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="130,450 160,450" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="210,450 240,450" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="170,490 140,490" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="90,540 90,516" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="250,540 250,516" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="250,625 250,601" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="415,325 389,325" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="620,265 620,291" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="620,235 620,213" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="360,600 320,600 320,645" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="400,600 440,600 440,645" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="415,355 389,355" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="415,365 389,365" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="415,305 389,305" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="415,315 389,315" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="415,335 389,335" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="415,345 389,345" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="525,305 551,305" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="525,295 551,295" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="415,295 389,295" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="720,465 674,465" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="720,455 674,455" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="720,375 674,375" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="720,385 674,385" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="100,650 100,705 70,705" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="140,650 140,705 190,705" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="880,285 904,285" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="880,375 904,375" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="720,475 696,475" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="900,530 900,508" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="960,525 960,503" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="300,277 295,274" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="305,269 295,264" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="295,274 305,269" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="295,255 305,250" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="295,264 305,260" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="305,260 295,255" stroke="#A00000" stroke-width="1" fill="none" />
+<polyline points="305,250 300,247" stroke="#A00000" stroke-width="1" fill="none" />
+<text x="319" y="265" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">1k</text>
+<text x="281" y="258" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">R2</text>
+<path d="M 300 282 L 300 277" stroke="#800" stroke-width="1" fill="none" />
+<path d="M 300 242 L 300 247" stroke="#800" stroke-width="1" fill="none" />
+<polyline points="305,327 300,337" stroke="#A54B4B" stroke-width="1" fill="none" />
+<polyline points="300,337 295,327" stroke="#A54B4B" stroke-width="1" fill="none" />
+<polyline points="305,337 300,337" stroke="#A54B4B" stroke-width="1" fill="none" />
+<polyline points="300,337 295,337" stroke="#A54B4B" stroke-width="1" fill="none" />
+<polyline points="305,327 300,327" stroke="#A54B4B" stroke-width="1" fill="none" />
+<polyline points="300,327 295,327" stroke="#A54B4B" stroke-width="1" fill="none" />
+<polyline points="300,327 300,337" stroke="#A54B4B" stroke-width="1" fill="none" />
+<polyline points="292,330 286.5,335.5" stroke="#A54B4B" stroke-width="1" fill="none" />
+<polyline points="292.5,334.5 287,340" stroke="#A54B4B" stroke-width="1" fill="none" />
+<polygon points="286.5,335.5 288,332 288,332 290,334 290,334 286.5,335.5" stroke="#A54B4B" stroke-width="0.6" fill="#A54B4B" fill-opacity="0.5" />
+<polygon points="287,340 288.5,336.5 288.5,336.5 290.5,338.5 290.5,338.5 287,340" stroke="#A54B4B" stroke-width="0.6" fill="#A54B4B" fill-opacity="0.5" />
+<text x="319" y="335" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">RED</text>
+<text x="272.5" y="328" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">D1</text>
+<path d="M 300 347 v -9.842" stroke="#A54B4B" stroke-width="1" fill="none" />
+<path d="M 300 317 v 9.842" stroke="#A54B4B" stroke-width="1" fill="none" />
+<rect x="985" y="210" width="90" height="20" rx="2" ry="2" stroke="#880000" stroke-width="1" fill="none" />
+<text x="985" y="253" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">P1</text>
+<text x="985" y="204" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">J3</text>
+<path d="M 1065 240 L 1065 230" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1063" y="222" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 1063 222)">1</text>
+<path d="M 1055 240 L 1055 230" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1053" y="222" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 1053 222)">2</text>
+<path d="M 1045 240 L 1045 230" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1043" y="222" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 1043 222)">3</text>
+<path d="M 1035 240 L 1035 230" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1033" y="222" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 1033 222)">4</text>
+<path d="M 1025 240 L 1025 230" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1023" y="222" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 1023 222)">5</text>
+<path d="M 1015 240 L 1015 230" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1013" y="222" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 1013 222)">6</text>
+<path d="M 1005 240 L 1005 230" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1003" y="222" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 1003 222)">7</text>
+<path d="M 995 240 L 995 230" stroke="#000000" stroke-width="1" fill="none" />
+<text x="993" y="222" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 993 222)">8</text>
+<rect x="985" y="330" width="90" height="20" rx="2" ry="2" stroke="#880000" stroke-width="1" fill="none" />
+<text x="985" y="373" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">P2</text>
+<text x="985" y="324" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">J4</text>
+<path d="M 1065 360 L 1065 350" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1063" y="342" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 1063 342)">1</text>
+<path d="M 1055 360 L 1055 350" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1053" y="342" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 1053 342)">2</text>
+<path d="M 1045 360 L 1045 350" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1043" y="342" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 1043 342)">3</text>
+<path d="M 1035 360 L 1035 350" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1033" y="342" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 1033 342)">4</text>
+<path d="M 1025 360 L 1025 350" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1023" y="342" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 1023 342)">5</text>
+<path d="M 1015 360 L 1015 350" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1013" y="342" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 1013 342)">6</text>
+<path d="M 1005 360 L 1005 350" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1003" y="342" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 1003 342)">7</text>
+<path d="M 995 360 L 995 350" stroke="#000000" stroke-width="1" fill="none" />
+<text x="993" y="342" font-family="Verdana" font-size="7" fill="#000080" text-anchor="end" transform="rotate(90 993 342)">8</text>
+<rect x="1040" y="470" width="20" height="60" rx="2" ry="2" stroke="#880000" stroke-width="1" fill="none" />
+<text x="1074" y="503" font-family="Arial" font-size="9" fill="#000080" text-anchor="start">ISP</text>
+<text x="1016" y="496" font-family="Arial" font-size="9" fill="#000080" text-anchor="end">J2</text>
+<path d="M 1030 480 L 1040 480" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1043.7" y="484" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">1</text>
+<path d="M 1030 490 L 1040 490" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1043.7" y="494" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">2</text>
+<path d="M 1030 500 L 1040 500" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1043.7" y="504" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">3</text>
+<path d="M 1030 510 L 1040 510" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1043.7" y="514" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">4</text>
+<path d="M 1030 520 L 1040 520" stroke="#000000" stroke-width="1" fill="none" />
+<text x="1043.7" y="524" font-family="Verdana" font-size="7" fill="#000080" text-anchor="start">5</text>
+<polyline points="150,230 172,230" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="150,240 172,240" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="150,250 172,250" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="150,270 172,270" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="130,450 108,450" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="210,450 232,450" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="170,490 170,512" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="90,540 90,514" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="90,580 90,606" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="250,540 250,510" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="330,545 330,510" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="250,510 330,510" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="250,580 250,610" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="330,575 330,610" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="250,610 330,610" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="555,530 555,500" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="630,525 630,500" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="555,500 630,500" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="555,560 555,590" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="630,565 630,590" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="555,590 630,590" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="415,295 393,295" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="415,305 393,305" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="415,315 393,315" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="415,325 393,325" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="415,335 393,335" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="415,345 393,345" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="415,355 393,355" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="415,365 393,365" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="525,305 547,305" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="525,295 547,295" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="620,235 620,211" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="620,265 620,289" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="360,600 326,600" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="400,600 434,600" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="320,645 320,621" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="440,645 440,621" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="320,675 320,699" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="440,675 440,699" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="150,675 116,675" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="190,675 224,675" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="110,720 110,696" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="230,720 230,696" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="110,750 110,774" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="230,750 230,774" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="720,285 698,285" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="720,295 698,295" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="720,305 698,305" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="720,315 698,315" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="720,325 698,325" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="720,335 698,335" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="720,345 698,345" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="720,355 698,355" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="720,365 698,365" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="720,375 698,375" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="720,385 698,385" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="720,455 698,455" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="720,465 698,465" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="720,475 708,475" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="880,475 902,475" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="880,465 902,465" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="880,455 902,455" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="880,445 902,445" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="880,435 902,435" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="880,425 902,425" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="880,415 902,415" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="880,405 902,405" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="880,375 902,375" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="880,285 902,285" stroke="#008800" stroke-width="1" fill="none" />
 <polyline points="620,135 660,135" stroke="#008800" stroke-width="1" fill="none" />
 <polyline points="620,135 620,90 750,90 750,130" stroke="#008800" stroke-width="1" fill="none" />
 <polyline points="620,165 660,165" stroke="#008800" stroke-width="1" fill="none" />
 <polyline points="620,165 620,190 850,190 850,185" stroke="#008800" stroke-width="1" fill="none" />
 <polyline points="750,170 750,190" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="850,190 662,190 662,365 720,365" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="1020,220 1020,265" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="1020,180 1020,158" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="1060,410 1036,410" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="1060,420 1036,420" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="1060,430 1036,430" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="1060,440 1036,440" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="1060,450 1036,450" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="720,285 674,285" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="720,295 674,295" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="720,305 674,305" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="720,315 674,315" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="720,325 674,325" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="720,335 674,335" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="720,345 674,345" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="720,355 674,355" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="880,475 904,475" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="880,465 904,465" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="880,455 904,455" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="880,445 904,445" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="880,435 904,435" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="880,425 904,425" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="880,415 904,415" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="880,405 904,405" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="560,175 538,175" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="560,185 538,185" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="560,195 538,195" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="560,205 538,205" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="560,215 538,215" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="560,225 538,225" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="560,235 538,235" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="560,245 538,245" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="1050,485 1072,485" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="1050,495 1072,495" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="1050,505 1072,505" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="1050,515 1072,515" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="1050,525 1072,525" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="1050,535 1072,535" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="1050,545 1072,545" stroke="#008800" stroke-width="1" fill="none" />
-<polyline points="1050,555 1072,555" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="850,225 850,247" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="300,242 300,220" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="300,282 300,317" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="300,347 300,369" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1030,480 986,480" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1030,490 968,490" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1030,500 1004,500" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1030,510 986,510" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1030,520 968,520" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1065,240 1065,266" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1055,240 1055,284" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1045,240 1045,302" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1035,240 1035,320" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1025,240 1025,266" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1015,240 1015,284" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1005,240 1005,302" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="995,240 995,320" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1065,360 1065,386" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1055,360 1055,404" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1045,360 1045,422" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1035,360 1035,440" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1025,360 1025,386" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1015,360 1015,404" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="1005,360 1005,422" stroke="#008800" stroke-width="1" fill="none" />
+<polyline points="995,360 995,440" stroke="#008800" stroke-width="1" fill="none" />
+<circle cx="250" cy="510" r="2.5" fill="#CC0000" stroke="none" />
+<circle cx="250" cy="610" r="2.5" fill="#CC0000" stroke="none" />
+<circle cx="555" cy="500" r="2.5" fill="#CC0000" stroke="none" />
+<circle cx="555" cy="590" r="2.5" fill="#CC0000" stroke="none" />
 <circle cx="850" cy="190" r="2.5" fill="#CC0000" stroke="none" />
 <circle cx="750" cy="190" r="2.5" fill="#CC0000" stroke="none" />
-<polyline points="240,450 250,450" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="250,445 250,455" stroke="#000000" stroke-width="1" fill="none" />
-<text x="258" y="454" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="start">+5V</text>
-<polyline points="250,516 250,506" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="245,506 255,506" stroke="#000000" stroke-width="1" fill="none" />
-<text x="250" y="500" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">+5V</text>
-<polyline points="250,601 250,591" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="245,591 255,591" stroke="#000000" stroke-width="1" fill="none" />
-<text x="250" y="585" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">+5V</text>
-<polyline points="551,295 561,295" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="561,290 561,300" stroke="#000000" stroke-width="1" fill="none" />
-<text x="569" y="299" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="start">+5V</text>
-<polyline points="904,285 914,285" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="914,280 914,290" stroke="#000000" stroke-width="1" fill="none" />
-<text x="922" y="289" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="start">+5V</text>
-<polyline points="904,375 914,375" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="914,370 914,380" stroke="#000000" stroke-width="1" fill="none" />
-<text x="922" y="379" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="start">+5V</text>
+<polyline points="172,270 182,270" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="182,261 182,279" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="184,264 184,276" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="186,267 186,273" stroke="#000000" stroke-width="1" fill="none" />
+<text x="190" y="274" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="start">GND</text>
+<polyline points="232,450 242,450" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="242,445 242,455" stroke="#000000" stroke-width="1" fill="none" />
+<text x="250" y="454" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="start">+5V</text>
+<polyline points="170,512 170,522" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="179,522 161,522" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="176,524 164,524" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="173,526 167,526" stroke="#000000" stroke-width="1" fill="none" />
+<text x="170" y="542" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
+<polyline points="90,606 90,616" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="99,616 81,616" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="96,618 84,618" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="93,620 87,620" stroke="#000000" stroke-width="1" fill="none" />
+<text x="90" y="636" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
+<polyline points="250,510 250,500" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="245,500 255,500" stroke="#000000" stroke-width="1" fill="none" />
+<text x="250" y="494" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">+5V</text>
+<polyline points="250,610 250,620" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="259,620 241,620" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="256,622 244,622" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="253,624 247,624" stroke="#000000" stroke-width="1" fill="none" />
+<text x="250" y="640" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
+<polyline points="555,500 555,490" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="550,490 560,490" stroke="#000000" stroke-width="1" fill="none" />
+<text x="555" y="484" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">+5V</text>
+<polyline points="555,590 555,600" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="564,600 546,600" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="561,602 549,602" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="558,604 552,604" stroke="#000000" stroke-width="1" fill="none" />
+<text x="555" y="620" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
+<polyline points="393,295 383,295" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="383,304 383,286" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="381,301 381,289" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="379,298 379,292" stroke="#000000" stroke-width="1" fill="none" />
+<text x="375" y="299" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="end">GND</text>
+<polyline points="547,305 557,305" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="557,296 557,314" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="559,299 559,311" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="561,302 561,308" stroke="#000000" stroke-width="1" fill="none" />
+<text x="565" y="309" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="start">GND</text>
+<polyline points="547,295 557,295" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="557,290 557,300" stroke="#000000" stroke-width="1" fill="none" />
+<text x="565" y="299" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="start">+5V</text>
+<polyline points="620,211 620,201" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="611,201 629,201" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="614,199 626,199" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="617,197 623,197" stroke="#000000" stroke-width="1" fill="none" />
+<text x="620" y="195" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
+<polyline points="320,699 320,709" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="329,709 311,709" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="326,711 314,711" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="323,713 317,713" stroke="#000000" stroke-width="1" fill="none" />
+<text x="320" y="729" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
+<polyline points="440,699 440,709" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="449,709 431,709" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="446,711 434,711" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="443,713 437,713" stroke="#000000" stroke-width="1" fill="none" />
+<text x="440" y="729" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
+<polyline points="110,774 110,784" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="119,784 101,784" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="116,786 104,786" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="113,788 107,788" stroke="#000000" stroke-width="1" fill="none" />
+<text x="110" y="804" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
+<polyline points="230,774 230,784" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="239,784 221,784" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="236,786 224,786" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="233,788 227,788" stroke="#000000" stroke-width="1" fill="none" />
+<text x="230" y="804" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
+<polyline points="708,475 698,475" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="698,484 698,466" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="696,481 696,469" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="694,478 694,472" stroke="#000000" stroke-width="1" fill="none" />
+<text x="690" y="479" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="end">GND</text>
+<polyline points="902,375 912,375" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="912,370 912,380" stroke="#000000" stroke-width="1" fill="none" />
+<text x="920" y="379" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="start">+5V</text>
+<polyline points="902,285 912,285" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="912,280 912,290" stroke="#000000" stroke-width="1" fill="none" />
+<text x="920" y="289" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="start">+5V</text>
 <polyline points="620,90 620,80" stroke="#000000" stroke-width="1" fill="none" />
 <polyline points="615,80 625,80" stroke="#000000" stroke-width="1" fill="none" />
 <text x="620" y="74" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">+5V</text>
-<polyline points="1020,158 1020,148" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="1015,148 1025,148" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1020" y="142" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">+5V</text>
-<polyline points="900,508 900,498" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="895,498 905,498" stroke="#000000" stroke-width="1" fill="none" />
-<text x="900" y="492" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">+5V</text>
-<polyline points="960,503 960,493" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="955,493 965,493" stroke="#000000" stroke-width="1" fill="none" />
-<text x="960" y="487" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">+5V</text>
-<polyline points="1036,410 1026,410" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="1026,415 1026,405" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1018" y="414" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="end">+5V</text>
-<polyline points="120,270 110,270" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="110,279 110,261" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="108,276 108,264" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="106,273 106,267" stroke="#000000" stroke-width="1" fill="none" />
-<text x="102" y="274" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="end">GND</text>
-<polyline points="140,490 130,490" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="130,499 130,481" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="128,496 128,484" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="126,493 126,487" stroke="#000000" stroke-width="1" fill="none" />
-<text x="122" y="494" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="end">GND</text>
-<polyline points="90,580 90,590" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="99,590 81,590" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="96,592 84,592" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="93,594 87,594" stroke="#000000" stroke-width="1" fill="none" />
-<text x="90" y="610" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
-<polyline points="250,580 250,590" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="259,590 241,590" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="256,592 244,592" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="253,594 247,594" stroke="#000000" stroke-width="1" fill="none" />
-<text x="250" y="610" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
-<polyline points="250,655 250,665" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="259,665 241,665" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="256,667 244,667" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="253,669 247,669" stroke="#000000" stroke-width="1" fill="none" />
-<text x="250" y="685" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
-<polyline points="620,213 620,203" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="611,203 629,203" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="614,201 626,201" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="617,199 623,199" stroke="#000000" stroke-width="1" fill="none" />
-<text x="620" y="197" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
-<polyline points="320,675 320,685" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="329,685 311,685" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="326,687 314,687" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="323,689 317,689" stroke="#000000" stroke-width="1" fill="none" />
-<text x="320" y="705" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
-<polyline points="440,675 440,685" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="449,685 431,685" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="446,687 434,687" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="443,689 437,689" stroke="#000000" stroke-width="1" fill="none" />
-<text x="440" y="705" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
-<polyline points="389,295 399,295" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="399,286 399,304" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="401,289 401,301" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="403,292 403,298" stroke="#000000" stroke-width="1" fill="none" />
-<text x="407" y="299" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="start">GND</text>
-<polyline points="551,305 541,305" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="541,314 541,296" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="539,311 539,299" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="537,308 537,302" stroke="#000000" stroke-width="1" fill="none" />
-<text x="533" y="309" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="end">GND</text>
-<polyline points="696,475 686,475" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="686,484 686,466" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="684,481 684,469" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="682,478 682,472" stroke="#000000" stroke-width="1" fill="none" />
-<text x="678" y="479" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="end">GND</text>
-<polyline points="70,735 70,745" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="79,745 61,745" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="76,747 64,747" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="73,749 67,749" stroke="#000000" stroke-width="1" fill="none" />
-<text x="70" y="765" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
-<polyline points="190,735 190,745" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="199,745 181,745" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="196,747 184,747" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="193,749 187,749" stroke="#000000" stroke-width="1" fill="none" />
-<text x="190" y="765" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
-<polyline points="900,560 900,570" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="909,570 891,570" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="906,572 894,572" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="903,574 897,574" stroke="#000000" stroke-width="1" fill="none" />
-<text x="900" y="590" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
-<polyline points="960,565 960,575" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="969,575 951,575" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="966,577 954,577" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="963,579 957,579" stroke="#000000" stroke-width="1" fill="none" />
-<text x="960" y="595" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
-<polyline points="850,225 850,235" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="859,235 841,235" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="856,237 844,237" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="853,239 847,239" stroke="#000000" stroke-width="1" fill="none" />
-<text x="850" y="255" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
-<polyline points="1020,295 1020,305" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="1029,305 1011,305" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="1026,307 1014,307" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="1023,309 1017,309" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1020" y="325" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
-<polyline points="1036,420 1026,420" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="1026,429 1026,411" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="1024,426 1024,414" stroke="#000000" stroke-width="1" fill="none" />
-<polyline points="1022,423 1022,417" stroke="#000000" stroke-width="1" fill="none" />
-<text x="1018" y="424" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="end">GND</text>
-<text x="120" y="230" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">VBUS</text>
-<text x="120" y="240" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">USB_D-</text>
-<text x="120" y="250" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">USB_D+</text>
-<text x="160" y="450" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">VBUS</text>
-<text x="90" y="516" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">VBUS</text>
-<text x="389" y="305" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">TXD</text>
-<text x="389" y="315" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">RXD</text>
-<text x="389" y="335" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">USB_D+</text>
-<text x="389" y="345" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">USB_D-</text>
-<text x="389" y="325" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">V3</text>
-<text x="620" y="291" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">V3</text>
-<text x="389" y="355" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">XI</text>
-<text x="389" y="365" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">XO</text>
-<text x="340" y="600" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="middle">XI</text>
-<text x="420" y="600" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="middle">XO</text>
-<text x="674" y="465" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">XTAL1</text>
-<text x="674" y="455" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">XTAL2</text>
-<text x="674" y="375" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">RXD</text>
-<text x="674" y="385" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">TXD</text>
-<text x="674" y="365" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">RST</text>
-<text x="100" y="677.5" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">XTAL1</text>
-<text x="140" y="677.5" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">XTAL2</text>
-<text x="642" y="190" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">RST</text>
-<text x="1020" y="242.5" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">PWR_LED</text>
-<text x="1036" y="430" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">RXD</text>
-<text x="1036" y="440" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">TXD</text>
-<text x="1036" y="450" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">RST</text>
-<text x="674" y="285" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.0</text>
-<text x="674" y="295" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.1</text>
-<text x="674" y="305" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.2</text>
-<text x="674" y="315" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.3</text>
-<text x="674" y="325" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.4</text>
-<text x="674" y="335" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.5</text>
-<text x="674" y="345" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.6</text>
-<text x="674" y="355" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.7</text>
-<text x="904" y="475" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.0</text>
-<text x="904" y="465" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.1</text>
-<text x="904" y="455" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.2</text>
-<text x="904" y="445" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.3</text>
-<text x="904" y="435" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.4</text>
-<text x="904" y="425" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.5</text>
-<text x="904" y="415" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.6</text>
-<text x="904" y="405" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.7</text>
-<text x="538" y="175" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.0</text>
-<text x="538" y="185" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.1</text>
-<text x="538" y="195" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.2</text>
-<text x="538" y="205" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.3</text>
-<text x="538" y="215" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.4</text>
-<text x="538" y="225" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.5</text>
-<text x="538" y="235" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.6</text>
-<text x="538" y="245" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.7</text>
-<text x="1072" y="485" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.0</text>
-<text x="1072" y="495" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.1</text>
-<text x="1072" y="505" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.2</text>
-<text x="1072" y="515" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.3</text>
-<text x="1072" y="525" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.4</text>
-<text x="1072" y="535" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.5</text>
-<text x="1072" y="545" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.6</text>
-<text x="1072" y="555" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.7</text>
+<polyline points="850,247 850,257" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="859,257 841,257" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="856,259 844,259" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="853,261 847,261" stroke="#000000" stroke-width="1" fill="none" />
+<text x="850" y="277" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
+<polyline points="300,220 300,210" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="295,210 305,210" stroke="#000000" stroke-width="1" fill="none" />
+<text x="300" y="204" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">+5V</text>
+<polyline points="300,369 300,379" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="309,379 291,379" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="306,381 294,381" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="303,383 297,383" stroke="#000000" stroke-width="1" fill="none" />
+<text x="300" y="399" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="middle">GND</text>
+<polyline points="986,480 976,480" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="976,485 976,475" stroke="#000000" stroke-width="1" fill="none" />
+<text x="968" y="484" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="end">+5V</text>
+<polyline points="968,490 958,490" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="958,499 958,481" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="956,496 956,484" stroke="#000000" stroke-width="1" fill="none" />
+<polyline points="954,493 954,487" stroke="#000000" stroke-width="1" fill="none" />
+<text x="950" y="494" font-family="Times New Roman" font-size="9" fill="#000000" text-anchor="end">GND</text>
+<text x="172" y="230" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">VBUS</text>
+<text x="172" y="240" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">USB_D-</text>
+<text x="172" y="250" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">USB_D+</text>
+<text x="108" y="450" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">VBUS</text>
+<text x="90" y="514" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">VBUS</text>
+<text x="393" y="305" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">TXD</text>
+<text x="393" y="315" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">RXD</text>
+<text x="393" y="325" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">V3</text>
+<text x="393" y="335" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">USB_D+</text>
+<text x="393" y="345" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">USB_D-</text>
+<text x="393" y="355" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">XI</text>
+<text x="393" y="365" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">XO</text>
+<text x="620" y="289" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">V3</text>
+<text x="326" y="600" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">XI</text>
+<text x="434" y="600" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">XO</text>
+<text x="320" y="621" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">XI</text>
+<text x="440" y="621" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">XO</text>
+<text x="116" y="675" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">XTAL1</text>
+<text x="224" y="675" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">XTAL2</text>
+<text x="110" y="696" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">XTAL1</text>
+<text x="230" y="696" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">XTAL2</text>
+<text x="698" y="285" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.0</text>
+<text x="698" y="295" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.1</text>
+<text x="698" y="305" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.2</text>
+<text x="698" y="315" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.3</text>
+<text x="698" y="325" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.4</text>
+<text x="698" y="335" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.5</text>
+<text x="698" y="345" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.6</text>
+<text x="698" y="355" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">P1.7</text>
+<text x="698" y="365" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">RST</text>
+<text x="698" y="375" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">RXD</text>
+<text x="698" y="385" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">TXD</text>
+<text x="698" y="455" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">XTAL2</text>
+<text x="698" y="465" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">XTAL1</text>
+<text x="902" y="475" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.0</text>
+<text x="902" y="465" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.1</text>
+<text x="902" y="455" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.2</text>
+<text x="902" y="445" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.3</text>
+<text x="902" y="435" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.4</text>
+<text x="902" y="425" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.5</text>
+<text x="902" y="415" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.6</text>
+<text x="902" y="405" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.7</text>
+<text x="750" y="190" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">RST</text>
+<text x="1004" y="500" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">RXD</text>
+<text x="986" y="510" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">TXD</text>
+<text x="968" y="520" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="end">RST</text>
+<text x="1065" y="266" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P1.0</text>
+<text x="1055" y="284" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P1.1</text>
+<text x="1045" y="302" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P1.2</text>
+<text x="1035" y="320" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P1.3</text>
+<text x="1025" y="266" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P1.4</text>
+<text x="1015" y="284" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P1.5</text>
+<text x="1005" y="302" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P1.6</text>
+<text x="995" y="320" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P1.7</text>
+<text x="1065" y="386" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.0</text>
+<text x="1055" y="404" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.1</text>
+<text x="1045" y="422" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.2</text>
+<text x="1035" y="440" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.3</text>
+<text x="1025" y="386" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.4</text>
+<text x="1015" y="404" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.5</text>
+<text x="1005" y="422" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.6</text>
+<text x="995" y="440" font-family="Times New Roman" font-size="7" fill="#0000ff" text-anchor="start">P2.7</text>
 </g>
 </svg>

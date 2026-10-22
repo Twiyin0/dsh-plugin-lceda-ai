@@ -5,17 +5,17 @@
     {
       "file": "stc89c52rc-usb-isp-F_Cu.gbr",
       "layer": "1",
-      "bytes": 41417
+      "bytes": 46223
     },
     {
       "file": "stc89c52rc-usb-isp-B_Cu.gbr",
       "layer": "2",
-      "bytes": 15287
+      "bytes": 19196
     },
     {
       "file": "stc89c52rc-usb-isp-F_SilkS.gbr",
       "layer": "3",
-      "bytes": 37856
+      "bytes": 36709
     },
     {
       "file": "stc89c52rc-usb-isp-B_SilkS.gbr",
@@ -25,22 +25,22 @@
     {
       "file": "stc89c52rc-usb-isp-F_Mask.gbr",
       "layer": "7",
-      "bytes": 4073
+      "bytes": 4188
     },
     {
       "file": "stc89c52rc-usb-isp-B_Mask.gbr",
       "layer": "8",
-      "bytes": 2030
+      "bytes": 2068
     },
     {
       "file": "stc89c52rc-usb-isp-Edge_Cuts.gbr",
       "layer": "10",
-      "bytes": 220
+      "bytes": 222
     },
     {
       "file": "stc89c52rc-usb-isp.drl",
       "layer": "drill",
-      "bytes": 4261
+      "bytes": 5769
     }
   ],
   "check": {
@@ -48,33 +48,33 @@
     "checks": [
       {
         "name": "top-copper-flashes",
-        "expected": 347,
-        "actual": 347
+        "expected": 442,
+        "actual": 442
       },
       {
         "name": "top-copper-segments",
-        "expected": 1147,
-        "actual": 1147
+        "expected": 1194,
+        "actual": 1194
       },
       {
         "name": "top-copper-apertures",
-        "expected": 21,
-        "actual": 21
+        "expected": 24,
+        "actual": 24
       },
       {
         "name": "top-copper-flash-positions",
-        "expected": 347,
-        "actual": 347
+        "expected": 442,
+        "actual": 442
       },
       {
         "name": "drill-hits",
-        "expected": 284,
-        "actual": 284
+        "expected": 379,
+        "actual": 379
       },
       {
         "name": "outline-size",
-        "expected": "81.95x77.93",
-        "actual": "81.95x77.93"
+        "expected": "113.06x78.69",
+        "actual": "113.06x78.69"
       }
     ],
     "problems": []

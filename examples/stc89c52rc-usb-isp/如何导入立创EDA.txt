@@ -1,4 +1,4 @@
-STC89C52RC-USB-ISP — 由 lceda-ai 生成
+stc89c52rc-usb-isp — 由 lceda-ai 生成
 
 在立创EDA(标准版)里:
   1. 顶部菜单 → 打开 → 嘉立创EDA
@@ -6,4 +6,4 @@ STC89C52RC-USB-ISP — 由 lceda-ai 生成
   3. 打开后即可另存到自己的工程
 
 原理图文件: sch/Sheet_1.json
-生成时间: 2026-10-22T09:34:28.167Z
+生成时间: 2026-10-22T12:01:53.970Z

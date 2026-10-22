@@ -13,7 +13,7 @@ import { extractNetlist } from '../netlist.js';
 import { mmToUnit, toMm, parsePcb } from './parser.js';
 import { fetchFootprintForLcsc, resolveFootprintByPackage, footprintRefOf, fetchFootprint, minPitchMm } from './footprint.js';
 import { boardDocument, libRecord, boardOutlineRecord, genGid, resetGid, DEFAULT_DRC, DEFAULT_LAYERS, footprintAnchor, footprintExtent } from './writer.js';
-import { rulePlace, layoutQuality } from './place.js';
+import { rulePlace, functionalPlace, zonedPlace, layoutQuality } from './place.js';
 
 /** True when the footprint carries pads the symbol has no pin for. */
 function pairing0HasExtras(pins, pads) {
@@ -170,7 +170,7 @@ export async function boardFromSchematic(input, opts = {}) {
   const layoutNotes = [];
   let auto;
   let ruleBoard = null;
-  if (placement === 'rule') {
+  if (placement === 'rule' || placement === 'functional' || placement === 'schematic' || placement === 'zoned') {
     const entries = placed.map((p) => ({
       ref: p.component.designator,
       package: p.component.package ?? '',
@@ -182,12 +182,26 @@ export async function boardFromSchematic(input, opts = {}) {
       schX: p.component.x,
       schY: p.component.y,
     }));
-    const ruled = rulePlace(entries, {
-      netlist, boardWidthMm: opts.boardWidthMm, gapMm: opts.gapMm ?? 1.5, edgeMm: opts.edgeMm ?? 2.5,
-      useSchematicOrder: opts.placement === 'schematic',
-    });
+    // 'functional' keeps declared blocks together and puts connectors on the
+    // edge they need; 'schematic' packs in sheet reading order; 'rule' is the
+    // original global shelf search.
+    const ruled = opts.placement === 'zoned'
+      ? zonedPlace(entries, {
+        netlist, gapMm: opts.gapMm ?? 1.5, edgeMm: opts.edgeMm ?? 2.5,
+        zones: opts.zones ?? [], restAt: opts.restAt, restWidthMm: opts.restWidthMm,
+      })
+      : opts.placement === 'functional'
+      ? functionalPlace(entries, {
+        netlist, boardWidthMm: opts.boardWidthMm ?? 80, gapMm: opts.gapMm ?? 1.5, edgeMm: opts.edgeMm ?? 2.5,
+        groups: opts.groups ?? [],
+      })
+      : rulePlace(entries, {
+        netlist, boardWidthMm: opts.boardWidthMm, gapMm: opts.gapMm ?? 1.5, edgeMm: opts.edgeMm ?? 2.5,
+        useSchematicOrder: opts.placement === 'schematic',
+      });
     layoutNotes.push(...ruled.notes);
-    if (ruled.strategy) layoutNotes.push(`布局策略:${ruled.strategy.order} 顺序 / 行宽 ${ruled.strategy.rowWidthMm}mm(试了 ${ruled.strategy.tried} 种)`);
+    if (ruled.strategy?.rowWidthMm) layoutNotes.push(`布局策略:${ruled.strategy.order} 顺序 / 行宽 ${ruled.strategy.rowWidthMm}mm(试了 ${ruled.strategy.tried} 种)`);
+    else if (ruled.strategy) layoutNotes.push(`布局策略:${ruled.strategy.order}`);
     ruleBoard = ruled.board;
     // rulePlace already returns file units starting near 0: shift the whole
     // board so its top-left lands on originX/originY (no unit conversion here -

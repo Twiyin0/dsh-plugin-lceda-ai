@@ -220,6 +220,9 @@ export function routeCells(grid, start, goal, opts = {}) {
     // A via inside the keep-out is priced, not forbidden: forbidding it outright
     // pushed vias next to through-hole pads instead (hole-to-hole errors) and cost
     // routability on both boards.
+    // A via inside the keep-out is priced, not forbidden: forbidding it outright
+    // pushed vias next to through-hole pads instead (26 hole-to-hole errors on
+    // this board) and cost routability on both boards.
     const viaAllowedHere = !grid.isViaAllowed || grid.isViaAllowed(cur.i, cur.j);
     const viaPenalty = viaAllowedHere ? 1 : (opts.keepOutPenalty ?? 12);
     for (const l of layers) {

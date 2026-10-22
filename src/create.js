@@ -26,7 +26,7 @@ const id = () => {
 };
 
 const textRec = ({ x, y, text, size = 8, color = '#880000', anchor = 'start', rot = 0, bold = false }) =>
-  ['T', 'L', fmt(x), fmt(y), String(rot), color, 'Arial', fmt(size), bold ? '1' : '', '', '', 'comment', String(text), '1', anchor, id(), '0', ''].join('~');
+  ['T', 'L', fmt(x), fmt(y), String(rot), color, 'Arial', fmt(size), bold ? '1' : '', '', '', 'comment', safeText(text), '1', anchor, id(), '0', ''].join('~');
 
 /** Plain A4-landscape sheet frame with zone ticks and a title block. */
 export function buildFrame() {
@@ -187,8 +187,11 @@ export function pinIndex(doc) {
   const parsed = parseDocument(JSON.parse(JSON.stringify(doc)));
   const map = new Map();
   for (const c of parsed.components) {
-    // `orient` is what the auto-router uses to leave a pin in the right direction
-    for (const p of c.pins) map.set(`${c.designator}.${p.number}`, { x: p.x, y: p.y, name: p.name, orient: p.orient });
+    // `orient` is what the auto-router uses to leave a pin in the right direction.
+    // `path` is kept too: it is the only reliable statement of which way a pin
+    // leaves its symbol (the library is inconsistent about `orient`, so authoring
+    // code that needs to place a label outside a symbol reads the path instead).
+    for (const p of c.pins) map.set(`${c.designator}.${p.number}`, { x: p.x, y: p.y, name: p.name, orient: p.orient, path: p.path });
   }
   return map;
 }
@@ -217,7 +220,7 @@ export function addWire(doc, points) {
 
 export function addLabel(doc, { x, y, text, rot = 0, anchor = 'start' }) {
   const tx = anchor === 'end' ? x - 2 : x + 2;
-  doc.shape.push(['N', fmt(x), fmt(y), String(rot), '#0000ff', String(text), id(), anchor,
+  doc.shape.push(['N', fmt(x), fmt(y), String(rot), '#0000ff', safeText(text), id(), anchor,
     fmt(tx), fmt(y - 4), 'Times New Roman', '7pt', '0'].join('~'));
 }
 
@@ -235,7 +238,19 @@ export function addJunction(doc, { x, y }) {
 }
 
 export function addText(doc, { x, y, text, size = 9, color = '#000080', anchor = 'start' }) {
-  doc.shape.push(textRec({ x, y, text, size, color, anchor }));
+  doc.shape.push(textRec({ x, y, text: safeText(text), size, color, anchor }));
+}
+
+/**
+ * Make a string safe for a record field.
+ *
+ * The LCEDA record format separates fields with `~` and has no escape, so a `~`
+ * inside a label or a note silently truncates the text at that point - which is
+ * exactly what happened to a design note that read "3.4~5.5V": the sheet showed
+ * "3.4" and nothing else. Tildes become hyphens and newlines become spaces.
+ */
+export function safeText(value) {
+  return String(value ?? '').replace(/~/g, '-').replace(/[\r\n]+/g, ' ');
 }
 
 /**

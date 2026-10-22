@@ -35,7 +35,10 @@ export function copperObstacles(model) {
   const out = [];
   for (const item of copperItems(model)) {
     if (item.kind === 'pad') {
-      const b = item.bbox ?? padBBox({ x: item.x, y: item.y, width: item.width, height: item.height });
+      // Use the full pad: the DRC computes pad extents from the rotation and the
+      // OVAL spine, and a stitched via placed against a smaller box than the DRC
+      // checks measured 0.089 mm from a SOP-16 pad.
+      const b = padBBox(item);
       out.push({ kind: 'pad', net: item.net || '', minX: b.minX, maxX: b.maxX, minY: b.minY, maxY: b.maxY, ref: `${item.footprint}.${item.number}` });
     } else if (item.kind === 'track') {
       const w = (item.width ?? 1) / 2;
