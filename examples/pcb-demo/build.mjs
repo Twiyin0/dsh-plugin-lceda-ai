@@ -14,8 +14,10 @@ import { pourBoard, pourNet, verifyPour, defaultPourNet } from '../../src/pcb/po
 import { viaBoard, stitchVias, verifyVias } from '../../src/pcb/via.js';
 import { runDrc, drcMarkdown } from '../../src/pcb/drc.js';
 import { exportGerber, verifyGerber } from '../../src/pcb/gerber.js';
+import { exportBom, verifyBom } from '../../src/pcb/bom.js';
 import { renderPcbFiles } from '../../src/pcb/render.js';
 import { readPcbFile } from '../../src/pcb/parser.js';
+import { parseDocument } from '../../src/parser.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const schematic = path.join(here, '..', 'stc89c52rc-minimal-v3.esch');
@@ -69,10 +71,19 @@ await fs.writeFile(path.join(gerberDir, 'gerber.manifest.json'), JSON.stringify(
   check: { ok: gerberCheck.ok, checks: gerberCheck.checks, problems: gerberCheck.problems },
 }, null, 2), 'utf8');
 
+// BOM + pick-and-place (joined back to the schematic for LCSC data)
+const schematicDoc = parseDocument(await fs.readFile(schematic, 'utf8'));
+const bom = exportBom(finalModel0, { name: 'stc89c52rc-minimal', schematic: schematicDoc });
+const bomDir = path.join(here, 'bom');
+await fs.mkdir(bomDir, { recursive: true });
+for (const f of bom.files) await fs.writeFile(path.join(bomDir, f.name), f.buffer ?? f.text);
+const bomCheck = verifyBom(finalModel0, bom);
+
 // final design rule check on the finished board
 const finalModel = await readPcbFile(path.join(here, 'board-stitched.json'));
 const drc = runDrc(finalModel);
 await fs.writeFile(path.join(here, 'drc.md'), drcMarkdown(drc, { file: 'board-stitched.json' }), 'utf8');
+console.log(`  BOM:${bom.stats.lines} 行 / ${bom.stats.parts} 器件 | 贴片 ${bom.stats.placements}(顶 ${bom.stats.top}/底 ${bom.stats.bottom}) | 有 LCSC 号 ${bom.stats.withLcsc} 行 | 自检 ${bomCheck.ok ? 'PASS' : 'FAIL'}`);
 console.log(`  Gerber:${exported.files.length} 个文件(${exported.files.map((f) => f.name).join(', ')}) | 自检 ${gerberCheck.ok ? 'PASS' : 'FAIL'}`);
 console.log(`  DRC:${drc.ok ? 'PASS' : 'FAIL'} — ${drc.summary}${Object.keys(drc.counts).length ? ' | ' + Object.entries(drc.counts).map(([k, v]) => `${k}:${v}`).join(' ') : ''}`);
 for (const w of placed.warnings) console.log('  !', w);

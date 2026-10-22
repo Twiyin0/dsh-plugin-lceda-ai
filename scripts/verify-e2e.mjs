@@ -429,6 +429,42 @@ print(n)
   await fsMod.rm(dir, { recursive: true, force: true });
   return `${exported.files.length} files, ${objects || 'gerbonara skipped'} objects, ${Date.now() - t0}ms`;
 });
+await check('pcb:bom and pick-and-place export, xlsx readable by openpyxl', async () => {
+  const { readPcbFile } = await import('../src/pcb/parser.js');
+  const { parseDocument } = await import('../src/parser.js');
+  const { exportBom, verifyBom } = await import('../src/pcb/bom.js');
+  const fsMod = await import('node:fs/promises');
+  const model = await readPcbFile(path.join(root, 'examples/pcb-demo/board-stitched.json'));
+  const schematic = parseDocument(await fsMod.readFile(path.join(root, 'examples', 'stc89c52rc-minimal-v3.esch'), 'utf8'));
+  const t0 = Date.now();
+  const exported = exportBom(model, { name: 'e2e', schematic });
+  const check = verifyBom(model, exported);
+  assert(check.ok, `bom check: ${check.problems.join('; ')}`);
+  assert(exported.stats.lines < exported.stats.parts, 'lines collapse repeated values');
+  assert(exported.stats.placements === model.footprints.length, 'one placement row per footprint');
+  const dir = path.join('/tmp', `bom-e2e-${process.pid}`);
+  await fsMod.mkdir(dir, { recursive: true });
+  for (const f of exported.files) await fsMod.writeFile(path.join(dir, f.name), f.buffer ?? f.text);
+  const py = '/Users/movsa/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/python/bin/python3';
+  const hasPy = await fsMod.access(py).then(() => true, () => false);
+  let dims = 'openpyxl skipped';
+  if (hasPy) {
+    const script = `
+import openpyxl, sys, glob
+f = glob.glob(sys.argv[1] + '/*.xlsx')[0]
+wb = openpyxl.load_workbook(f)
+print(len(wb.sheetnames), wb['BOM'].max_row, wb['CPL'].max_row)
+`;
+    const { execFile } = await import('node:child_process');
+    const { promisify } = await import('node:util');
+    const run = promisify(execFile);
+    const { stdout } = await run(py, ['-c', script, dir], { timeout: 60000 });
+    dims = stdout.trim();
+    assert(dims === `2 ${exported.stats.lines + 1} ${exported.stats.placements + 1}`, `openpyxl saw ${dims}`);
+  }
+  await fsMod.rm(dir, { recursive: true, force: true });
+  return `${exported.stats.lines} lines / ${exported.stats.parts} parts, xlsx ${dims}, ${Date.now() - t0}ms`;
+});
 await check('cli:pcb read/render', async () => {
   const { stdout } = await run(process.execPath, [bin, 'pcb', 'read', path.join(root, 'test/fixtures/pcb/mini-board.pcb.json'), '--json'], { cwd: root });
   const summary = JSON.parse(stdout);

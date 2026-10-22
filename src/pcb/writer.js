@@ -224,6 +224,9 @@ export function cparaToText(cPara = {}) {
 export function libRecord(footprintModel, {
   x, y, rotation = 0, flip = false, cPara = {}, gid = genGid(), layer = 1,
   netsByPad = null, designator = '', value = '', showDesignator = true, showValue = true,
+  // the schematic component this footprint came from, so a BOM can join back to
+  // the schematic for LCSC / supplier / manufacturer data
+  bindSchId = '', addIntoBom = true, datastrid = '', uuid3d = '',
 } = {}) {
   const { map } = placementTransform(footprintModel, { x, y, rotation, flip });
   const subs = [];
@@ -259,7 +262,7 @@ export function libRecord(footprintModel, {
 
   const head = [
     'LIB', fmt(x), fmt(y), cparaToText(cPara), String(rotation), '0', gid, String(layer),
-    footprintModel.head?.uuid ?? '', '0', '0', '', 'yes', '', '',
+    footprintModel.head?.uuid ?? '', '0', '0', bindSchId, addIntoBom ? 'yes' : 'no', datastrid, uuid3d,
   ].join('~');
   return subs.length ? [head, ...subs].join('#@$') : head;
 }

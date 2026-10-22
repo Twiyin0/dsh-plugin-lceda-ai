@@ -50,6 +50,8 @@ Commands:
   pcb drc <board.json>           Design rule check: width / clearance / via ring / hole-to-hole / edge / silk / connectivity
         [--checks a,b,c] [-o report.md]
   pcb gerber <board.json> -o dir Export Gerber (RS-274X) + Excellon drill, then self-check [--name board] [--manifest]
+  pcb bom <board.json> -o dir    Export BOM + pick-and-place (CSV, and XLSX unless --no-xlsx)
+        [--sch sheet.esch] [--name board]
   project <dir>                  Multi-sheet project overview (merged BOM, net classes); [-o out] [--render]
   export <sch.esch|json>         Write the LCEDA-importable JSON (文件 → 打开 → 嘉立创EDA)
         [-o out.json] [--project Dir] [--sheet-name Sheet_1] [--json]
@@ -256,6 +258,35 @@ async function main() {
       }
       emit({ files: rows, totals });
       if (totals.missing || totals.mismatch) process.exitCode = 1;
+      return;
+    }
+    if (sub === 'bom') {
+      const { readPcbFile: readPcb } = await import('../src/pcb/parser.js');
+      const { exportBom, verifyBom } = await import('../src/pcb/bom.js');
+      const fsMod = await import('node:fs/promises');
+      const pathMod = await import('node:path');
+      const out = flag('-o', flag('--out', null));
+      if (!out) return usage();
+      const model = await readPcb(input);
+      // enrich from the schematic when one is given (or when the board sits next
+      // to the sheet it came from)
+      const schFile = flag('--sch', null);
+      let schematic = null;
+      if (schFile) {
+        const { parseDocument } = await import('../src/parser.js');
+        schematic = parseDocument(await fsMod.readFile(schFile, 'utf8'));
+      }
+      const name = flag('--name', pathMod.basename(input).replace(/\.(json|epcb)$/i, '')) || 'board';
+      const t0 = Date.now();
+      const exported = exportBom(model, { name, schematic, xlsx: !rest.includes('--no-xlsx') });
+      await fsMod.mkdir(out, { recursive: true });
+      for (const f of exported.files) await fsMod.writeFile(pathMod.join(out, f.name), f.buffer ?? f.text);
+      const check = verifyBom(model, exported);
+      emit({ dir: out, stats: exported.stats, check, bom: exported.bom, cpl: exported.cpl, files: exported.files.map((f) => f.name), ms: Date.now() - t0 });
+      log(`bom ${out}: ${exported.stats.lines} 行 / ${exported.stats.parts} 个器件 | 贴片 ${exported.stats.placements}(顶 ${exported.stats.top} / 底 ${exported.stats.bottom}) | 有 LCSC 号 ${exported.stats.withLcsc} 行 | ${Date.now() - t0} ms`);
+      log(`  文件:${exported.files.map((f) => f.name).join(', ')}`);
+      log(`  自检:${check.ok ? '器件不重不漏' : check.problems.join('; ')}`);
+      for (const r of exported.bom.slice(0, 12)) log(`  ${String(r.item).padStart(2)} x${String(r.qty).padEnd(2)} ${r.references.slice(0, 18).padEnd(19)} ${String(r.value).slice(0, 12).padEnd(13)} ${String(r.package).slice(0, 18).padEnd(19)} ${r.lcsc || '-'}`);
       return;
     }
     if (sub === 'gerber') {

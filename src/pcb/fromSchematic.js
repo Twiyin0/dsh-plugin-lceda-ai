@@ -228,6 +228,7 @@ export async function boardFromSchematic(input, opts = {}) {
       x: p.pos.x, y: p.pos.y, rotation: p.pos.rotation,
       cPara, designator: c.designator, value: c.value ?? '',
       netsByPad: p.netsByPad,
+      bindSchId: c.id ?? '', addIntoBom: c.addIntoBom !== false,
     }));
     const anchor = footprintAnchor(p.footprint.model);
     const extent = footprintExtent(p.footprint.model);
