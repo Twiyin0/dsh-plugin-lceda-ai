@@ -68,6 +68,7 @@ npx lceda-ai export examples/stc89c52rc-minimal-v3.esch --project ./MyProject
 | `pcb read <file\|dir>` | 解析 PCB/封装:层、器件、焊盘、走线、过孔、铺铜、板框、DRC |
 | `pcb render <file\|dir> -o <out>` | PCB 分层渲染 svg/png/pdf + 报告(`--view bottom` 看底层) |
 | `pcb route <board.json> -o out` | 网格 A* 自动布线(两层 + 换层过孔)+ 间距自检(`--cell/--clearance/--width`) |
+| `pcb pour <board.json> -o out` | 铺铜:洪泛填充 + 热焊盘 + 孤岛移除 + 自检(`--net/--layer/--no-thermal/--keep-island`) |
 | `pcb fp <LCSC\|uuid\|封装名>` | 查器件对应的封装(焊盘数/间距/尺寸/层) |
 | `pcb map <sch\|dir>` | 把原理图每个器件映射到封装并校验 **引脚↔焊盘**(缺失=错误,多余=提示) |
 | `pcb from-sch <sch> -o board.json` | **原理图→PCB**:规则化布局 + 把网表写进焊盘(`--place rule\|shelf`,`--export` 顺带出图) |
@@ -259,6 +260,8 @@ docs/format.md       .esch 文件格式笔记(踩坑记录)
   实测比货架排布**飞线短 37%**、板面积更小、零重叠零越界。
 - **P-06 布线**:`pcb route` —— 两层网格 A*(换层过孔)+ 精确间距自检;实测 v3 最小系统 **33/40 网络布通、0 违规**;
   顺带修掉 POLYGON 焊盘被当成点、以及封装择优误配 LQFP 两个真 bug(现在支持 `--footprint U1=DIP-40`)。
+- **P-07 铺铜**:`pcb pour` —— 栅格洪泛 + 热焊盘辐条 + 孤岛移除,输出 `COPPERAREA`;
+  实测 GND 铜 **1897.5mm² / 23 个多边形 / 0 越界**,编辑器识别出 23 个铜皮区域。
 
 ## 路线图(未实现)
 

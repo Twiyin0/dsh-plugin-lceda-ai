@@ -335,6 +335,22 @@ await check('pcb:autoroute the demo board and stay clearance clean', async () =>
   assert(routed.stats.vias > 0, 'no vias produced');
   return `${routed.stats.routed}/${routed.stats.nets} nets, ${routed.stats.lengthMm}mm, ${Date.now() - t0}ms`;
 });
+await check('pcb:copper pour on the routed board is clean and connected', async () => {
+  const { readPcbFile } = await import('../src/pcb/parser.js');
+  const { pourBoard, pourNet, verifyPour, defaultPourNet } = await import('../src/pcb/pour.js');
+  const model = await readPcbFile(path.join(root, 'examples/pcb-demo/board-routed.json'));
+  const net = defaultPourNet(model);
+  assert(net === 'GND', `default pour net ${net}`);
+  const t0 = Date.now();
+  const pour = pourNet(model, { net, cell: 2, clearance: 1, thermal: true });
+  assert(pour.stats.areaMm2 > 500, `pour area ${pour.stats.areaMm2}`);
+  assert(pour.stats.kept >= 1, 'no copper survived');
+  const check = verifyPour(model, pour);
+  assert(check.count === 0, `${check.count} foreign pads inside the pour`);
+  const poured = pourBoard(model, { net, cell: 2, clearance: 1 });
+  assert(poured.stats.polygons > 1, `polygons ${poured.stats.polygons}`);
+  return `${net} ${pour.stats.areaMm2}mm2, ${pour.stats.polygons} polys, ${Date.now() - t0}ms`;
+});
 await check('cli:pcb read/render', async () => {
   const { stdout } = await run(process.execPath, [bin, 'pcb', 'read', path.join(root, 'test/fixtures/pcb/mini-board.pcb.json'), '--json'], { cwd: root });
   const summary = JSON.parse(stdout);

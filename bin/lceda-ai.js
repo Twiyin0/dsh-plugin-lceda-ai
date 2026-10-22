@@ -44,6 +44,8 @@ Commands:
         [--place rule|shelf] [--export]
   pcb route <board.json> -o out  Autoroute the board (grid maze router) and self-check the result
         [--cell 2] [--clearance 1] [--width 1] [--layers 2] [--export]
+  pcb pour <board.json> -o out   Copper pour (flood fill + thermal spokes + island removal) and self-check
+        [--net GND] [--layer 1] [--cell 2] [--clearance 1] [--no-thermal] [--keep-island] [--export]
   project <dir>                  Multi-sheet project overview (merged BOM, net classes); [-o out] [--render]
   export <sch.esch|json>         Write the LCEDA-importable JSON (文件 → 打开 → 嘉立创EDA)
         [-o out.json] [--project Dir] [--sheet-name Sheet_1] [--json]
@@ -249,6 +251,37 @@ async function main() {
       }
       emit({ files: rows, totals });
       if (totals.missing || totals.mismatch) process.exitCode = 1;
+      return;
+    }
+    if (sub === 'pour') {
+      const { readPcbFile: readPcb } = await import('../src/pcb/parser.js');
+      const { pourBoard, pourNet, verifyPour, defaultPourNet } = await import('../src/pcb/pour.js');
+      const out = flag('-o', flag('--out', null));
+      if (!out) return usage();
+      const model = await readPcb(input);
+      const net = flag('--net', null) ?? defaultPourNet(model);
+      const opts = {
+        net, layer: Number(flag('--layer', 1)) || 1,
+        cell: Number(flag('--cell', 2)) || 2,
+        clearance: Number(flag('--clearance', 1)) || 1,
+        thermal: !rest.includes('--no-thermal'),
+        keepIsland: rest.includes('--keep-island'),
+      };
+      const t0 = Date.now();
+      const poured = pourBoard(model, opts);
+      await fsMod.writeFile(out, JSON.stringify(poured.doc), 'utf8');
+      const pour = pourNet(model, opts);
+      const check = verifyPour(model, pour);
+      emit({ file: out, net, stats: poured.stats, pour: pour.stats, check, ms: Date.now() - t0 });
+      log(`poured ${out}: 网络 ${net} | 铜 ${pour.stats.areaMm2} mm² | 多边形 ${pour.stats.polygons} | 热焊盘 ${pour.stats.thermal ? '开' : '关'} | 移除孤岛 ${pour.stats.removedIslands} | ${Date.now() - t0} ms`);
+      log(`  自检:${check.ok ? '无其他网络焊盘落在铜内' : check.count + ' 处越界'}`);
+      for (const v of check.violations.slice(0, 5)) log(`    - ${v.net || '(无网络)'} 焊盘在铜内 @${v.at.x},${v.at.y}`);
+      if (rest.includes('--export')) {
+        const { renderPcbFiles } = await import('../src/pcb/render.js');
+        const dir = out.replace(/\.(json|epcb)$/i, '') + '.render';
+        const results = await renderPcbFiles([out], { outDir: dir, formats: ['png', 'svg', 'report'], scale: 8 });
+        for (const r of results) for (const [k, v] of Object.entries(r.outputs)) log(`  ${k}: ${v}`);
+      }
       return;
     }
     if (sub === 'route') {
