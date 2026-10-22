@@ -497,6 +497,312 @@ const TOOLS = [
       return { text: lines.join('\n'), files, changed: res.changed === true };
     },
   },
+  {
+    name: 'lceda_pcb_read',
+    description: 'Read a 嘉立创EDA PCB board or footprint document (.json/.epcb saved from the standard edition) and report what is on it: layers, footprints with package and position, pad/track/via/copper-area counts, board outline size, nets and the DRC rules stored in the file. Use this before editing or routing a board.',
+    parameters: {
+      path: { type: 'string', required: true, description: 'PCB .json/.epcb file, or a directory of them.' },
+      ref: { type: 'string', description: 'Only report the footprint whose designator matches this text (e.g. "U1").' },
+      net: { type: 'string', description: 'Only report nets whose name matches this text (e.g. "GND").' },
+    },
+    async execute(args, ctx, exec) {
+      const cwd = await ctx.workingDirectory.ensure(exec.agent, exec.signal);
+      const target = await resolvePath(ctx, exec, args.path);
+      const res = await runCli(['pcb', 'read', target, '--json'], { cwd });
+      const rows = Array.isArray(res) ? res : [res];
+      const lines = [];
+      const files = [];
+      for (const r of rows) {
+        const c = r.counts ?? {};
+        lines.push(`## ${r.file}`);
+        lines.push(`${r.kind}${r.package ? ` (${r.package})` : ''}: ${c.footprints ?? 0} footprints, ${c.pads ?? 0} pads, ${c.tracks ?? 0} tracks, ${c.vias ?? 0} vias, ${c.copperAreas ?? 0} copper areas`);
+        if (r.board) lines.push(`board ${r.board.widthMm} x ${r.board.heightMm} mm`);
+        const netRows = r.nets ?? [];
+        if (netRows.length) lines.push(`nets: ${netRows.map((n) => (typeof n === 'string' ? n : n.name)).slice(0, 40).join(', ')}`);
+        let fps = r.footprints ?? [];
+        if (args.ref) fps = fps.filter((f) => String(f.name).includes(String(args.ref)));
+        for (const fp of fps) lines.push(`- ${fp.name || '(unnamed)'} ${fp.package ?? ''} @${fp.x},${fp.y} rot${fp.rotation ?? 0} pads=${fp.pads ?? 0}`);
+        const drc = r.drc ?? {};
+        if (drc.trackWidth) lines.push(`DRC: width ${drc.trackWidth}mm clearance ${drc.clearance}mm via ${drc.viaHoleDiameter}/${drc.viaHoleD}mm`);
+      }
+      return { text: lines.join('\n'), files };
+    },
+  },
+  {
+    name: 'lceda_pcb_render',
+    description: 'Render a 嘉立创EDA PCB to files a human or agent can look at: SVG (vector), PNG (raster), PDF and a Markdown/JSON report, with copper, pads, vias, silkscreen and drill drawn per layer. Use --view bottom for the bottom side. Returns the written file paths.',
+    parameters: {
+      path: { type: 'string', required: true, description: 'PCB .json/.epcb file, or a directory of them.' },
+      outDir: { type: 'string', description: 'Output directory. Defaults to "<board>.ai" next to the input.' },
+      formats: { type: 'array', items: { type: 'string', enum: ['svg', 'png', 'pdf', 'report'] }, description: 'Formats to write. Defaults to all four.' },
+      scale: { type: 'number', description: 'PNG/PDF pixels per board unit (1 unit = 0.254 mm); default 4.' },
+      view: { type: 'string', enum: ['top', 'bottom'], description: 'Which side to draw. Defaults to top.' },
+    },
+    async execute(args, ctx, exec) {
+      const cwd = await ctx.workingDirectory.ensure(exec.agent, exec.signal);
+      const target = await resolvePath(ctx, exec, args.path);
+      const argv = ['pcb', 'render', target, '--formats', (asArray(args.formats).length ? asArray(args.formats) : ['svg', 'png', 'pdf', 'report']).join(','), '--scale', String(asNum(args.scale, 4)), '--json'];
+      if (args.view) argv.push('--view', String(args.view));
+      if (args.outDir) argv.push('-o', await resolvePath(ctx, exec, args.outDir));
+      const res = await runCli(argv, { cwd });
+      const rows = Array.isArray(res) ? res : [res];
+      const files = [];
+      const lines = [];
+      for (const r of rows) {
+        lines.push(`## ${r.file ?? r.input}${r.view ? ` (${r.view})` : ''}`);
+        for (const [k, v] of Object.entries(r.outputs ?? {})) { files.push(v); lines.push(`- ${k}: ${v}`); }
+      }
+      return { text: lines.join('\n') || 'nothing rendered', files };
+    },
+  },
+  {
+    name: 'lceda_pcb_build',
+    description: 'Build a PCB from a 嘉立创EDA schematic: fetch a footprint for every component from the standard library, place them (rule-based clustering by default), carry the netlist onto the pads and write a board document the editor can open. Optionally continue the whole pipeline in one call: autoroute, pour a net, stitch vias and export Gerber/BOM. Returns the board path, the placement quality (ratsnest length, overlaps) and per-stage results.',
+    parameters: {
+      path: { type: 'string', required: true, description: 'Schematic .esch/.json to build from.' },
+      outPath: { type: 'string', required: true, description: 'Where to write the board .json.' },
+      placement: { type: 'string', enum: ['rule', 'shelf'], description: 'Placement strategy: "rule" (cluster + search, default) or "shelf" (simple rows).' },
+      footprint: { type: 'array', items: { type: 'string' }, description: 'Footprint overrides as "REF=name", e.g. "U1=STC89C52RC-DIP-40". Use it when the library search picks a package you do not want.' },
+      boardWidthMm: { type: 'number', description: 'Target board width in mm (drives the placement search).' },
+      route: { type: 'boolean', description: 'After placing, autoroute the board.' },
+      pourNet: { type: 'string', description: 'After routing, pour this net (e.g. "GND"). Empty string skips pouring.' },
+      stitchVias: { type: 'boolean', description: 'After pouring, add stitching vias to the poured net.' },
+      exportGerber: { type: 'boolean', description: 'Also export Gerber + drill into "<outPath>.gerber/".' },
+      exportBom: { type: 'boolean', description: 'Also export BOM + pick-and-place into "<outPath>.bom/".' },
+      sheetTitle: { type: 'string', description: 'Board title stored in the document.' },
+    },
+    async execute(args, ctx, exec) {
+      const cwd = await ctx.workingDirectory.ensure(exec.agent, exec.signal);
+      const sch = await resolvePath(ctx, exec, args.path);
+      const out = await resolvePath(ctx, exec, args.outPath);
+      const lines = [];
+      const files = [];
+      const argv = ['pcb', 'from-sch', sch, '-o', out, '--place', String(args.placement ?? 'rule'), '--json'];
+      if (args.sheetTitle) argv.push('--title', String(args.sheetTitle));
+      if (asNum(args.boardWidthMm, 0) > 0) argv.push('--board-width', String(asNum(args.boardWidthMm, 0)));
+      for (const f of asArray(args.footprint)) argv.push('--footprint', String(f));
+      const built = await runCli(argv, { cwd });
+      files.push(out);
+      lines.push(`board: ${out}`);
+      lines.push(`${built.stats?.components ?? '?'} components, ${built.stats?.pads ?? '?'} pads, ${built.stats?.nets ?? '?'} nets, board ${built.board?.widthMm} x ${built.board?.heightMm} mm`);
+      if (built.quality) lines.push(`placement: ratsnest ${built.quality.ratsnestMm} mm, overlaps ${built.quality.overlaps}, outside ${built.quality.outside}`);
+      for (const w of built.warnings ?? []) lines.push(`! ${w}`);
+
+      let current = out;
+      if (args.route) {
+        const routed = `${out.replace(/\.json$/i, '')}-routed.json`;
+        const r = await runCli(['pcb', 'route', current, '-o', routed, '--json'], { cwd });
+        current = routed;
+        files.push(routed);
+        lines.push(`route: ${r.stats?.routed}/${r.stats?.nets} nets, ${r.stats?.tracks} tracks, ${r.stats?.vias} vias, ${r.stats?.lengthMm} mm, ${r.check?.count ?? 0} clearance issues`);
+      }
+      if (args.pourNet) {
+        const poured = `${out.replace(/\.json$/i, '')}-poured.json`;
+        const r = await runCli(['pcb', 'pour', current, '-o', poured, '--net', String(args.pourNet), '--json'], { cwd });
+        current = poured;
+        files.push(poured);
+        lines.push(`pour: ${args.pourNet} ${r.pour?.areaMm2} mm2 in ${r.pour?.polygons} polygons, ${r.check?.count ?? 0} violations`);
+      }
+      if (args.stitchVias) {
+        const stitched = `${out.replace(/\.json$/i, '')}-stitched.json`;
+        const net = String(args.pourNet || 'GND');
+        const r = await runCli(['pcb', 'via', current, '-o', stitched, '--net', net, '--json'], { cwd });
+        current = stitched;
+        files.push(stitched);
+        lines.push(`stitch: ${r.stats?.placed} vias on ${net}, ${r.check?.count ?? 0} violations`);
+      }
+      if (args.exportGerber) {
+        const dir = `${out.replace(/\.json$/i, '')}.gerber`;
+        const r = await runCli(['pcb', 'gerber', current, '-o', dir, '--manifest', '--json'], { cwd });
+        lines.push(`gerber: ${(r.files ?? []).length} files in ${dir} (self check ${r.check?.ok ? 'ok' : 'failed'})`);
+        for (const f of r.files ?? []) files.push(`${dir}/${f}`);
+      }
+      if (args.exportBom) {
+        const dir = `${out.replace(/\.json$/i, '')}.bom`;
+        const r = await runCli(['pcb', 'bom', current, '-o', dir, '--sch', sch, '--json'], { cwd });
+        lines.push(`bom: ${r.stats?.lines} lines / ${r.stats?.parts} parts, placement ${r.stats?.placements} in ${dir}`);
+        for (const f of r.files ?? []) files.push(`${dir}/${f}`);
+      }
+      return { text: lines.join('\n'), files };
+    },
+  },
+  {
+    name: 'lceda_pcb_route',
+    description: 'Autoroute a 嘉立创EDA PCB with a two-layer grid maze router: it builds a raster of the board, blocks foreign copper, the board edge and anything already routed, connects each net pad-to-pad in MST order with A*, and drops a via where a track changes layer. Then it self-checks the result against the clearance rule. Returns routed/failed nets, track and via counts and the copper length.',
+    parameters: {
+      path: { type: 'string', required: true, description: 'Board .json to route.' },
+      outPath: { type: 'string', required: true, description: 'Where to write the routed board.' },
+      cell: { type: 'number', description: 'Routing grid cell in board units (1 unit = 0.254 mm); default 2 (0.508 mm). Smaller finds more paths, slower.' },
+      clearance: { type: 'number', description: 'Clearance in board units; defaults to the board DRC value.' },
+      width: { type: 'number', description: 'Track width in board units; defaults to the board DRC value.' },
+    },
+    async execute(args, ctx, exec) {
+      const cwd = await ctx.workingDirectory.ensure(exec.agent, exec.signal);
+      const board = await resolvePath(ctx, exec, args.path);
+      const out = await resolvePath(ctx, exec, args.outPath);
+      const argv = ['pcb', 'route', board, '-o', out, '--json'];
+      for (const [flag, value] of [['--cell', args.cell], ['--clearance', args.clearance], ['--width', args.width]]) {
+        if (asNum(value, 0) > 0) argv.push(flag, String(asNum(value, 0)));
+      }
+      const r = await runCli(argv, { cwd });
+      const lines = [
+        `routed: ${out}`,
+        `${r.stats?.routed}/${r.stats?.nets} nets, ${r.stats?.tracks} tracks, ${r.stats?.vias} vias, ${r.stats?.lengthMm} mm`,
+        `self check: ${r.check?.count ? `${r.check.count} clearance issues` : 'clean'}`,
+      ];
+      for (const f of r.failed ?? []) lines.push(`! unrouted ${f.net} ${f.from ?? ''}${f.to ? ` -> ${f.to}` : ''}`);
+      return { text: lines.join('\n'), files: [out] };
+    },
+  },
+  {
+    name: 'lceda_pcb_pour',
+    description: 'Pour copper on a 嘉立创EDA PCB: rasterise the board area, clear everything the net may not touch plus the clearance ring, keep four thermal spokes through a same-net pad so it stays connected without becoming a heat sink, drop copper islands that touch no pad of the net, then trace the result into polygon outlines and write COPPERAREA records. Self-checks that no pad of another net ends up inside the copper.',
+    parameters: {
+      path: { type: 'string', required: true, description: 'Board .json to pour.' },
+      outPath: { type: 'string', required: true, description: 'Where to write the poured board.' },
+      net: { type: 'string', description: 'Net to pour. Defaults to ground if the board has one, else the widest rail.' },
+      layer: { type: 'number', description: 'Layer id to pour on: 1 top (default), 2 bottom.' },
+      cell: { type: 'number', description: 'Raster cell in board units; default 2 (0.508 mm).' },
+      clearance: { type: 'number', description: 'Clearance in board units; defaults to the board DRC value.' },
+      thermal: { type: 'boolean', description: 'Thermal spokes on same-net pads. Default true.' },
+      keepIsland: { type: 'boolean', description: 'Keep the largest copper island even when it touches no pad. Default false.' },
+    },
+    async execute(args, ctx, exec) {
+      const cwd = await ctx.workingDirectory.ensure(exec.agent, exec.signal);
+      const board = await resolvePath(ctx, exec, args.path);
+      const out = await resolvePath(ctx, exec, args.outPath);
+      const argv = ['pcb', 'pour', board, '-o', out, '--json'];
+      if (args.net) argv.push('--net', String(args.net));
+      if (asNum(args.layer, 0) > 0) argv.push('--layer', String(asNum(args.layer, 0)));
+      if (asNum(args.cell, 0) > 0) argv.push('--cell', String(asNum(args.cell, 0)));
+      if (asNum(args.clearance, 0) > 0) argv.push('--clearance', String(asNum(args.clearance, 0)));
+      if (args.thermal === false) argv.push('--no-thermal');
+      if (args.keepIsland === true) argv.push('--keep-island');
+      const r = await runCli(argv, { cwd });
+      return {
+        text: [
+          `poured: ${out}`,
+          `net ${r.net}: ${r.pour?.areaMm2} mm2, ${r.pour?.polygons} polygons, thermal ${r.pour?.thermal ? 'on' : 'off'}, islands removed ${r.pour?.removedIslands}`,
+          `self check: ${r.check?.count ? `${r.check.count} foreign pads inside the copper` : 'clean'}`,
+        ].join('\n'),
+        files: [out],
+      };
+    },
+  },
+  {
+    name: 'lceda_pcb_via',
+    description: 'Place stitching vias inside a copper pour on a 嘉立创EDA PCB: a lattice of through vias ties the poured net to the other layer, skipping cells without solid copper around them and keeping the clearance measured from the via edge against copper on every layer. Reports the via geometry (pad, drill, annular ring) and checks clearance and hole-to-hole spacing.',
+    parameters: {
+      path: { type: 'string', required: true, description: 'Poured board .json.' },
+      outPath: { type: 'string', required: true, description: 'Where to write the board with stitching vias.' },
+      net: { type: 'string', description: 'Net to stitch (defaults to the pour net, ground if present).' },
+      spacingMm: { type: 'number', description: 'Lattice pitch in mm; default 5.' },
+      edgeMm: { type: 'number', description: 'How far a via must stay inside solid copper, in mm; default 1.' },
+    },
+    async execute(args, ctx, exec) {
+      const cwd = await ctx.workingDirectory.ensure(exec.agent, exec.signal);
+      const board = await resolvePath(ctx, exec, args.path);
+      const out = await resolvePath(ctx, exec, args.outPath);
+      const argv = ['pcb', 'via', board, '-o', out, '--json'];
+      if (args.net) argv.push('--net', String(args.net));
+      if (asNum(args.spacingMm, 0) > 0) argv.push('--spacing', String(asNum(args.spacingMm, 0)));
+      if (asNum(args.edgeMm, 0) > 0) argv.push('--edge', String(asNum(args.edgeMm, 0)));
+      const r = await runCli(argv, { cwd });
+      return {
+        text: [
+          `stitched: ${out}`,
+          `${r.stats?.placed} vias on ${r.net}, pad ${r.stats?.diameterMm} mm / drill ${r.stats?.drillMm} mm / ring ${r.stats?.annularRingMm} mm`,
+          `self check: ${r.check?.count ? `${r.check.count} violations` : 'clearance and hole-to-hole clean'}`,
+        ].join('\n'),
+        files: [out],
+      };
+    },
+  },
+  {
+    name: 'lceda_pcb_drc',
+    description: 'Run a design rule check on a 嘉立创EDA PCB: track width, clearance (track/track, track/pad, pad/pad, via) on the same layer for different nets, via annular ring, hole-to-hole spacing (vias, through-hole pads and mounting holes together), copper-to-board-edge distance, silkscreen over a pad, and connectivity (each net\'s copper is grouped and a net whose pads end up in separate groups is reported). Rules come from the board file with per-net overrides. Returns the violations and can write a Markdown report.',
+    parameters: {
+      path: { type: 'string', required: true, description: 'Board .json to check.' },
+      checks: { type: 'array', items: { type: 'string', enum: ['track-width', 'clearance', 'via-ring', 'hole-to-hole', 'edge-clearance', 'silk-over-pad', 'unconnected'] }, description: 'Only run these checks. Defaults to all of them.' },
+      outPath: { type: 'string', description: 'Also write a Markdown report here.' },
+    },
+    async execute(args, ctx, exec) {
+      const cwd = await ctx.workingDirectory.ensure(exec.agent, exec.signal);
+      const board = await resolvePath(ctx, exec, args.path);
+      const argv = ['pcb', 'drc', board, '--json'];
+      const checks = asArray(args.checks);
+      if (checks.length) argv.push('--checks', checks.join(','));
+      const files = [];
+      if (args.outPath) {
+        const report = await resolvePath(ctx, exec, args.outPath);
+        argv.push('-o', report);
+        files.push(report);
+      }
+      const r = await runCli(argv, { cwd });
+      const rows = Array.isArray(r.files) ? r.files : [r];
+      const lines = [];
+      for (const row of rows) {
+        lines.push(`## ${row.file}`);
+        lines.push(`${row.ok ? 'PASS' : 'FAIL'} — ${row.summary}${Object.keys(row.counts ?? {}).length ? ` (${Object.entries(row.counts).map(([k, v]) => `${k}:${v}`).join(', ')})` : ''}`);
+      }
+      if (args.outPath) lines.push(`report: ${files[0]}`);
+      return { text: lines.join('\n'), files };
+    },
+  },
+  {
+    name: 'lceda_pcb_gerber',
+    description: 'Export fabrication data for a 嘉立创EDA PCB: Gerber (RS-274X) for top/bottom copper, silkscreen, solder mask and the board outline, plus an Excellon drill file (plated holes; a separate NPTH file when mounting holes exist). Silkscreen text is drawn from a built-in stroke font because the editor stores text without strokes. Coordinates use the Gerber convention (origin at the board bottom-left corner, Y up, millimetres). Self-checks flash counts and positions, stroke counts, aperture definitions, drill hits and outline size.',
+    parameters: {
+      path: { type: 'string', required: true, description: 'Board .json to export.' },
+      outDir: { type: 'string', required: true, description: 'Directory to write the files into.' },
+      name: { type: 'string', description: 'Base file name; defaults to the board file name.' },
+      manifest: { type: 'boolean', description: 'Also write gerber.manifest.json listing the files and the self-check result.' },
+    },
+    async execute(args, ctx, exec) {
+      const cwd = await ctx.workingDirectory.ensure(exec.agent, exec.signal);
+      const board = await resolvePath(ctx, exec, args.path);
+      const dir = await resolvePath(ctx, exec, args.outDir);
+      const argv = ['pcb', 'gerber', board, '-o', dir, '--json'];
+      if (args.name) argv.push('--name', String(args.name));
+      if (args.manifest) argv.push('--manifest');
+      const r = await runCli(argv, { cwd });
+      const files = (r.files ?? []).map((f) => `${dir}/${f}`);
+      const lines = [`exported ${files.length} files to ${dir}`, ...(r.files ?? [])];
+      for (const c of r.check?.checks ?? []) lines.push(`${c.name}: ${c.expected} -> ${c.actual}`);
+      lines.push(`self check: ${r.check?.ok ? 'all consistent' : r.check?.problems?.join('; ')}`);
+      return { text: lines.join('\n'), files };
+    },
+  },
+  {
+    name: 'lceda_pcb_bom',
+    description: 'Export a bill of materials and a pick-and-place file for a 嘉立创EDA PCB. Parts collapse into one BOM line when value, package, LCSC number and manufacturer part match. Passing the schematic fills the LCSC part number, supplier, manufacturer and description through the bind_sch_id link the board carries. The placement file uses the same assembly frame as the Gerber export. Writes CSV, and an XLSX workbook with BOM and CPL sheets.',
+    parameters: {
+      path: { type: 'string', required: true, description: 'Board .json.' },
+      outDir: { type: 'string', required: true, description: 'Directory to write the files into.' },
+      schPath: { type: 'string', description: 'Schematic the board was built from, to enrich LCSC/supplier data.' },
+      name: { type: 'string', description: 'Base file name; defaults to the board file name.' },
+      xlsx: { type: 'boolean', description: 'Write the XLSX workbook as well. Default true.' },
+    },
+    async execute(args, ctx, exec) {
+      const cwd = await ctx.workingDirectory.ensure(exec.agent, exec.signal);
+      const board = await resolvePath(ctx, exec, args.path);
+      const dir = await resolvePath(ctx, exec, args.outDir);
+      const argv = ['pcb', 'bom', board, '-o', dir, '--json'];
+      if (args.schPath) argv.push('--sch', await resolvePath(ctx, exec, args.schPath));
+      if (args.name) argv.push('--name', String(args.name));
+      if (args.xlsx === false) argv.push('--no-xlsx');
+      const r = await runCli(argv, { cwd });
+      const files = (r.files ?? []).map((f) => `${dir}/${f}`);
+      const lines = [
+        `${r.stats?.lines} BOM lines covering ${r.stats?.parts} parts, ${r.stats?.placements} placements (top ${r.stats?.top} / bottom ${r.stats?.bottom})`,
+        `${r.stats?.withLcsc} lines carry an LCSC part number`,
+        `files: ${(r.files ?? []).join(', ')}`,
+        `self check: ${r.check?.ok ? 'every part appears exactly once' : r.check?.problems?.join('; ')}`,
+      ];
+      for (const row of (r.bom ?? []).slice(0, 15)) lines.push(`${row.item}. x${row.qty} ${row.references} — ${row.value} ${row.package}${row.lcsc ? ` (${row.lcsc})` : ''}`);
+      return { text: lines.join('\n'), files };
+    },
+  },
 ];
 
 /** Exposed for schema tests: the tool definitions registered by apply(). */

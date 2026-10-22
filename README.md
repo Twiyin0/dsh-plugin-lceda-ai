@@ -73,6 +73,22 @@ npx lceda-ai export examples/stc89c52rc-minimal-v3.esch --project ./MyProject
 | `pcb drc <board.json>` | 设计规则检查:线宽/间距/过孔环/孔到孔/板边/丝印压盘/**连通性**(`-o report.md`) |
 | `pcb gerber <board.json> -o dir` | 导出 Gerber(RS-274X)+ Excellon 钻孔 + 自检(`--manifest`) |
 | `pcb bom <board.json> -o dir` | 导出 BOM + 贴片坐标(CSV + XLSX,可用原理图补 LCSC 号)(`--sch`) |
+
+### 作为 DSH 工具(Harness 里直接调用)
+
+原理图 8 个 + PCB 9 个,共 **17 个工具**;PCB 这套可以一次调用跑完整条流水线:
+
+| 工具 | 作用 |
+|---|---|
+| `lceda_pcb_build` | 原理图 → PCB:**布局 → 布线 → 铺铜 → 缝合孔 → Gerber → BOM** 一条龙(各阶段可选) |
+| `lceda_pcb_read` | 读板:层/器件/焊盘/走线/过孔/铜皮/板框/网络/DRC 规则 |
+| `lceda_pcb_render` | 分层渲染 svg/png/pdf + 报告(`view` 选正反面) |
+| `lceda_pcb_route` | 两层网格 A* 自动布线 + 间距自检 |
+| `lceda_pcb_pour` | 铺铜(热焊盘 / 孤岛移除)+ 越界自检 |
+| `lceda_pcb_via` | 缝合孔(按过孔边缘精确校距)+ 孔到孔自检 |
+| `lceda_pcb_drc` | 7 类设计规则检查,可出 markdown 报告 |
+| `lceda_pcb_gerber` | 导出 Gerber + Excellon(自检 flash/钻孔/板框) |
+| `lceda_pcb_bom` | 导出 BOM + 贴片坐标(CSV/XLSX) |
 | `pcb fp <LCSC\|uuid\|封装名>` | 查器件对应的封装(焊盘数/间距/尺寸/层) |
 | `pcb map <sch\|dir>` | 把原理图每个器件映射到封装并校验 **引脚↔焊盘**(缺失=错误,多余=提示) |
 | `pcb from-sch <sch> -o board.json` | **原理图→PCB**:规则化布局 + 把网表写进焊盘(`--place rule\|shelf`,`--export` 顺带出图) |
@@ -280,6 +296,21 @@ docs/format.md       .esch 文件格式笔记(踩坑记录)
 PCB 方向(原理图转 PCB、封装管理、布局、布线、铺铜、过孔、DRC、Gerber、BOM/贴片坐标)的技术方案已写成
 [`docs/roadmap-pcb.md`](docs/roadmap-pcb.md):每个工作流给了 2–3 条可选路线、推荐路线与验证方式,
 并附 REA 得到的事实(文档类型、跨图纸用 **Net Port**、封装可从商城接口取)。
+
+## PCB 工作流(P-01…P-12 已完成)
+
+```bash
+# 一条命令从原理图做到制造文件
+node bin/lceda-ai.js pcb from-sch examples/stc89c52rc-minimal-v3.esch -o board.json --footprint U1=STC89C52RC-DIP-40
+node bin/lceda-ai.js pcb route  board.json        -o board-routed.json
+node bin/lceda-ai.js pcb pour   board-routed.json -o board-poured.json --net GND
+node bin/lceda-ai.js pcb via    board-poured.json -o board-stitched.json --net GND --spacing 5
+node bin/lceda-ai.js pcb drc    board-stitched.json -o drc.md
+node bin/lceda-ai.js pcb gerber board-stitched.json -o fab/ --manifest
+node bin/lceda-ai.js pcb bom    board-stitched.json -o bom/ --sch examples/stc89c52rc-minimal-v3.esch
+```
+
+完整示例与各阶段产物见 [`examples/pcb-demo/`](examples/pcb-demo/)。
 
 ## 校验(可选)
 

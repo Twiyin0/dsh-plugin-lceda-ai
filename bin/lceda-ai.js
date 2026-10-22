@@ -442,6 +442,8 @@ async function main() {
         marginMm: Number(flag('--margin', 5)) || 5,
         title: flag('--title', '') || undefined,
         placement: flag('--place', 'rule'),
+        boardWidthMm: Number(flag('--board-width', 0)) || undefined,
+        title: flag('--title', undefined),
         footprints: footprintOverrides,
       });
       await fsMod.mkdir(await import('node:path').then((m) => m.dirname(out)), { recursive: true });
@@ -470,8 +472,9 @@ async function main() {
       if (!outDir) return usage();
       const formats = flag('--formats', 'svg,png,pdf,report').split(',').map((x) => x.trim()).filter(Boolean);
       const scale = Number(flag('--scale', 3)) || 3;
-      const results = await renderPcbFiles(files, { outDir, formats, scale });
-      emit(results.map((r) => ({ input: r.input, outputs: r.outputs })));
+      const view = flag('--view', 'top');
+      const results = await renderPcbFiles(files, { outDir, formats, scale, view });
+      emit(results.map((r) => ({ file: r.input, input: r.input, view, outputs: r.outputs })));
       for (const r of results) for (const [k, v] of Object.entries(r.outputs)) log(`  ${k}: ${v}`);
       return;
     }

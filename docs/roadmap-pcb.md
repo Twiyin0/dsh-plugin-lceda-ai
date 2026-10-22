@@ -211,7 +211,38 @@ R0603 与 2.54mm 排针封装(离线可测)。细节见 `docs/format.md`。
   - C 自动布线时由布线器决定(依赖 P-06B)。
 - 验证:孔径/环宽符合规则;缝合孔间距达标;DRC 通过。
 
-### P-09 Layout / DRC 规则引擎
+### ~~P-09 Layout / DRC 规则引擎~~ ✅ 已完成
+
+**结果**:`src/pcb/drc.js` + `lceda-ai pcb drc`(带 markdown 报告与退出码)。
+
+规则来自板子 DRC 块(毫米)+ 按网络覆盖,统一换算成文件单位;检查项:
+
+| 检查 | 说明 | 严重度 |
+|---|---|---|
+| `track-width` | 线宽是否小于规则(按网络) | 错误 |
+| `clearance` | 走线-走线 / 走线-焊盘 / 焊盘-焊盘 / 过孔(同层且异网络) | 错误 |
+| `via-ring` | 过孔环宽 < 0.05mm | 错误 |
+| `hole-to-hole` | 钻孔间距(过孔 / 插件焊盘 / 安装孔一起算) | 错误 |
+| `edge-clearance` | 铜到板框的距离 | 提示 |
+| `silk-over-pad` | 丝印压焊盘(0 = 不检查) | 提示 |
+| `unconnected` | 网络铜的**连通分量**:焊盘分成多组即报 | 提示 |
+
+几何原语:`segmentDistance`(线段-线段,含相交)、`segmentRectDistance`、矩形距离;带包围盒预筛保证速度。
+
+**实测**:demo 四个阶段(未布线 / 已布线 / 已铺铜 / 已缝合孔)全部 **PASS,0 错误**;
+未布线阶段 8 条“未连通”提示 → 布线后 7 条(正好是没布通的 7 个网络),说明连通性检查是真的在算。
+
+**这一步立刻体现出价值**:引擎比 P-06 的自检(只查“走线 vs 焊盘”)更严格,一次就抓出 **9 处走线压走线**
+(0.178mm / 0.206mm / 甚至 0mm 相交)。根因是布线时为了给自身焊盘开口,把**之前已布走线的保留格也解封了**。
+
+为此给布线栅格加了一层 **hard 标记**并顺带修掉两个连带问题:
+1. **硬/软阻塞**:走线、过孔、板框是硬阻塞(永不解封);焊盘是软阻塞(本网络布线时可以开自己的口)。
+2. `closeCells` 原来会把焊盘自己的格子也标成硬阻塞,导致后续连到该焊盘的边再也开不了口;改为**精确还原**软阻塞状态。
+3. 换层过孔落在焊盘旁边时,它的保留(全层 ±1 格)同样会把该焊盘标硬;改为**保留铜时跳过本网络自己焊盘的格子**。
+
+修完后:布线 **33/40**、走线 64 段、过孔 16、158mm,**DRC 0 错误**。
+
+### (原计划) P-09 Layout / DRC 规则引擎
 - 目标:设计规则(线宽、间距、过孔、孔到孔、丝印压焊盘、板边距)与检查报告;支持网络类(电源加宽)。
 - 方案:
   - **A(推荐)** 纯几何实现:线段-线段距离、点-多边形、圆-矩形;规则用 JSON 配置;输出可点击的违规清单。
@@ -256,7 +287,25 @@ R0603 与 2.54mm 排针封装(离线可测)。细节见 `docs/format.md`。
   - C 用 `pcb-tools`(Python)等第三方库转换。
 - 验证:导出的 Gerber 用第三方查看器/编辑器反向导入无误;与编辑器导出的层做逐层比对。
 
-### P-11 BOM 导出
+### ~~P-11 BOM 导出~~ ✅ 已完成
+
+**结果**:`src/pcb/bom.js` + `lceda-ai pcb bom`。
+
+- **BOM**:按 `值 + 封装 + LCSC + 厂商料号` 分组合并(与采购单同一规则),输出
+  `Item / Qty / References / Value / Package / LCSC Part / Manufacturer Part / Manufacturer / Supplier / Description`。
+- **与原理图打通**:生成 PCB 时把原理图器件 id 写进 LIB 记录的 `bind_sch_id`,BOM 用它对回原理图取
+  **LCSC 号 / 供应商 / 厂商 / 描述**(板上的 `c_para` 里没有这些时)。顺带修掉了之前 `bind_sch_id` 为空的问题(13/13 现在都有值)。
+- **贴片坐标(CPL)**:`Designator / Mid X / Mid Y / Layer / Rotation / Package / Value`,坐标用与 Gerber
+  **同一套装配坐标系**(板左下角为原点、Y 向上、毫米),贴片厂直接可用。
+- **输出格式**:CSV(CRLF、引号转义)+ **自研 XLSX**(不引入电子表格依赖:inline string + 手写 ZIP 容器,
+  CRC32 + deflate),两个工作表 `BOM` / `CPL`。
+- **自检** `verifyBom()`:器件不重不漏、贴片坐标一行一个位号。
+
+**实测**(v3 最小系统):**11 行 / 13 器件**、贴片 13(全顶层)、自检 PASS;XLSX 被**独立工具 openpyxl 3.1.5 成功打开**
+(`BOM` A1:J12、`CPL` A1:G14,数字/字符串类型正确)。注:demo 原理图的 LCSC 号本身是空的(用标准库符号搭建、未填供应商料号),
+所以“有 LCSC 号 0 行” —— 列与合并逻辑都在,填了号就会带出来(单测里用一个带 LCSC 号的原理图验证了这条链路)。
+
+### (原计划) P-11 BOM 导出
 - 目标:PCB 版 BOM(位号、值、封装、LCSC、数量、位号分组)+ 贴片坐标(CPL/POS)+ Excel/CSV。
 - 方案:
   - **A(推荐)** 复用现有 BOM + 封装映射,输出 CSV/XLSX(已有 `office-xlsx` 能力),并生成嘉立创/立创商城下单列(LCSC 编号)。
@@ -264,7 +313,33 @@ R0603 与 2.54mm 排针封装(离线可测)。细节见 `docs/format.md`。
   - C 直接对接嘉立创下单格式(需要其模板,风险高,最后做)。
 - 验证:位号齐全、数量与原理图一致、坐标可被贴片厂解析。
 
-### P-12 工程与工具集成
+### ~~P-12 工程与工具集成~~ ✅ 已完成
+
+**结果**:`index.js` 新增 **9 个 PCB 工具**(原理图 8 个 + PCB 9 个 = **17 个**),全部经 `compileParameters()`
+编译成 provider 要求的 object-rooted JSON Schema,各自 shell 到 CLI 子命令:
+
+| 工具 | 对应命令 |
+|---|---|
+| `lceda_pcb_read` | `pcb read --json` |
+| `lceda_pcb_render` | `pcb render`(`--view` 正/反面) |
+| `lceda_pcb_build` | `pcb from-sch` + 可选 `route/pour/via/gerber/bom`(**一次调用跑完整条流水线**) |
+| `lceda_pcb_route` | `pcb route` |
+| `lceda_pcb_pour` | `pcb pour` |
+| `lceda_pcb_via` | `pcb via` |
+| `lceda_pcb_drc` | `pcb drc` |
+| `lceda_pcb_gerber` | `pcb gerber` |
+| `lceda_pcb_bom` | `pcb bom` |
+
+**顺带补齐的 CLI 缺口**(工具需要但 CLI 还没有):`pcb render --view`、`pcb from-sch --board-width/--title`、
+`pcb render --json` 的键名统一为 `file`。
+
+**回归测试**:`test/plugin-pcb-tools.test.js` 用真实子进程按 harness 的调用方式逐个执行 9 个工具,验证返回文本与产物文件
+(含 `build` 一条龙:13 器件 / 33-40 网络 / 铺铜 / 58 缝合孔 / 8 个 Gerber 文件 / BOM),并验证不存在的文件会真的报错而不是假装成功。
+schema 测试也立刻抓到 `lceda_pcb_build` 的 `title` 参数与 JSON Schema 关键字冲突(改名为 `sheetTitle`,与原理图工具一致)。
+
+**版本**:插件从 `0.0.1-beta` 提到 **`0.1.0-beta`**(已包含完整 PCB 工作流)。
+
+### (原计划) P-12 工程与工具集成
 - 目标:新命令/新工具:`pcb read/render/drc/export`、`pcb place/route/pour/via`;Harness 工具 `lceda_pcb_*`。
 - 方案:
   - **A(推荐)** 与原理图同一套结构:`src/pcb/*` + `bin` 子命令 + 工具(参数名避开保留字,描述写清返回)。

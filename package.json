@@ -1,7 +1,7 @@
 {
   "name": "dsh-plugin-lceda-ai",
-  "version": "0.0.1-beta",
-  "description": "DeepSeek Harness plugin + toolchain for 嘉立创EDA (LCEDA standard) schematics: read, render, author, edit and export them, using the editor's own component library.",
+  "version": "0.1.0-beta",
+  "description": "DeepSeek Harness plugin + toolchain for 嘉立创EDA (LCEDA standard edition): read/render/author schematics and run the whole PCB workflow (place, route, pour, stitch, DRC, Gerber, BOM)",
   "license": "GPL-3.0",
   "type": "module",
   "main": "index.js",

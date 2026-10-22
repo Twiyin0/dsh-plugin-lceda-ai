@@ -89,3 +89,16 @@ spec 里 `at`/`from`/`to` 可以写引脚引用(`"U1.9"`),坐标一定要**先�
 - 渲染是“忠实描边”:编辑器里画得丑的库符号,渲染出来一样丑,不是渲染 bug。
 - 总线记录**只读不写**(没有真实样本);跨图纸连通性按 Net Port / NetFlag / NetLabel 的作用域判断,不靠同名猜。
 - 版式(器件间距、标签避让)需要按符号尺寸微调;引脚坐标可从 `place` 的返回值直接读。
+
+## PCB 工作流(同一插件的 PCB 工具)
+
+原理图做完可以直接落到板子,PCB 工具与原理图工具并列:
+
+- `lceda_pcb_build` —— 原理图 → PCB,并可一次跑完 **布局 → 布线 → 铺铜 → 缝合孔 → Gerber → BOM**。
+- `lceda_pcb_read` / `lceda_pcb_render` —— 读板与分层渲染(正面/背面)。
+- `lceda_pcb_route` / `lceda_pcb_pour` / `lceda_pcb_via` —— 布线 / 铺铜 / 缝合孔,各自带间距自检。
+- `lceda_pcb_drc` —— 线宽、间距、过孔环、孔到孔、板边、丝印压盘、连通性。
+- `lceda_pcb_gerber` / `lceda_pcb_bom` —— 制造文件(Gerber + Excellon)与 BOM/贴片坐标(CSV + XLSX)。
+
+命令行等价物:`lceda-ai pcb {read|render|from-sch|route|pour|via|drc|gerber|bom}`。
+完整示例见仓库 `examples/pcb-demo/`(含各阶段板文件、Gerber、BOM、DRC 报告与渲染图)。
