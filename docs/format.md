@@ -151,6 +151,41 @@ REA 结论(编辑器 bundle `js/main.min.js`):
 如果以后拿到含总线/端口的真实文件,补上记录格式与双向支持即可,`src/parser.js` 的
 `parseShape` 已经对未知记录做了 `unknown` 兜底,不会崩。
 
+## PCB / 封装格式(已实测)
+
+字段顺序来自编辑器自己的解析模块(`js/main.min.js` 里的 `iu`),坐标单位由真实库封装反推:
+
+| 结论 | 证据 |
+|---|---|
+| 分隔符:`~` 字段,`^^` 子图形,`#@$` 子记录(LIB/SHEET/PLANEZONE 内) | `fc="~", Cc="^^", yc="#@$"` |
+| **1 文件单位 = 0.254 mm = 10 mil** | 2.54mm 排针焊盘间距 = 10.000 单位;0603 = 5.932 单位 = 1.507mm |
+| canvas 的 `snapSize` 用 mm(0.03937 = 1 mil),别和几何单位混淆 | 封装 canvas 实测 |
+| `docType` 3=板、4=封装 | 文档头 |
+| **LIB 子记录是绝对坐标**,LIB 的 x/y 只是器件锚点,不能相加 | 编辑器把 LIB(1000,1000) 内写 4002.966 的焊盘渲染在 4002.966 |
+| 封装文档(docType 4)的记录在顶层,不套 LIB | 实测 11 条顶层记录 |
+
+记录字段(节选):
+
+```
+PAD      shape~x~y~width~height~layerid~net~number~holeR~pointArr~rotation~gId~holeLength~slotPointArr~plated~locked~pasteexpansion~solderexpansion~holeCenter
+VIA      x~y~diameter~net~holeR~gId~locked                    (layerid 固定 11)
+HOLE     x~y~holeR~gId~locked
+TRACK    strokeWidth~layerid~net~pointArr~gId~locked
+COPPERAREA strokeWidth~layerid~net~pathStr~clearanceWidth~fillStyle~gId~thermal~keepIsland~fillData~locked~name~order~...
+SOLIDREGION layerid~net~pathStr~type~gId~teardrop~targetPad~targetWire~locked
+RECT     x~y~width~height~layerid~gId~locked~strokeWidth~fill~transform~net~c_etype
+CIRCLE   cx~cy~r~strokeWidth~layerid~gId~locked~net~transformarc
+ARC      strokeWidth~layerid~net~d~c_helper_dots~gId~locked
+TEXT     type~x~y~strokeWidth~rotation~mirror~layerid~net~fontSize~text~pathStr~display~gId~fontFamily~locked~c_etype
+LIB      x~y~c_para~rotation~importFlag~gId~layerid~uuid~utime~locked~bind_sch_id~add_into_bom~datastrid~uuid_3d   (+ #@$ 子记录)
+DIMENSION layerid~d~gId~fontSize~locked~measuring_type~font_width
+PLANEZONE layerid~net~fillStyle~gId                                          (+ #@$ 子记录:gId~pathStr)
+```
+
+层号(与编辑器 `cc` 一致):1 顶层铜、2 底层铜、3 顶层丝印、4 底层丝印、5/6 锡膏、7/8 阻焊、9 飞线、
+10 板框、11 多层、12 文档、13/14 装配、15 机械、16/17 器件层、18 基材、19 3D、21–52 内层 1–32、
+99/100/101 器件外形/引脚/标记。
+
 ## 兼容性验证
 
 导出的 json 与编辑器自己保存的文件做逐键对比(顶层 5 键、`head` 12 键)一致;

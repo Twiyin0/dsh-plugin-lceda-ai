@@ -65,6 +65,8 @@ npx lceda-ai export examples/stc89c52rc-minimal-v3.esch --project ./MyProject
 | `place <sch> <符号或uuid或C编号> [--ref --value --at x,y --rot --std --standard --pins]` | 放一个器件,返回引脚坐标 |
 | `build <spec.json> -o <out.esch> [--auto-layout] [--export]` | 按声明式 spec 画整图;`--auto-layout` 自动摆放并正交走线 |
 | `project <dir> [-o <out>] [--render]` | 多图纸工程汇总(合并 BOM / 网络分类 / 跨图纸同名网络) |
+| `pcb read <file\|dir>` | 解析 PCB/封装:层、器件、焊盘、走线、过孔、铺铜、板框、DRC |
+| `pcb render <file\|dir> -o <out>` | PCB 分层渲染 svg/png/pdf + 报告(`--view bottom` 看底层) |
 | `cache [stats\|clear]` | 查看或清空器件缓存(任何命令都可加 `--no-cache`) |
 | `edit <sch> --ops '<json>' [--dry-run] [--out] [--preview]` | 结构化编辑 |
 | `export <sch> [-o out.json] [--project <dir>]` | 导出可导入立创EDA 的 JSON |
@@ -237,6 +239,14 @@ docs/format.md       .esch 文件格式笔记(踩坑记录)
 `examples/` 是 **STC89C52RC 最小系统**:全部器件取自立创EDA 标准库(符号 uuid 已锁定),
 并依据 STC89C51RC/RD+ 数据手册标注了引脚、复位时序、POR、ISP 的出处。
 详见 [`examples/README.md`](examples/README.md)。
+
+## PCB 支持(进行中)
+
+按 [`docs/roadmap-pcb.md`](docs/roadmap-pcb.md) 推进,已完成:
+
+- **P-01 解析**:`pcb read` —— 记录字段顺序取自编辑器解析模块,坐标单位实测为 **0.254mm/单位(10 mil)**,
+  并确认 **LIB 子记录是绝对坐标**;真实 0603/2.54mm 排针封装做 fixture,离线可测。
+- **P-02 渲染**:`pcb render` —— 分层配色、顶层/底层视图、图例、报告;与编辑器打开同一文档比对一致。
 
 ## 路线图(未实现)
 

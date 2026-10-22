@@ -36,6 +36,8 @@ Commands:
   find <query>                   Search parts: built-in catalogue, LCSC number (Cnnnn), or --file sheet
   place <sch.json> <symbol|Cnnn> Place one component [--ref R1] [--value 10k] [--at x,y] [--rot 90]
   cache [stats|clear]            Inspect or clear the component cache (also: --no-cache on any command)
+  pcb read <file|dir>            Parse a PCB/footprint document: layers, footprints, pads, tracks, vias, pours, board size
+  pcb render <file|dir> -o out   Render PCB layers to svg/png/pdf (+ report)
   project <dir>                  Multi-sheet project overview (merged BOM, net classes); [-o out] [--render]
   export <sch.esch|json>         Write the LCEDA-importable JSON (文件 → 打开 → 嘉立创EDA)
         [-o out.json] [--project Dir] [--sheet-name Sheet_1] [--json]
@@ -167,6 +169,46 @@ async function main() {
     for (const p of pins) log(`  ${p.pin} ${p.name} @ ${p.x},${p.y}`);
     return;
   }
+  if (cmd === 'pcb') {
+    const sub = rest[0];
+    const input = rest[1];
+    if (!sub || !input) return usage();
+    const { readPcbFile, pcbSummary, boardOutline } = await import('../src/pcb/parser.js');
+    const fsMod = await import('node:fs/promises');
+    const stat = await fsMod.stat(input).catch(() => null);
+    const files = stat?.isDirectory()
+      ? (await fsMod.readdir(input)).filter((f) => /\.(json|epcb)$/i.test(f)).map((f) => `${input}/${f}`)
+      : [input];
+    if (sub === 'read') {
+      const rows = [];
+      for (const f of files) {
+        const model = await readPcbFile(f);
+        const summary = pcbSummary(model);
+        rows.push(summary);
+        log(`## ${summary.file}`);
+        log(`  ${summary.kind}${summary.package ? ` (${summary.package})` : ''} | 器件 ${summary.counts.footprints} | 焊盘 ${summary.counts.pads} | 走线 ${summary.counts.tracks} | 过孔 ${summary.counts.vias} | 铜皮 ${summary.counts.copperAreas}`);
+        if (summary.board) log(`  板框 ${summary.board.widthMm} x ${summary.board.heightMm} mm`);
+        for (const fp of summary.footprints) log(`  - ${fp.name || '(未命名)'} ${fp.package} @${fp.x},${fp.y} rot${fp.rotation} pads=${fp.pads}`);
+        const drc = summary.drc ?? {};
+        if (drc.trackWidth) log(`  DRC 线宽 ${drc.trackWidth} 间距 ${drc.clearance} 过孔 ${drc.viaHoleDiameter}/${drc.viaHoleD}`);
+      }
+      emit(files.length === 1 ? rows[0] : rows);
+      return;
+    }
+    if (sub === 'render') {
+      const { renderPcbFiles } = await import('../src/pcb/render.js');
+      const outDir = flag('-o', flag('--out', null));
+      if (!outDir) return usage();
+      const formats = flag('--formats', 'svg,png,pdf,report').split(',').map((x) => x.trim()).filter(Boolean);
+      const scale = Number(flag('--scale', 3)) || 3;
+      const results = await renderPcbFiles(files, { outDir, formats, scale });
+      emit(results.map((r) => ({ input: r.input, outputs: r.outputs })));
+      for (const r of results) for (const [k, v] of Object.entries(r.outputs)) log(`  ${k}: ${v}`);
+      return;
+    }
+    return usage();
+  }
+
   if (cmd === 'project') {
     const dir = rest[0];
     if (!dir) return usage();
