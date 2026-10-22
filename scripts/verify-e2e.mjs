@@ -322,6 +322,19 @@ await check('pcb:rule placement beats shelf order and stays clean', async () => 
   assert(rule.board.widthMm * rule.board.heightMm < 6000, `area ${rule.board.widthMm * rule.board.heightMm}`);
   return `ratsnest ${shelf.quality.ratsnestMm} -> ${rule.quality.ratsnestMm} mm`;
 });
+await check('pcb:autoroute the demo board and stay clearance clean', async () => {
+  const { readPcbFile } = await import('../src/pcb/parser.js');
+  const { routeBoard, verifyRouting } = await import('../src/pcb/route.js');
+  const model = await readPcbFile(path.join(root, 'examples/pcb-demo/board.json'));
+  assert(model.counts.pads >= 60, `pads ${model.counts.pads}`);
+  const t0 = Date.now();
+  const routed = routeBoard(model, { cell: 2, clearance: 1, width: 1 });
+  const check = verifyRouting(model, routed.tracks, { clearance: 1 });
+  assert(check.count === 0, `${check.count} clearance violations`);
+  assert(routed.stats.routed >= 25, `only ${routed.stats.routed}/${routed.stats.nets} nets routed`);
+  assert(routed.stats.vias > 0, 'no vias produced');
+  return `${routed.stats.routed}/${routed.stats.nets} nets, ${routed.stats.lengthMm}mm, ${Date.now() - t0}ms`;
+});
 await check('cli:pcb read/render', async () => {
   const { stdout } = await run(process.execPath, [bin, 'pcb', 'read', path.join(root, 'test/fixtures/pcb/mini-board.pcb.json'), '--json'], { cwd: root });
   const summary = JSON.parse(stdout);

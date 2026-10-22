@@ -42,6 +42,8 @@ Commands:
   pcb map <sch|dir>              Map every component to a footprint and check pin<->pad numbers
   pcb from-sch <sch> -o board    Build a PCB from a schematic: place footprints + carry the netlist
         [--place rule|shelf] [--export]
+  pcb route <board.json> -o out  Autoroute the board (grid maze router) and self-check the result
+        [--cell 2] [--clearance 1] [--width 1] [--layers 2] [--export]
   project <dir>                  Multi-sheet project overview (merged BOM, net classes); [-o out] [--render]
   export <sch.esch|json>         Write the LCEDA-importable JSON (文件 → 打开 → 嘉立创EDA)
         [-o out.json] [--project Dir] [--sheet-name Sheet_1] [--json]
@@ -249,17 +251,54 @@ async function main() {
       if (totals.missing || totals.mismatch) process.exitCode = 1;
       return;
     }
+    if (sub === 'route') {
+      const { readPcbFile: readPcb } = await import('../src/pcb/parser.js');
+      const { routeBoard, verifyRouting } = await import('../src/pcb/route.js');
+      const out = flag('-o', flag('--out', null));
+      if (!out) return usage();
+      const model = await readPcb(input);
+      const t0 = Date.now();
+      const routed = routeBoard(model, {
+        cell: Number(flag('--cell', 2)) || 2,
+        clearance: Number(flag('--clearance', 1)) || 1,
+        width: Number(flag('--width', 1)) || 1,
+        viaCost: Number(flag('--via-cost', 6)) || 6,
+      });
+      await fsMod.writeFile(out, JSON.stringify(routed.doc), 'utf8');
+      const check = verifyRouting(model, routed.tracks);
+      emit({ file: out, stats: routed.stats, routed: routed.routed, failed: routed.failed, check, ms: Date.now() - t0 });
+      log(`routed ${out}: ${routed.stats.routed}/${routed.stats.nets} 网络 | 走线 ${routed.stats.tracks} 段 | 过孔 ${routed.stats.vias} | 长度 ${routed.stats.lengthMm} mm | ${Date.now() - t0} ms`);
+      if (routed.failed.length) for (const f of routed.failed.slice(0, 8)) log(`  ! 未布通 ${f.net} ${f.from ?? ''}${f.to ? ' -> ' + f.to : ''}`);
+      log(`  自检:${check.ok ? '未压到其他网络的焊盘' : check.count + ' 处压到其他网络焊盘'}`);
+      for (const v of check.violations.slice(0, 5)) log(`    - ${v.net} 压到 ${v.pad}(${v.padNet}) 间距 ${v.gapMm}mm`);
+      if (rest.includes('--export')) {
+        const { renderPcbFiles } = await import('../src/pcb/render.js');
+        const dir = out.replace(/\.(json|epcb)$/i, '') + '.render';
+        const results = await renderPcbFiles([out], { outDir: dir, formats: ['png', 'svg', 'report'], scale: 8 });
+        for (const r of results) for (const [k, v] of Object.entries(r.outputs)) log(`  ${k}: ${v}`);
+      }
+      return;
+    }
     if (sub === 'from-sch') {
       const { boardFromSchematic } = await import('../src/pcb/fromSchematic.js');
       const out = flag('-o', flag('--out', null));
       if (!out) return usage();
       const sch = input;
+      // --footprint U1=DIP-40 (repeatable)
+      const footprintOverrides = {};
+      for (let i = 0; i < rest.length; i++) {
+        if (rest[i] === '--footprint' && rest[i + 1]) {
+          const [ref, query] = String(rest[i + 1]).split('=');
+          if (ref && query) footprintOverrides[ref] = query;
+        }
+      }
       const res = await boardFromSchematic(sch, {
         refresh: rest.includes('--refresh'),
         pitchMm: Number(flag('--pitch', 12.7)) || 12.7,
         marginMm: Number(flag('--margin', 5)) || 5,
         title: flag('--title', '') || undefined,
         placement: flag('--place', 'rule'),
+        footprints: footprintOverrides,
       });
       await fsMod.mkdir(await import('node:path').then((m) => m.dirname(out)), { recursive: true });
       await fsMod.writeFile(out, res.text, 'utf8');
@@ -270,7 +309,7 @@ async function main() {
       });
       log(`built ${out}: ${res.stats.components} 器件 / ${res.stats.pads} 焊盘 / ${res.stats.nets} 网络 | 板框 ${res.board.widthMm} x ${res.board.heightMm} mm`);
       if (res.quality) log(`布局质量:飞线 ${res.quality.ratsnestMm} mm | 重叠 ${res.quality.overlaps} | 越界 ${res.quality.outside}`);
-      for (const p of res.placements) log(`  ${String(p.ref).padEnd(5)} ${String(p.footprint).slice(0, 28).padEnd(29)} @${p.x},${p.y} ${p.pins}脚 ${p.nets}网络${p.byNumber ? '' : ' (按顺序对应焊盘)'}`);
+      for (const p of res.placements) log(`  ${String(p.ref).padEnd(5)} ${String(p.footprint).slice(0, 26).padEnd(27)} @${p.x},${p.y} ${String(p.pins).padStart(2)}脚/${String(p.pads).padStart(2)}盘 ${String(p.pitchMm ?? '-').padStart(5)}mm ${p.nets}网络${p.byNumber ? '' : ' (按顺序对应)'}`);
       for (const f of res.failed) log(`  ! ${f.ref}: ${f.reason}`);
       for (const w of res.warnings) log(`  ! ${w}`);
       if (rest.includes('--export')) {

@@ -11,9 +11,15 @@
 import { parseDocument } from '../parser.js';
 import { extractNetlist } from '../netlist.js';
 import { mmToUnit, toMm, parsePcb } from './parser.js';
-import { fetchFootprintForLcsc, resolveFootprintByPackage, footprintRefOf } from './footprint.js';
+import { fetchFootprintForLcsc, resolveFootprintByPackage, footprintRefOf, fetchFootprint, minPitchMm } from './footprint.js';
 import { boardDocument, libRecord, boardOutlineRecord, genGid, resetGid, DEFAULT_DRC, DEFAULT_LAYERS, footprintAnchor, footprintExtent } from './writer.js';
 import { rulePlace, layoutQuality } from './place.js';
+
+/** True when the footprint carries pads the symbol has no pin for. */
+function pairing0HasExtras(pins, pads) {
+  const pinSet = new Set(pins.map((p) => String(p.number).trim()));
+  return pads.some((p) => !pinSet.has(String(p.number).trim()));
+}
 
 /** Pin number -> net name, from a schematic netlist. */
 export function netByPin(netlist) {
@@ -93,6 +99,8 @@ export async function boardFromSchematic(input, opts = {}) {
     refresh = false, pitchMm = 12.7, columns = 8,
     originX = 4000, originY = 3000, positions = null, marginMm = 5, drc = DEFAULT_DRC,
     outlineWidth = 10, onProgress = null, placement = 'rule',
+    // explicit per-reference footprint override: { U1: 'DIP-40' } or { U1: '<uuid>' }
+    footprints: footprintOverrides = {},
   } = opts;
 
   const doc = typeof input === 'string' ? parseDocument(await (await import('node:fs/promises')).readFile(input, 'utf8')) : input;
@@ -112,7 +120,17 @@ export async function boardFromSchematic(input, opts = {}) {
     let fp = null;
     let how = '';
     try {
-      if (lcsc) {
+      const override = footprintOverrides[c.designator];
+      if (override) {
+        if (/^[0-9a-f]{32}$/i.test(String(override))) {
+          const got = await fetchFootprint(String(override), { refresh });
+          fp = got; how = `override-uuid:${override}`;
+        } else {
+          const got = await resolveFootprintByPackage(String(override), { pins, refresh });
+          if (got.model) { fp = got; how = `override:${override}`; }
+        }
+      }
+      if (!fp && lcsc) {
         const r = await fetchFootprintForLcsc(lcsc, { refresh });
         if (r.model) { fp = r; how = `lcsc:${lcsc}`; }
       }
@@ -129,6 +147,10 @@ export async function boardFromSchematic(input, opts = {}) {
       continue;
     }
     const pads = fp.model.footprints?.[0]?.pads ?? [];
+    const pitchMm = minPitchMm(fp.model);
+    if (pitchMm !== null && pitchMm < 0.65 && pairing0HasExtras(pins, pads)) {
+      warnings.push(`${c.designator}: 选中的封装「${fp.title}」焊盘间距仅 ${pitchMm}mm 且焊盘数多于引脚数,可能是错的封装;用 --footprint ${c.designator}=<封装名> 指定`);
+    }
     const pairing = pairPinsToPads(pins, pads.map((p) => p.number));
     if (!pairing.byNumber && pairing.pairs.length) {
       warnings.push(`${c.designator}: 符号引脚号(${pins.map((p) => p.number).join(',')})与封装焊盘号(${pads.map((p) => p.number).join(',')})不一致,按顺序对应`);
@@ -262,6 +284,7 @@ export async function boardFromSchematic(input, opts = {}) {
       pins: p.pairing.pairs.length, pads: p.pads.length,
       nets: Object.values(p.netsByPad).length,
       byNumber: p.pairing.byNumber,
+      pitchMm: minPitchMm(p.footprint.model),
     })),
     failed,
     warnings: [...warnings, ...layoutNotes],

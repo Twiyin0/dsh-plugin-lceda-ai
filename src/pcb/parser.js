@@ -298,6 +298,9 @@ export function parsePcb(input) {
   const drc = doc.DRCRULE ?? {};
   const model = {
     docType,
+    // the original record strings: additive edits (routing, pours) re-emit these
+    // instead of rebuilding them from the parsed objects
+    rawShape: (doc.shape ?? []).map(String),
     isFootprint: docType === '4',
     isBoard: docType === '3',
     title: doc.title ?? '',
@@ -348,6 +351,23 @@ export function boardOutline(model) {
   };
 }
 
+/**
+ * A pad's real footprint on the board.
+ *
+ * POLYGON pads carry width/height 0 and put their shape in `points` (absolute
+ * coordinates), so anything measuring a pad - the router, the clearance check,
+ * the renderer - has to look at the polygon first.
+ */
+export function padBBox(pad) {
+  if (pad?.points?.length) {
+    const xs = pad.points.map((p) => p.x), ys = pad.points.map((p) => p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+    return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY, fromPolygon: true };
+  }
+  const w = Number(pad?.width) || 0, h = Number(pad?.height) || 0;
+  return { minX: pad.x - w / 2, maxX: pad.x + w / 2, minY: pad.y - h / 2, maxY: pad.y + h / 2, width: w, height: h, fromPolygon: false };
+}
+
 /** Every copper item (tracks / pads / vias / pours) with its layer and net. */
 export function copperItems(model) {
   const out = [];
@@ -361,7 +381,14 @@ export function copperItems(model) {
   // editor, which renders a LIB at (1000,1000) whose pads say 4002.966 at
   // exactly 4002.966.
   for (const fp of model.footprints) {
-    for (const pad of fp.pads) out.push({ kind: 'pad', net: pad.net, layer: pad.layer, x: pad.x, y: pad.y, width: pad.width, height: pad.height, number: pad.number, footprint: fp.name, rotation: pad.rotation, anchor: { x: fp.x, y: fp.y } });
+    for (const pad of fp.pads) {
+      const bbox = padBBox(pad);
+      out.push({
+        kind: 'pad', net: pad.net, layer: pad.layer, x: pad.x, y: pad.y,
+        width: bbox.width, height: bbox.height, bbox,
+        number: pad.number, footprint: fp.name, rotation: pad.rotation, anchor: { x: fp.x, y: fp.y },
+      });
+    }
     for (const t of fp.tracks) if (isCopper(t.layer)) out.push({ kind: 'track', net: t.net, layer: t.layer, width: t.strokeWidth, points: t.points, footprint: fp.name });
   }
   return out;

@@ -5,8 +5,8 @@
   "name": "",
   "counts": {
     "footprints": 13,
-    "pads": 75,
-    "tracks": 67,
+    "pads": 71,
+    "tracks": 110,
     "vias": 0,
     "holes": 0,
     "copperAreas": 0,
@@ -15,8 +15,8 @@
     "dimensions": 0
   },
   "board": {
-    "widthMm": 56.984,
-    "heightMm": 30.701
+    "widthMm": 58.55,
+    "heightMm": 45.29
   },
   "unit": {
     "name": "unit",
@@ -101,24 +101,24 @@
     {
       "name": "U1",
       "package": "STC89C52RC",
-      "x": 4124,
-      "y": 3067,
+      "x": 4113,
+      "y": 3090,
       "rotation": 0,
-      "pads": 44,
-      "uuid": "8e29860668e248a2a893ee49839f0444",
-      "xMm": 1047.496,
-      "yMm": 779.018
+      "pads": 40,
+      "uuid": "bd2c4def558d4f1997ced1089bc7e7e1",
+      "xMm": 1044.702,
+      "yMm": 784.86
     },
     {
       "name": "SW1",
       "package": "TS-1187A-B-A-B",
-      "x": 4129,
-      "y": 3024,
+      "x": 4138,
+      "y": 3155,
       "rotation": 0,
       "pads": 4,
       "uuid": "8529f36bb43b45c89a45b5f0a81e03c8",
-      "xMm": 1048.766,
-      "yMm": 768.096
+      "xMm": 1051.052,
+      "yMm": 801.37
     },
     {
       "name": "C3",
@@ -134,13 +134,13 @@
     {
       "name": "R1",
       "package": "R0603",
-      "x": 4072,
-      "y": 3061,
+      "x": 4071,
+      "y": 3034,
       "rotation": 0,
       "pads": 2,
-      "uuid": "20da638b34624c0e8edf2e7e1d3215b4",
-      "xMm": 1034.288,
-      "yMm": 777.494
+      "uuid": "f906dda371d74b94a3ee4ffbd702c513",
+      "xMm": 1034.034,
+      "yMm": 770.636
     },
     {
       "name": "Y1",
@@ -156,68 +156,68 @@
     {
       "name": "C1",
       "package": "C0603",
-      "x": 4110,
-      "y": 3104,
+      "x": 4115,
+      "y": 3049,
       "rotation": 0,
       "pads": 2,
-      "uuid": "c81cb736fd7b454db2d1ff36a14e9513",
-      "xMm": 1043.94,
-      "yMm": 788.416
+      "uuid": "66301b0eadf64898b24d560a47e1279b",
+      "xMm": 1045.21,
+      "yMm": 774.446
     },
     {
       "name": "C2",
       "package": "C0603",
       "x": 4097,
-      "y": 3021,
+      "y": 3013,
       "rotation": 0,
       "pads": 2,
-      "uuid": "c81cb736fd7b454db2d1ff36a14e9513",
+      "uuid": "66301b0eadf64898b24d560a47e1279b",
       "xMm": 1040.638,
-      "yMm": 767.334
+      "yMm": 765.302
     },
     {
       "name": "R2",
       "package": "R0603",
-      "x": 4152,
-      "y": 3108,
+      "x": 4159,
+      "y": 3012,
       "rotation": 0,
       "pads": 2,
-      "uuid": "20da638b34624c0e8edf2e7e1d3215b4",
-      "xMm": 1054.608,
-      "yMm": 789.432
+      "uuid": "f906dda371d74b94a3ee4ffbd702c513",
+      "xMm": 1056.386,
+      "yMm": 765.048
     },
     {
       "name": "D1",
       "package": "CHIPLED-0603-TTW",
-      "x": 4086,
+      "x": 4084,
       "y": 3013,
       "rotation": 0,
       "pads": 4,
       "uuid": "d995c451b7574b678b1ff4439018ebe3",
-      "xMm": 1037.844,
+      "xMm": 1037.336,
       "yMm": 765.302
     },
     {
       "name": "C4",
       "package": "C0603",
-      "x": 4091,
-      "y": 3045,
+      "x": 4094,
+      "y": 3046,
       "rotation": 0,
       "pads": 2,
-      "uuid": "c81cb736fd7b454db2d1ff36a14e9513",
-      "xMm": 1039.114,
-      "yMm": 773.43
+      "uuid": "66301b0eadf64898b24d560a47e1279b",
+      "xMm": 1039.876,
+      "yMm": 773.684
     },
     {
       "name": "C5",
       "package": "CASE-A_3216",
       "x": 4072,
-      "y": 3076,
+      "y": 3135,
       "rotation": 0,
       "pads": 2,
       "uuid": "ab21ffa666a44df2982dcd96cc423465",
       "xMm": 1034.288,
-      "yMm": 781.304
+      "yMm": 796.29
     },
     {
       "name": "J1",
@@ -233,12 +233,12 @@
     {
       "name": "J2",
       "package": "HDR-M-2.54_1X5",
-      "x": 4190,
+      "x": 4196,
       "y": 3015,
       "rotation": 0,
       "pads": 5,
       "uuid": "05a75c7d824a4124a05db48a66df50b6",
-      "xMm": 1064.26,
+      "xMm": 1065.784,
       "yMm": 765.81
     }
   ],

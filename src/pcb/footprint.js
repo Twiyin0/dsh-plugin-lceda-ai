@@ -74,6 +74,21 @@ export function symbolPins(doc) {
   });
 }
 
+/**
+ * Smallest pad pitch of a footprint, in mm - the number that tells a human
+ * whether the package can actually be routed (0.8 mm LQFP vs 2.54 mm DIP).
+ */
+export function minPitchMm(model) {
+  const pads = (model?.footprints ?? []).flatMap((f) => f.pads ?? []);
+  if (pads.length < 2) return null;
+  const xs = [...new Set(pads.map((p) => p.x))].sort((a, b) => a - b);
+  const ys = [...new Set(pads.map((p) => p.y))].sort((a, b) => a - b);
+  const gaps = [];
+  for (const list of [xs, ys]) for (let i = 1; i < list.length; i++) if (list[i] - list[i - 1] > 0.5) gaps.push(list[i] - list[i - 1]);
+  if (!gaps.length) return null;
+  return +(Math.min(...gaps) * 0.254).toFixed(3);
+}
+
 /** Pad numbers of a parsed footprint model. */
 export function padNumbers(model) {
   return (model?.footprints ?? []).flatMap((f) => f.pads.map((p) => String(p.number).trim()));
@@ -202,19 +217,34 @@ export async function resolveFootprintByPackage(pkg, { pins = [], limit = 8, ref
   }
   let tried = 0;
   let best = null;
+  let bestScore = Infinity;
   for (const c of candidates) {
     if (!c.uuid) continue;
     try {
       const fp = await fetchFootprint(c.uuid, { title: c.title, refresh });
       tried++;
       const check = checkMapping(pins, padNumbers(fp.model), { packageName: pkg, footprintPackage: fp.model.cPara?.package ?? '' });
-      if (check.ok) return { ...fp, check, tried };
-      if (!best) best = { ...fp, check, tried };
+      if (!check.ok) continue;
+      // Score instead of taking the first hit: a 44-pad LQFP also "covers" a
+      // 40-pin symbol, but it is the wrong package - an exact pad set wins.
+      const extras = check.extra.length;
+      const score = extras * 10 + Math.abs(check.footprintPads - check.symbolPins) + (check.packageMatches ? 0 : 2);
+      if (score < bestScore) {
+        bestScore = score;
+        best = { ...fp, check, tried, extras };
+      }
+      if (score === 0) break;
     } catch {
       // unreadable candidate: keep looking
     }
   }
-  if (best) return { ...best, tried, note: '没有完全匹配的封装,返回最接近的一个' };
+  if (best) {
+    return {
+      ...best,
+      tried,
+      note: best.extras ? `最接近的封装仍多出 ${best.extras} 个焊盘(散热/固定盘)` : undefined,
+    };
+  }
   return { uuid: '', title: '', model: null, error: `标准库里没有可用于 ${pkg} 的封装`, tried };
 }
 
