@@ -17,8 +17,10 @@ import crypto from 'node:crypto';
 
 const DEFAULT_TTL = {
   std: 30 * 24 * 3600 * 1000,     // one component: rarely changes
+  fp: 30 * 24 * 3600 * 1000,      // one footprint document
   search: 7 * 24 * 3600 * 1000,   // keyword ranking drifts, refresh weekly
 };
+export const CACHE_KINDS = ['std', 'fp', 'search'];
 
 export function cacheDir() {
   if (process.env.LCEDA_CACHE_DIR) return process.env.LCEDA_CACHE_DIR;
@@ -63,7 +65,7 @@ export async function writeCache(kind, key, data) {
 /** Count entries and total bytes per kind. */
 export async function cacheStats() {
   const out = { dir: cacheDir(), disabled: cacheDisabled(), kinds: {} };
-  for (const kind of ['std', 'search']) {
+  for (const kind of CACHE_KINDS) {
     const dir = path.join(cacheDir(), kind);
     let names = [];
     try { names = await fs.readdir(dir); } catch { /* empty */ }
@@ -80,7 +82,7 @@ export async function cacheStats() {
 /** Remove every cached entry (returns how many files were deleted). */
 export async function clearCache() {
   let removed = 0;
-  for (const kind of ['std', 'search']) {
+  for (const kind of CACHE_KINDS) {
     const dir = path.join(cacheDir(), kind);
     let names = [];
     try { names = await fs.readdir(dir); } catch { continue; }

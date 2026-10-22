@@ -38,6 +38,8 @@ Commands:
   cache [stats|clear]            Inspect or clear the component cache (also: --no-cache on any command)
   pcb read <file|dir>            Parse a PCB/footprint document: layers, footprints, pads, tracks, vias, pours, board size
   pcb render <file|dir> -o out   Render PCB layers to svg/png/pdf (+ report)
+  pcb fp <LCSC|uuid|封装名>       Show the footprint behind a part (pads, size, layers)
+  pcb map <sch|dir>              Map every component to a footprint and check pin<->pad numbers
   project <dir>                  Multi-sheet project overview (merged BOM, net classes); [-o out] [--render]
   export <sch.esch|json>         Write the LCEDA-importable JSON (文件 → 打开 → 嘉立创EDA)
         [-o out.json] [--project Dir] [--sheet-name Sheet_1] [--json]
@@ -193,6 +195,56 @@ async function main() {
         if (drc.trackWidth) log(`  DRC 线宽 ${drc.trackWidth} 间距 ${drc.clearance} 过孔 ${drc.viaHoleDiameter}/${drc.viaHoleD}`);
       }
       emit(files.length === 1 ? rows[0] : rows);
+      return;
+    }
+    if (sub === 'fp') {
+      const { fetchFootprint, fetchFootprintForLcsc, resolveFootprintByPackage } = await import('../src/pcb/footprint.js');
+      const { pcbSummary } = await import('../src/pcb/parser.js');
+      const arg = input;
+      let fp;
+      if (/^C\d{4,}$/i.test(arg)) fp = await fetchFootprintForLcsc(arg.toUpperCase());
+      else if (/^[0-9a-f]{32}$/i.test(arg)) fp = await fetchFootprint(arg);
+      else fp = await resolveFootprintByPackage(arg, {});
+      if (!fp?.model) {
+        logError(`no footprint for ${arg}: ${fp?.error ?? 'unknown'}`);
+        process.exitCode = 1;
+        return;
+      }
+      const summary = pcbSummary(fp.model);
+      emit({ query: arg, uuid: fp.uuid, title: fp.title, tried: fp.tried, note: fp.note, summary });
+      log(`## ${fp.title || fp.uuid}  (${arg})`);
+      log(`  封装名 ${summary.package} | 焊盘 ${summary.counts.pads} | 走线 ${summary.counts.tracks} | 层 ${summary.layers.slice(0, 5).join(', ')}`);
+      const pads = fp.model.footprints[0].pads;
+      const xs = pads.map((p) => p.x), ys = pads.map((p) => p.y);
+      if (pads.length > 1) {
+        const pitch = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+        log(`  焊盘间距 ${(pitch * 0.254).toFixed(3)} mm | 尺寸 ${(pads[0].width * 0.254).toFixed(2)} x ${(pads[0].height * 0.254).toFixed(2)} mm`);
+      }
+      log(`  焊盘号: ${pads.map((p) => p.number).join(', ')}`);
+      if (fp.note) log(`  ! ${fp.note}`);
+      return;
+    }
+    if (sub === 'map') {
+      const { mapSchematic } = await import('../src/pcb/footprint.js');
+      const { parseDocument } = await import('../src/parser.js');
+      const refresh = rest.includes('--refresh');
+      const rows = [];
+      let totals = { total: 0, ok: 0, mismatch: 0, missing: 0 };
+      for (const f of files) {
+        const doc = parseDocument(await fsMod.readFile(f, 'utf8'));
+        doc.components = doc.components.filter((c) => c.designator);
+        const { rows: r, summary } = await mapSchematic(doc, { refresh });
+        rows.push({ file: f, rows: r, summary });
+        totals = { total: totals.total + summary.total, ok: totals.ok + summary.ok, mismatch: totals.mismatch + summary.mismatch, missing: totals.missing + summary.missing };
+        log(`## ${f}`);
+        log(`   器件 ${summary.total} | 匹配 ${summary.ok} | 引脚不符 ${summary.mismatch} | 找不到封装 ${summary.missing}`);
+        for (const row of r) {
+          const mark = row.status.startsWith('ok') ? '✓' : '✗';
+          log(`   ${mark} ${String(row.ref).padEnd(5)} ${String(row.pins).padStart(2)}脚 ${String(row.package || '-').padEnd(18)} ${String(row.footprint || '-').slice(0, 28).padEnd(29)} ${row.detail}`);
+        }
+      }
+      emit({ files: rows, totals });
+      if (totals.missing || totals.mismatch) process.exitCode = 1;
       return;
     }
     if (sub === 'render') {

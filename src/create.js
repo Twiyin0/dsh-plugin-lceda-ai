@@ -467,6 +467,14 @@ export function partFromApi(result) {
   return {
     doc: {
       shape: (doc.shape ?? []).map(String),
+      // keep the document head (c_para carries package / Supplier Part / Value)
+      // and the footprint reference: PCB work needs both
+      head: doc.head,
+      canvas: doc.canvas,
+      BBox: doc.BBox,
+      packageDetail: result.packageDetail
+        ? { uuid: result.packageDetail.uuid, title: result.packageDetail.title, docType: result.packageDetail.docType }
+        : (doc.packageDetail ?? undefined),
       package: doc.package ?? result.packageDetail?.title ?? '',
       lcsc,
       mfrPart: result.title ?? '',

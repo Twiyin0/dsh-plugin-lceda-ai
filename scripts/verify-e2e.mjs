@@ -261,6 +261,51 @@ await check('project:multi-sheet overview', async () => {
   return `${project.sheets.length} sheets, ${project.bom.length} BOM rows`;
 });
 
+await check('pcb:parse a real footprint and measure it', async () => {
+  const { readPcbFile, pcbSummary, toMm } = await import('../src/pcb/parser.js');
+  const model = await readPcbFile(path.join(root, 'test/fixtures/pcb/HDR-TH_2P-P2.54.fp.json'));
+  const summary = pcbSummary(model);
+  assert(summary.kind === 'footprint', 'not recognised as a footprint');
+  assert(summary.counts.pads === 2, `pads ${summary.counts.pads}`);
+  const xs = model.footprints[0].pads.map((p) => p.x);
+  const pitch = Math.abs(Math.max(...xs) - Math.min(...xs));
+  assert(Number(toMm(pitch).toFixed(3)) === 2.54, `pitch ${toMm(pitch)}`);
+  return `${summary.package} 2.54mm`;
+});
+await check('pcb:footprint lookup by LCSC number validates pin<->pad', async () => {
+  const { fetchFootprintForLcsc, symbolPins, padNumbers, checkMapping } = await import('../src/pcb/footprint.js');
+  const { fetchPart } = await import('../src/library.js');
+  const fp = await fetchFootprintForLcsc('C25804');
+  assert(fp.model, fp.error ?? 'no footprint');
+  const part = await fetchPart('C25804');
+  const check = checkMapping(symbolPins(part.doc), padNumbers(fp.model), { packageName: 'R0603', footprintPackage: fp.model.cPara.package });
+  assert(check.ok, `mapping failed: ${check.missing.join(',')}`);
+  assert(check.symbolPins === 2 && check.footprintPads === 2, 'expected 2 pins and 2 pads');
+  return `${fp.title} ${check.symbolPins}pins/${check.footprintPads}pads`;
+});
+await check('pcb:map resolves a whole schematic by package name', async () => {
+  const { mapSchematic } = await import('../src/pcb/footprint.js');
+  const { parseDocument } = await import('../src/parser.js');
+  const doc = parseDocument(await fs.readFile(path.join(root, 'examples/stc89c52rc-minimal-v3.esch'), 'utf8'));
+  doc.components = doc.components.filter((c) => c.designator);
+  const { summary } = await mapSchematic(doc);
+  assert(summary.missing === 0, `${summary.missing} components without a footprint`);
+  assert(summary.mismatch === 0, `${summary.mismatch} pin/pad mismatches`);
+  assert(summary.ok === summary.total && summary.total >= 13, `ok ${summary.ok}/${summary.total}`);
+  return `${summary.ok}/${summary.total} mapped`;
+});
+await check('cli:pcb read/render', async () => {
+  const { stdout } = await run(process.execPath, [bin, 'pcb', 'read', path.join(root, 'test/fixtures/pcb/mini-board.pcb.json'), '--json'], { cwd: root });
+  const summary = JSON.parse(stdout);
+  assert(summary.kind === 'board', 'not a board');
+  assert(summary.counts.vias === 1, 'via count');
+  const outDir = path.join(tmp, 'pcb-cli');
+  await run(process.execPath, [bin, 'pcb', 'render', path.join(root, 'test/fixtures/pcb/mini-board.pcb.json'), '-o', outDir, '--formats', 'svg,png,report', '--scale', '3'], { cwd: root });
+  const st = await fs.stat(path.join(outDir, 'mini-board.pcb.png'));
+  assert(st.size > 1000, 'png not written');
+  return `${summary.kind} + png`;
+});
+
 // 8. CLI contract -----------------------------------------------------------
 await check('cli:--json output parses', async () => {
   const { stdout } = await run(process.execPath, [bin, 'read', doc3, '--json'], { cwd: root });

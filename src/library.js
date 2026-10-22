@@ -242,23 +242,25 @@ export function symbolQuality(doc) {
   return q;
 }
 
-const stdBody = (wd) => new URLSearchParams({
-  type: '3', 'doctype[]': '2', uid: 'user', returnListStyle: 'classifyarr', wd, version: STD_VERSION,
+/** `doctype` 2 = schematic symbols (the default), 4 = PCB footprints. */
+const stdBody = (wd, doctype = 2) => new URLSearchParams({
+  type: '3', 'doctype[]': String(doctype), uid: 'user', returnListStyle: 'classifyarr', wd, version: STD_VERSION,
 });
 
 /** Search the LCEDA standard library (the one the editor's 元件库 panel uses). */
-export async function searchStandard(wd, { timeoutMs = 15000 } = {}) {
+export async function searchStandard(wd, { timeoutMs = 15000, doctype = 2 } = {}) {
   const q = String(wd ?? '').trim();
   if (q.length < 2) return [];
-  if (stdCache.has(q)) return stdCache.get(q);
-  const cachedHits = await readCache('search', q);
-  if (cachedHits) { stdCache.set(q, cachedHits); return cachedHits; }
+  const cacheKey = doctype === 2 ? q : `dt${doctype}:${q}`;
+  if (stdCache.has(cacheKey)) return stdCache.get(cacheKey);
+  const cachedHits = await readCache('search', cacheKey);
+  if (cachedHits) { stdCache.set(cacheKey, cachedHits); return cachedHits; }
   let res;
   try {
     res = await fetch(`${STD}/search`, {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'lceda-ai/0.2', accept: 'application/json' },
-      body: stdBody(q),
+      body: stdBody(q, doctype),
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (e) {
@@ -286,8 +288,8 @@ export async function searchStandard(wd, { timeoutMs = 15000 } = {}) {
       });
     }
   }
-  stdCache.set(q, out);
-  await writeCache('search', q, out);
+  stdCache.set(cacheKey, out);
+  await writeCache('search', cacheKey, out);
   return out;
 }
 
