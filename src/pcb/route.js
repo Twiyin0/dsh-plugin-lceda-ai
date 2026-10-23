@@ -59,6 +59,9 @@ export function buildGrid(model, opts = {}) {
   // way across.
   const noViaHard = new Map();
   const viaRadius = opts.viaRadius ?? 1.5;
+  const holeToHole = opts.holeToHole ?? (model.drc?.default ?? DEFAULT_DRC.Default).holeToHole ?? 2;
+
+
   for (const l of layers) {
     blocked.set(l, new Uint8Array(cols * rows));
     hard.set(l, new Uint8Array(cols * rows));
@@ -119,6 +122,18 @@ export function buildGrid(model, opts = {}) {
         const vj0 = Math.max(0, snap(bb.minY - keep, minY, cell));
         const vj1 = Math.min(rows - 1, snap(bb.maxY + keep, minY, cell));
         for (let j = vj0; j <= vj1; j++) for (let i = vi0; i <= vi1; i++) noVia.get(layer)[idx(i, j)] = 1;
+        // A via's drill must also keep the hole-to-hole spacing from an existing
+        // hole: clearance alone is not enough around a through-hole pad, and the
+        // router used to drop a via 0.482 mm from a DIP pin's hole.
+        const padHoleR = item.holeR ?? 0;
+        if (padHoleR > 0) {
+          const holeKeep = holeToHole + padHoleR + viaRadius;
+          const hi0 = Math.max(0, snap(bb.minX - holeKeep, minX, cell));
+          const hi1 = Math.min(cols - 1, snap(bb.maxX + holeKeep, minX, cell));
+          const hj0 = Math.max(0, snap(bb.minY - holeKeep, minY, cell));
+          const hj1 = Math.min(rows - 1, snap(bb.maxY + holeKeep, minY, cell));
+          for (let j = hj0; j <= hj1; j++) for (let i = hi0; i <= hi1; i++) noVia.get(layer)[idx(i, j)] = 1;
+        }
         const hi0 = Math.max(0, snap(bb.minX, minX, cell));
         const hi1 = Math.min(cols - 1, snap(bb.maxX, minX, cell));
         const hj0 = Math.max(0, snap(bb.minY, minY, cell));
@@ -418,12 +433,32 @@ export function autoroute(model, opts = {}) {
   // negative-clearance turns on the DIP-40 board (35 -> 4 errors) but broke the
   // 13-part demo board (0 -> 1 error), so the escape margin still needs a rule
   // that distinguishes a 2.54 mm DIP row from a 0603 pad pair.
-  const needed = clearance + width / 2;
+  // Two escape margins. The strict one adds a full cell to the clearance, which
+  // is what the blocking raster itself uses: any cell opened under it stays legal
+  // even after the track end is snapped to a pad centre that sits off grid. The
+  // relaxed one is the bare clearance, and is used only when the strict margin
+  // leaves a pad with nowhere to go (a 0603 pad pair, a 0.65 mm connector) - then
+  // the pad still escapes and any resulting violation is reported by the DRC
+  // instead of silently making the net unroutable.
+  const neededStrict = clearance + width / 2 + (opts.cell ?? 2);
+  const neededRelaxed = clearance + width / 2;
 
   // cells of through-hole pads: a layer change there needs no via
-  const throughHoleCells = new Set(
-    grid.padTerminals.filter((p) => p.through).map((p) => `${p.i}:${p.j}`),
-  );
+  // Every cell within the hole-to-hole spacing of a through-hole pad, not just
+  // the pad's own cell: a via dropped one cell beside a DIP pin measured a
+  // -0.445 mm hole-to-hole gap. Same-net pads are not exempt - the clearance rule
+  // skips them, the drill spacing does not.
+  const drcRules = model.drc?.default ?? DEFAULT_DRC.Default;
+  const holeToHole = opts.holeToHole ?? drcRules.holeToHole ?? 2;
+  const viaHoleRadius = (opts.viaDrill ?? drcRules.viaHoleD ?? 1) / 2;
+  const throughHoleCells = new Set();
+  for (const p of grid.padTerminals) {
+    if (!p.through) continue;
+    const keep = Math.ceil(((p.holeR ?? 1) + viaHoleRadius + holeToHole) / grid.cell);
+    for (let di = -keep; di <= keep; di++) for (let dj = -keep; dj <= keep; dj++) {
+      throughHoleCells.add(`${p.i + di}:${p.j + dj}`);
+    }
+  }
   const skipVia = (i, j) => throughHoleCells.has(`${i}:${j}`);
 
   /**
@@ -454,7 +489,8 @@ export function autoroute(model, opts = {}) {
   };
 
   const openPad = (pad) => {
-    const cells = [];
+    const strict = [];
+    const relaxed = [];
     // Open the pad's OWN rectangle (plus clearance), never a square of radius
     // max(halfW, halfH): that square reaches 10 units sideways and unblocks the
     // neighbouring through-hole pad, which the router then happily crosses.
@@ -481,13 +517,17 @@ export function autoroute(model, opts = {}) {
           // so every cell around them failed the foreign-pad test and the only
           // way out was a via dropped on the pad).
           const insideOwnPad = at.x >= bb.minX && at.x <= bb.maxX && at.y >= bb.minY && at.y <= bb.maxY;
-          // ... nor one that would let the track violate a foreign pad
-          if (!insideOwnPad && nearestForeign(at.x, at.y, pad.net) < needed) continue;
-          grid.setBlocked(layer, i, j, 0);
-          cells.push([layer, i, j]);
+          if (insideOwnPad) { strict.push([layer, i, j]); continue; }
+          const gapToForeign = nearestForeign(at.x, at.y, pad.net);
+          if (gapToForeign >= neededStrict) strict.push([layer, i, j]);
+          else if (gapToForeign >= neededRelaxed) relaxed.push([layer, i, j]);
         }
       }
     }
+    // A pad needs a few cells to be able to leave at all; if the strict margin
+    // does not give it that many, fall back to the relaxed set.
+    const cells = strict.length >= 4 ? strict : [...strict, ...relaxed];
+    for (const [layer, i, j] of cells) grid.setBlocked(layer, i, j, 0);
     return cells;
   };
   const closeCells = (cells) => {
@@ -596,7 +636,10 @@ export function autoroute(model, opts = {}) {
             const x = p0.x + ((p1.x - p0.x) * s) / steps;
             const y = p0.y + ((p1.y - p0.y) * s) / steps;
             const c = grid.toCell(x, y);
-            const radius = Math.ceil((width / 2 + grid.clearance) / grid.cell);
+            // One extra cell: the track ends are snapped onto pad centres that sit
+            // off grid, and that sub-cell shift was eating the track-to-track
+            // clearance (0.145 mm measured where 0.254 mm is required).
+            const radius = Math.ceil((width / 2 + grid.clearance) / grid.cell) + 1;
             for (let di = -radius; di <= radius; di++) for (let dj = -radius; dj <= radius; dj++) {
               if (isOwnPadCell(net, track.layer, c.i + di, c.j + dj)) continue;
               grid.setBlocked(track.layer, c.i + di, c.j + dj, 1);

@@ -119,7 +119,11 @@ export function stitchVias(model, opts = {}) {
     for (const r of obstacles) {
       const dx = Math.max(r.minX - x, 0, x - r.maxX);
       const dy = Math.max(r.minY - y, 0, y - r.maxY);
-      if (Math.hypot(dx, dy) < needed) return false;
+      // A via must also keep the drill spacing from another via's hole; the plain
+      // clearance (2.5 units here) is smaller than that (3 units), so stitching a
+      // board twice left vias 0.127 mm apart hole-to-hole.
+      const need = r.kind === 'via' ? Math.max(needed, rules.drill + (rules.holeToHole ?? 2)) : needed;
+      if (Math.hypot(dx, dy) < need) return false;
     }
     return true;
   };
@@ -132,6 +136,12 @@ export function stitchVias(model, opts = {}) {
       if (!solid(i, j)) continue;
       const at = grid.toBoard(i, j);
       if (!clearOfForeign(at.x, at.y)) continue;
+      // Keep the stitching vias clear of each other too: the lattice step is
+      // measured in millimetres and rounded to cells, so two rows can land closer
+      // than the drill spacing (0.127 mm hole-to-hole at a 3 mm pitch).
+      const holeGap = rules.holeToHole ?? 2;
+      const minCentre = rules.drill + holeGap;
+      if (vias.some((v) => Math.hypot(v.x - at.x, v.y - at.y) < minCentre)) continue;
       vias.push({ x: at.x, y: at.y, net, diameter: rules.diameter, holeR: rules.drill / 2, type: rules.type });
     }
   }
