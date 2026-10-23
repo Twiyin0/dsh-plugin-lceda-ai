@@ -114,7 +114,10 @@ export function stitchVias(model, opts = {}) {
   // is a disc - relying on the cell grid left the edge 0.127 mm too close.
   const viaRadius = rules.diameter / 2;
   const needed = rules.clearance + viaRadius;
-  const obstacles = copperObstacles(model).filter((o) => (o.net || '') !== net);
+  // Foreign copper, plus the vias of this net: a stitching via still has to keep
+  // the drill spacing from another GND via. Filtering the whole net out hid them,
+  // which is why two stitching vias could end up 0.127 mm apart hole-to-hole.
+  const obstacles = copperObstacles(model).filter((o) => (o.net || '') !== net || o.kind === 'via');
   const clearOfForeign = (x, y) => {
     for (const r of obstacles) {
       const dx = Math.max(r.minX - x, 0, x - r.maxX);
