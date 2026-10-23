@@ -401,7 +401,7 @@ const STANDARD_DRC_FLAGS = {
 };
 
 
-export function boardDocument({ title = '', shape = [], layers = STANDARD_LAYERS, drc = DEFAULT_DRC, canvas = {}, originX = 4000, originY = 3000, editorVersion = '6.5.51', bbox = null } = {}) {
+export function boardDocument({ title = '', shape = [], layers = STANDARD_LAYERS, drc = DEFAULT_DRC, canvas = {}, originX = 4000, originY = 3000, editorVersion = '6.5.51', bbox = null, perNet = null } = {}) {
   // The editor's own field set: without objects/BBox/preference/netColors and the
   // full head the import is degraded (the layer panel comes up nearly empty).
   const box = bbox ?? bboxOfShapes(shape);
@@ -417,7 +417,9 @@ export function boardDocument({ title = '', shape = [], layers = STANDARD_LAYERS
     BBox: box,
     preference: { hideFootprints: '', hideNets: '' },
     netColors: {},
-    DRCRULE: { Default: JSON.parse(JSON.stringify(drc?.Default ?? drc)), ...STANDARD_DRC_FLAGS },
+    // perNet carries net-class overrides (a 0.65 mm connector needs 0.15 mm rules
+    // where the rest of the board is fine at 0.254 mm)
+    DRCRULE: { Default: JSON.parse(JSON.stringify(drc?.Default ?? drc)), ...(perNet && Object.keys(perNet).length ? { perNet } : {}), ...STANDARD_DRC_FLAGS },
     ...(title ? { title } : {}),
   };
 }

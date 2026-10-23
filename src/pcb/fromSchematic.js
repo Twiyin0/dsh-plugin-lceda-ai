@@ -277,6 +277,7 @@ export async function boardFromSchematic(input, opts = {}) {
   const centerX = (outline.minX + outline.maxX) / 2;
   const centerY = (outline.minY + outline.maxY) / 2;
   const board = boardDocument({
+      perNet: opts.netRules ?? null,
     title: opts.title ?? '',
     shape,
     layers: opts.layers ?? DEFAULT_LAYERS,

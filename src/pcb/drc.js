@@ -32,14 +32,20 @@ export function rulesFor(model, { net = null, overrides = {} } = {}) {
   const u = (mm, dflt) => Math.max(1, Math.round(mmToUnit(mm ?? dflt)));
   // a rule of 0 means "do not check", so it must not be rounded up to one cell
   const u0 = (mm, dflt) => Math.max(0, Math.round(mmToUnit(mm ?? dflt)));
+  // Per-net rules keep their sub-cell precision. The router works on a 0.254 mm
+  // grid, so a fine-pitch net cannot be ROUTED at 0.15 mm - but that is exactly
+  // the rule a 0.65 mm connector needs to be judged by, and rounding it up to
+  // 0.254 mm is what made those nets fail. The comparison below is in board
+  // units, so a fractional requirement is meaningful.
+  const uf = (mm, dflt) => Math.max(0, mmToUnit(mm ?? dflt));
   const via = viaRules(model, { net });
   return {
-    trackWidth: u(netRule.trackWidth ?? drc.trackWidth, 0.254),
-    clearance: u(netRule.clearance ?? drc.clearance, 0.254),
+    trackWidth: netRule.trackWidth != null ? uf(netRule.trackWidth, 0.254) : u(drc.trackWidth, 0.254),
+    clearance: netRule.clearance != null ? uf(netRule.clearance, 0.254) : u(drc.clearance, 0.254),
     viaDiameter: via.diameter,
     viaDrill: via.drill,
     annularRing: via.annularRing,
-    holeToHole: u(netRule.holeToHole ?? drc.holeToHole, 0.5),
+    holeToHole: netRule.holeToHole != null ? uf(netRule.holeToHole, 0.5) : u(drc.holeToHole, 0.5),
     edgeClearance: u(overrides.edgeClearance ?? drc.edgeClearance, 0.3),
     silkClearance: u0(overrides.silkClearance ?? drc.silkClearance, 0),
     ...overrides,

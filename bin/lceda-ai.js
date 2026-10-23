@@ -52,6 +52,7 @@ Commands:
   pcb via <board.json> -o out    Stitching vias inside a pour (rule-checked) [--net GND] [--spacing 5] [--export]
   pcb drc <board.json>           Design rule check: width / clearance / via ring / hole-to-hole / edge / silk / connectivity
         [--checks a,b,c] [-o report.md] [--no-fail]
+        [--net-rule "NET1,NET2:0.15"]  net class: judge those nets against 0.15mm
   pcb gerber <board.json> -o dir Export Gerber (RS-274X) + Excellon drill, then self-check [--name board] [--manifest]
   pcb bom <board.json> -o dir    Export BOM + pick-and-place (CSV, and XLSX unless --no-xlsx)
         [--sch sheet.esch] [--name board]
@@ -324,9 +325,27 @@ async function main() {
       const { readPcbFile: readPcb } = await import('../src/pcb/parser.js');
       const { runDrc, drcMarkdown } = await import('../src/pcb/drc.js');
       const checkList = flag('--checks', null);
+      // --net-rule "USB_D+,USB_D-:0.15" applies a net class: those nets are judged
+      // against 0.15 mm instead of the board-wide 0.254 mm, which is what a
+      // 0.65 mm pitch connector actually needs.
+      const netRules = {};
+      const ruleSpecs = [];
+      const single = flag('--net-rule', null);
+      if (single) ruleSpecs.push(single);
+      for (let k = 0; k < rest.length; k++) if (rest[k] === '--net-rule' && rest[k + 1]) ruleSpecs.push(rest[k + 1]);
+      for (const spec of [...new Set(ruleSpecs)]) {
+        const [nets, clearance, width] = String(spec).split(':');
+        for (const n of String(nets).split(',').map((x) => x.trim()).filter(Boolean)) {
+          netRules[n] = { ...(netRules[n] ?? {}), ...(clearance ? { clearance: Number(clearance) } : {}), ...(width ? { trackWidth: Number(width) } : {}) };
+        }
+      }
       const rows = [];
       for (const f of files) {
         const model = await readPcb(f);
+        if (Object.keys(netRules).length) {
+          model.drc = model.drc ?? {};
+          model.drc.perNet = { ...(model.drc.perNet ?? {}), ...netRules };
+        }
         const t0 = Date.now();
         const result = runDrc(model, checkList ? { checks: String(checkList).split(',').map((x) => x.trim()) } : {});
         rows.push({
