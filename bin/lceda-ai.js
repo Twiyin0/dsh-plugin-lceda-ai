@@ -46,6 +46,7 @@ Commands:
         [--cell 2] [--clearance 1] [--width 1] [--layers 2] [--export]
         [--priority "RXD,TXD,RST,..."] route these nets first, one at a time
         [--only-priority]               with --priority, skip the remaining nets
+  pcb legalize <board.json> -o out  Force every track segment onto the 0/45/90/135 degree grid
   pcb pour <board.json> -o out   Copper pour (flood fill + thermal spokes + island removal) and self-check
         [--net GND] [--layer 1] [--cell 2] [--clearance 1] [--no-thermal] [--keep-island] [--export]
   pcb via <board.json> -o out    Stitching vias inside a pour (rule-checked) [--net GND] [--spacing 5] [--export]
@@ -397,6 +398,41 @@ async function main() {
         const results = await renderPcbFiles([out], { outDir: dir, formats: ['png', 'svg', 'report'], scale: 8 });
         for (const r of results) for (const [k, v] of Object.entries(r.outputs)) log(`  ${k}: ${v}`);
       }
+      return;
+    }
+    if (sub === 'legalize') {
+      // Force every segment onto the 0/45/90/135 degree grid real LCEDA boards use.
+      const { parsePcb } = await import('../src/pcb/parser.js');
+      const { legalizeAngles } = await import('../src/pcb/route.js');
+      const out = flag('-o', flag('--out', null));
+      if (!out) return usage();
+      const doc = JSON.parse(await fsMod.readFile(input, 'utf8'));
+      const angleOf = (a, b) => {
+        const d = Math.round((Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI) % 180;
+        return d < 0 ? d + 180 : d;
+      };
+      const before = {}, after = {};
+      let fixed = 0;
+      doc.shape = doc.shape.map((rec) => {
+        const str = String(rec);
+        if (!str.startsWith('TRACK~')) return rec;
+        const f = str.split('~');
+        const nums = f[4].split(/\s+/).map(Number);
+        const pts = [];
+        for (let i = 0; i + 1 < nums.length; i += 2) pts.push({ x: nums[i], y: nums[i + 1] });
+        for (let i = 0; i + 1 < pts.length; i++) { const a = angleOf(pts[i], pts[i + 1]); before[a] = (before[a] || 0) + 1; }
+        const next = legalizeAngles(pts);
+        if (next.length !== pts.length) fixed++;
+        for (let i = 0; i + 1 < next.length; i++) { const a = angleOf(next[i], next[i + 1]); after[a] = (after[a] || 0) + 1; }
+        f[4] = next.map((q) => `${q.x} ${q.y}`).join(' ');
+        return f.join('~');
+      });
+      await fsMod.writeFile(out, JSON.stringify(doc), 'utf8');
+      const illegal = Object.entries(after).filter(([a]) => ![0, 45, 90, 135].includes(Number(a)));
+      emit({ file: out, fixed, before, after, illegal });
+      log(`legalized ${out}: ${fixed} 条走线被拆成 45° 折线`);
+      log(`  角度分布: ${Object.entries(after).sort((a, b) => Number(a[0]) - Number(b[0])).map(([a, n]) => `${a}°:${n}`).join('  ')}`);
+      log(illegal.length ? `  ! 仍有非法角: ${illegal.map(([a, n]) => `${a}°x${n}`).join(' ')}` : '  ✓ 全部落在 0/45/90/135');
       return;
     }
     if (sub === 'route') {

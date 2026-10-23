@@ -5,12 +5,12 @@
     {
       "file": "stc89c52rc-minimal-F_Cu.gbr",
       "layer": "1",
-      "bytes": 18750
+      "bytes": 18566
     },
     {
       "file": "stc89c52rc-minimal-B_Cu.gbr",
       "layer": "2",
-      "bytes": 7418
+      "bytes": 7843
     },
     {
       "file": "stc89c52rc-minimal-F_SilkS.gbr",
@@ -53,8 +53,8 @@
       },
       {
         "name": "top-copper-segments",
-        "expected": 481,
-        "actual": 481
+        "expected": 486,
+        "actual": 486
       },
       {
         "name": "top-copper-apertures",

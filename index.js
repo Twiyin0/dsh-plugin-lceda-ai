@@ -186,7 +186,7 @@ const TOOLS = [
   },
   {
     name: 'lceda_create_schematic',
-    description: 'Create a new 嘉立创EDA schematic sheet (A4 frame + title block), optionally building the whole circuit in one call from a declarative spec. The spec is { components:[{symbol|lcsc,ref,value,x,y,rot}], wires:[{from:"U1.19",to:"Y1.1"}|{points:[[x,y],...]}], labels:[{text,at,anchor}], flags:[{text,kind,at,rot}], junctions:[{at}], texts:[{text,at,size,color}] } where any "at"/"from"/"to" can be a pin reference like "U1.9" or a coordinate [x,y]. Net labels and power flags placed on pins connect them, and the call returns the netlist it built so mistakes are visible immediately. Optionally exports svg/png/pdf/report.',
+    description: 'Create a new 嘉立创EDA schematic sheet (A4 frame + title block), optionally building the whole circuit in one call from a declarative spec. The spec is { components:[{std|lcsc|symbol,ref,value,x,y,rot}], wires:[{from:"U1.19",to:"Y1.1"}|{points:[[x,y],...]}], labels:[{text,at,anchor}], flags:[{text,kind,at,rot}], junctions:[{at}], texts:[{text,at,size,color}] } where any "at"/"from"/"to" can be a pin reference like "U1.9" or a coordinate [x,y]. Net labels and power flags placed on pins connect them, and the call returns the netlist it built so mistakes are visible immediately. Part source priority is mandatory: std (LCEDA standard library uuid) first, then lcsc (LCSC mall library), then symbol (built-in drawn) only as a fallback — never hand-draw a part that exists in either library. Optionally exports svg/png/pdf/report.',
     parameters: {
       path: { type: 'string', required: true, description: 'Output .esch path (relative to the session workspace).' },
       sheetTitle: { type: 'string', description: 'Sheet title shown in the title block (previously named title; "title" is still accepted).' },
@@ -260,11 +260,12 @@ const TOOLS = [
   },
   {
     name: 'lceda_place_component',
-    description: 'Place one component into an existing 嘉立创EDA schematic: a built-in symbol key from lceda_find_component, or a real LCSC part number (e.g. C9900042655) whose symbol is fetched from the online library. Coordinates are sheet units (y grows downward; a fresh A4 sheet is 1160x820). Returns the placed pins so the next call can wire them with lceda_edit_schematic.',
+    description: 'Place one component into an existing 嘉立创EDA schematic. PART SOURCE ORDER IS MANDATORY: (1) LCEDA standard library — pass std=<uuid> from lceda_find_component (or symbol=<standard title>); (2) LCSC/EasyEDA product library — pass lcsc=<C-number>; (3) built-in drawn symbols (resistor/capacitor/led/...) ONLY as a last resort when neither library has the part. Do not hand-draw a symbol when a standard-library or LCSC part exists; mixing hand-drawn flags with library parts breaks sheet consistency. Coordinates are sheet units (y grows downward; a fresh A4 sheet is 1160x820). Returns the placed pins so the next call can wire them with lceda_edit_schematic.',
     parameters: {
       path: { type: 'string', required: true, description: 'Schematic file to modify (.esch/.json).' },
-      symbol: { type: 'string', description: 'Built-in symbol key, e.g. stc89c52rc, resistor, capacitor, crystal, switch, led, header.' },
-      lcsc: { type: 'string', description: 'LCSC part number to fetch instead of a built-in symbol, e.g. C9900042655.' },
+      std: { type: 'string', description: 'LCEDA standard-library uuid from lceda_find_component — preferred source for every part.' },
+      symbol: { type: 'string', description: 'Built-in symbol key (resistor/capacitor/led/crystal/header/...) — fallback only; or a standard-library title which is resolved automatically.' },
+      lcsc: { type: 'string', description: 'LCSC part number from the LCSC mall library, e.g. C9900042655 — use when the standard library has no suitable part.' },
       ref: { type: 'string', required: true, description: 'Designator, e.g. R1 or U1.' },
       value: { type: 'string', description: 'Value/name shown on the schematic (e.g. 10k, 11.0592MHz).' },
       x: { type: 'number', required: true, description: 'Sheet x of the symbol centre.' },
@@ -628,7 +629,7 @@ const TOOLS = [
   },
   {
     name: 'lceda_pcb_route',
-    description: 'Autoroute a 嘉立创EDA PCB with a two-layer grid maze router: it builds a raster of the board, blocks foreign copper, the board edge and anything already routed, connects each net pad-to-pad in MST order with A*, and drops a via where a track changes layer. Then it self-checks the result against the clearance rule. Returns routed/failed nets, track and via counts and the copper length.',
+    description: 'Autoroute a 嘉立创EDA PCB with a two-layer grid maze router: it builds a raster of the board, blocks foreign copper, the board edge and anything already routed, connects each net pad-to-pad in MST order with A*, and drops a via where a track changes layer. ROUTING RULES (check the result against them and fix by hand where the grid router cannot comply): signal tracks 10 mil (0.254 mm), power tracks 20-30 mil (0.5-0.762 mm, wider for higher current); no 90-degree corners — chamfer every bend to 45 degrees; USB D+/D- routed as a tight pair of equal length on one layer; never run two tracks directly on top of each other on opposite layers (capacitive coupling); route the hardest nets first (clock, USB, high-speed, power) and the simple GPIO fan-out last. Returns routed/failed nets, track and via counts and the copper length.',
     parameters: {
       path: { type: 'string', required: true, description: 'Board .json to route.' },
       outPath: { type: 'string', required: true, description: 'Where to write the routed board.' },
@@ -652,6 +653,31 @@ const TOOLS = [
       ];
       for (const f of r.failed ?? []) lines.push(`! unrouted ${f.net} ${f.from ?? ''}${f.to ? ` -> ${f.to}` : ''}`);
       return { text: lines.join('\n'), files: [out] };
+    },
+  },
+  {
+    name: 'lceda_pcb_legalize',
+    description: 'Force every track segment of a 嘉立创EDA PCB onto the 0/45/90/135 degree grid that real LCEDA boards are drawn on. A grid router lands tracks on pad centres that sit off the routing grid, which leaves short segments at arbitrary angles (8 deg, 153 deg, ...); a real board never shows those, it uses a 1-2 mm 45-degree chamfer at every bend (measured median 1.19 mm on a reference production board). Any illegal segment is split into an orthogonal run plus a 45-degree run. Run this after lceda_pcb_route and after any hand-added copper, then confirm the reported angle histogram contains only 0/45/90/135.',
+    parameters: {
+      path: { type: 'string', required: true, description: 'Board .json to legalize.' },
+      outPath: { type: 'string', required: true, description: 'Where to write the legalized board.' },
+    },
+    async execute(args, ctx, exec) {
+      const cwd = await ctx.workingDirectory.ensure(exec.agent, exec.signal);
+      const board = await resolvePath(ctx, exec, args.path);
+      const out = await resolvePath(ctx, exec, args.outPath);
+      const r = await runCli(['pcb', 'legalize', board, '-o', out, '--json'], { cwd });
+      const dist = Object.entries(r?.after ?? {}).sort((a, b) => Number(a[0]) - Number(b[0])).map(([a, n]) => `${a}°:${n}`).join('  ');
+      const illegal = r?.illegal ?? [];
+      return {
+        text: [
+          `legalized: ${out}`,
+          `${r?.fixed ?? 0} tracks split into 45-degree polylines`,
+          `angles: ${dist}`,
+          illegal.length ? `! still illegal: ${illegal.map(([a, n]) => `${a}deg x${n}`).join(' ')}` : 'all segments on the 0/45/90/135 grid',
+        ].join('\n'),
+        files: [out],
+      };
     },
   },
   {

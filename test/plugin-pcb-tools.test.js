@@ -32,7 +32,8 @@ test('the PCB tool family is registered with the expected names', () => {
   const names = [...byName.keys()].filter((n) => n.startsWith('lceda_pcb_'));
   assert.deepEqual(names.sort(), [
     'lceda_pcb_bom', 'lceda_pcb_build', 'lceda_pcb_drc', 'lceda_pcb_gerber',
-    'lceda_pcb_pour', 'lceda_pcb_read', 'lceda_pcb_render', 'lceda_pcb_route', 'lceda_pcb_via',
+    'lceda_pcb_legalize', 'lceda_pcb_pour', 'lceda_pcb_read', 'lceda_pcb_render',
+    'lceda_pcb_route', 'lceda_pcb_via',
   ]);
 });
 

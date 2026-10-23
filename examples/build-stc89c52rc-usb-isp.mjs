@@ -75,9 +75,9 @@ const COMPONENTS = [
   // --- USB to serial -----------------------------------------------------
   { part: parts.ch340, ref: 'U3', value: 'CH340G', x: 470, y: 330 },
   { part: parts.c, ref: 'C9', value: '100nF', x: 620, y: 250, rot: 90 },      // V3 regulator
-  { part: parts.xtal, ref: 'Y2', value: '12MHz', x: 380, y: 600 },
-  { part: parts.c, ref: 'C6', value: '22pF', x: 330, y: 660, rot: 90 },
-  { part: parts.c, ref: 'C7', value: '22pF', x: 430, y: 660, rot: 90 },
+  { part: parts.xtal, ref: 'Y2', value: '12MHz', x: 460, y: 620 },
+  { part: parts.c, ref: 'C6', value: '22pF', x: 410, y: 680, rot: 90 },
+  { part: parts.c, ref: 'C7', value: '22pF', x: 510, y: 680, rot: 90 },
   // --- MCU and its decoupling -------------------------------------------
   { part: parts.mcu, ref: 'U1', value: 'STC89C52RC-40I', x: 800, y: 380 },
   { part: parts.c, ref: 'C10', value: '100nF', x: 555, y: 545, rot: 90 },     // ) parallel

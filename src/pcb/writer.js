@@ -307,15 +307,138 @@ export function canvasRecord({ originX = 4000, originY = 3000, unit = 'mm', snap
 }
 
 /** Assemble a board document (docType 3). */
-export function boardDocument({ title = '', shape = [], layers = DEFAULT_LAYERS, drc = DEFAULT_DRC, canvas = {}, originX = 4000, originY = 3000, editorVersion = '6.5.51' } = {}) {
+/**
+ * The full layer table a PCB document carries, exactly as the editor saves it.
+ *
+ * A board is not just its copper: the editor reads this table to build the layer
+ * panel and to decide what it can draw. Writing only the ten layers a board
+ * happens to use made an imported board show a single copper layer - and the
+ * board outline sits on layer 10, which was not declared at all. Copied from a
+ * board saved by 嘉立创EDA 6.5.51.
+ */
+export const STANDARD_LAYERS = [
+  "1~TopLayer~#FF0000~true~true~true~",
+  "2~BottomLayer~#0000FF~true~false~true~",
+  "3~TopSilkLayer~#FFCC00~true~false~true~",
+  "4~BottomSilkLayer~#66CC33~true~false~true~",
+  "5~TopPasteMaskLayer~#808080~true~false~true~",
+  "6~BottomPasteMaskLayer~#800000~true~false~true~",
+  "7~TopSolderMaskLayer~#800080~true~false~true~0.3",
+  "8~BottomSolderMaskLayer~#AA00FF~true~false~true~0.3",
+  "9~Ratlines~#6464FF~true~false~true~",
+  "10~BoardOutLine~#FF00FF~true~false~true~",
+  "11~Multi-Layer~#C0C0C0~true~false~true~",
+  "12~Document~#FFFFFF~true~false~true~",
+  "13~TopAssembly~#33CC99~false~false~false~",
+  "14~BottomAssembly~#5555FF~false~false~false~",
+  "15~Mechanical~#F022F0~false~false~false~",
+  "19~3DModel~#66CCFF~false~false~false~",
+  "21~Inner1~#999966~false~false~false~~",
+  "22~Inner2~#008000~false~false~false~~",
+  "23~Inner3~#00FF00~false~false~false~~",
+  "24~Inner4~#BC8E00~false~false~false~~",
+  "25~Inner5~#70DBFA~false~false~false~~",
+  "26~Inner6~#00CC66~false~false~false~~",
+  "27~Inner7~#9966FF~false~false~false~~",
+  "28~Inner8~#800080~false~false~false~~",
+  "29~Inner9~#008080~false~false~false~~",
+  "30~Inner10~#15935F~false~false~false~~",
+  "31~Inner11~#000080~false~false~false~~",
+  "32~Inner12~#00B400~false~false~false~~",
+  "33~Inner13~#2E4756~false~false~false~~",
+  "34~Inner14~#99842F~false~false~false~~",
+  "35~Inner15~#FFFFAA~false~false~false~~",
+  "36~Inner16~#99842F~false~false~false~~",
+  "37~Inner17~#2E4756~false~false~false~~",
+  "38~Inner18~#3535FF~false~false~false~~",
+  "39~Inner19~#8000BC~false~false~false~~",
+  "40~Inner20~#43AE5F~false~false~false~~",
+  "41~Inner21~#C3ECCE~false~false~false~~",
+  "42~Inner22~#728978~false~false~false~~",
+  "43~Inner23~#39503F~false~false~false~~",
+  "44~Inner24~#0C715D~false~false~false~~",
+  "45~Inner25~#5A8A80~false~false~false~~",
+  "46~Inner26~#2B937E~false~false~false~~",
+  "47~Inner27~#23999D~false~false~false~~",
+  "48~Inner28~#45B4E3~false~false~false~~",
+  "49~Inner29~#215DA1~false~false~false~~",
+  "50~Inner30~#4564D7~false~false~false~~",
+  "51~Inner31~#6969E9~false~false~false~~",
+  "52~Inner32~#9069E9~false~false~false~~",
+  "99~ComponentShapeLayer~#00CCCC~false~false~false~0.4",
+  "100~LeadShapeLayer~#CC9999~false~false~false~",
+  "101~ComponentMarkingLayer~#66FFCC~false~false~false~",
+  "Hole~Hole~#222222~false~false~true~",
+  "DRCError~DRCError~#FAD609~false~false~true~"
+];
+
+/** Object visibility table, also copied from an editor-saved board. */
+export const STANDARD_OBJECTS = [
+  "All~true~false",
+  "Component~true~true",
+  "Prefix~true~true",
+  "Name~true~false",
+  "Track~true~true",
+  "Pad~true~true",
+  "Via~true~true",
+  "Hole~true~true",
+  "Copper_Area~true~true",
+  "Circle~true~true",
+  "Arc~true~true",
+  "Solid_Region~true~true",
+  "Text~true~true",
+  "Image~true~true",
+  "Rect~true~true",
+  "Dimension~true~true",
+  "Protractor~true~true"
+];
+
+const STANDARD_DRC_FLAGS = {
+  "isRealtime": true,
+  "isDrcOnRoutingOrPlaceVia": true,
+  "checkObjectToCopperarea": true,
+  "showDRCRangeLine": true
+};
+
+
+export function boardDocument({ title = '', shape = [], layers = STANDARD_LAYERS, drc = DEFAULT_DRC, canvas = {}, originX = 4000, originY = 3000, editorVersion = '6.5.51', bbox = null } = {}) {
+  // The editor's own field set: without objects/BBox/preference/netColors and the
+  // full head the import is degraded (the layer panel comes up nearly empty).
+  const box = bbox ?? bboxOfShapes(shape);
   return {
-    head: { docType: '3', editorVersion, c_para: '' },
+    head: {
+      docType: '3', editorVersion, newgId: true, c_para: {},
+      x: String(originX), y: String(originY), hasIdFlag: true, importFlag: 0, transformList: '',
+    },
     canvas: canvasRecord({ originX, originY, ...canvas }),
-    layers: [...layers],
     shape: [...shape],
-    DRCRULE: JSON.parse(JSON.stringify(drc)),
+    layers: [...layers],
+    objects: [...STANDARD_OBJECTS],
+    BBox: box,
+    preference: { hideFootprints: '', hideNets: '' },
+    netColors: {},
+    DRCRULE: { Default: JSON.parse(JSON.stringify(drc?.Default ?? drc)), ...STANDARD_DRC_FLAGS },
     ...(title ? { title } : {}),
   };
+}
+
+/** Bounding box of every coordinate in the shape records, as the editor stores it. */
+function bboxOfShapes(shape) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const add = (x, y) => { if (Number.isFinite(x) && Number.isFinite(y)) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); } };
+  for (const rec of shape) {
+    const f = String(rec).split('~');
+    if (f[0] === 'TRACK' || f[0] === 'SOLIDREGION' || f[0] === 'COPPERAREA') {
+      // coordinates live in the trailing "x y x y ..." payload
+      const nums = String(rec).split('~').slice(-1)[0];
+      const parts = String(nums).split(/\s+/).map(Number);
+      for (let i = 0; i + 1 < parts.length; i += 2) add(parts[i], parts[i + 1]);
+    } else if (f[0] === 'LIB') { add(Number(f[1]), Number(f[2])); }
+    else if (f[0] === 'VIA' || f[0] === 'PAD') { add(Number(f[2]), Number(f[3])); }
+    else if (f[0] === 'TEXT' || f[0] === 'SVGNODE') { add(Number(f[3]), Number(f[4])); }
+  }
+  if (!Number.isFinite(minX)) return { x: 0, y: 0, width: 0, height: 0 };
+  return { x: Math.round(minX), y: Math.round(minY), width: +(maxX - minX).toFixed(1), height: +(maxY - minY).toFixed(1) };
 }
 
 export const unit = { mm: 0.254, toUnits: mmToUnit, toMm };

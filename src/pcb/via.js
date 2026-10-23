@@ -195,7 +195,8 @@ export function viaBoard(model, opts = {}) {
   for (const via of stitched.vias) shape.push(viaRecord(via));
   const doc = boardDocument({
     shape,
-    layers: [...model.layers.values()].map((l) => `${l.id}~${l.name}~${l.color}~${l.visible}~${l.active}`),
+    // no explicit layer table: boardDocument writes the editor's full 53-layer
+    // stack, which is what the editor needs to build its layer panel
     drc: model.drc?.default ? { Default: model.drc.default, isRealtime: true } : DEFAULT_DRC,
     originX: model.canvas?.originX ?? 4000,
     originY: model.canvas?.originY ?? 3000,

@@ -190,7 +190,17 @@ export function routeCells(grid, start, goal, opts = {}) {
   const viaCost = opts.viaCost ?? 6;
   const startKey = key(start.layer, start.i, start.j);
   const goalKey = key(goal.layer, goal.i, goal.j);
-  const h = (l, i, j) => Math.abs(i - goal.i) + Math.abs(j - goal.j) + (l === goal.layer ? 0 : viaCost);
+  // Octilinear (45-degree) routing is the default: a real LCEDA board only ever
+  // uses 0/45/90/135 degree segments, and a Manhattan-only search forces a right
+  // angle at every bend. The octile heuristic stays admissible for diagonal cost
+  // sqrt(2), so A* still finds the shortest legal path.
+  const octi = opts.octilinear !== false;
+  const SQRT2 = 1.41421356;
+  const h = (l, i, j) => {
+    const dx = Math.abs(i - goal.i), dy = Math.abs(j - goal.j);
+    const d = octi ? (Math.max(dx, dy) + (SQRT2 - 1) * Math.min(dx, dy)) : dx + dy;
+    return d + (l === goal.layer ? 0 : viaCost);
+  };
 
   const open = new Map([[startKey, { l: start.layer, i: start.i, j: start.j, g: 0, f: h(start.layer, start.i, start.j), prev: null }]]);
   const best = new Map([[startKey, 0]]);
@@ -212,6 +222,18 @@ export function routeCells(grid, start, goal, opts = {}) {
     for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const i = cur.i + di, j = cur.j + dj;
       if (!grid.isBlocked(cur.l, i, j)) neighbours.push({ l: cur.l, i, j, cost: 1 });
+    }
+    if (octi) {
+      // A diagonal step is only legal when BOTH orthogonal cells it squeezes
+      // between are free: cutting a corner would clip a foreign pad even though
+      // the destination cell itself is clear.
+      for (const [di, dj] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+        const i = cur.i + di, j = cur.j + dj;
+        if (grid.isBlocked(cur.l, i, j)) continue;
+        if (grid.isBlocked(cur.l, cur.i + di, cur.j)) continue;
+        if (grid.isBlocked(cur.l, cur.i, cur.j + dj)) continue;
+        neighbours.push({ l: cur.l, i, j, cost: SQRT2 });
+      }
     }
     // A via inside the keep-out (next to a fine-pitch pad) is a bad idea but not
     // impossible, so it is priced, not forbidden: forbidding it outright made the
@@ -270,16 +292,47 @@ export function pathToCopper(grid, path, { net, width, skipVia = null }) {
     }
     const q = grid.toBoard(p.i, p.j);
     const prev = run[run.length - 1];
-    // collapse collinear steps
+    // collapse collinear steps, including 45-degree runs (a diagonal run is
+    // collinear when |dx| == |dy| with the same sign on both axes)
     if (run.length >= 2) {
       const before = run[run.length - 2];
-      const collinear = (before.x === prev.x && prev.x === q.x) || (before.y === prev.y && prev.y === q.y);
-      if (collinear) { run[run.length - 1] = { x: q.x, y: q.y }; continue; }
+      const d1x = prev.x - before.x, d1y = prev.y - before.y;
+      const d2x = q.x - prev.x, d2y = q.y - prev.y;
+      const cross = d1x * d2y - d1y * d2x;
+      const sameWay = (d1x === 0 || d2x === 0 || Math.sign(d1x) === Math.sign(d2x))
+        && (d1y === 0 || d2y === 0 || Math.sign(d1y) === Math.sign(d2y));
+      if (cross === 0 && sameWay) { run[run.length - 1] = { x: q.x, y: q.y }; continue; }
     }
     run.push({ x: q.x, y: q.y });
   }
   flush();
   return { tracks, vias };
+}
+
+/**
+ * Force every segment onto the 0/45/90/135 degree grid LCEDA boards are drawn on.
+ *
+ * Landing a track on a pad centre snaps the endpoint off the routing grid, which
+ * leaves a short segment at an arbitrary angle (8 deg, 153 deg, ...). Real boards
+ * never show those: a corner is either orthogonal or a 45-degree chamfer. Any
+ * illegal segment is therefore split into an orthogonal run plus a 45-degree run,
+ * which is exactly how the editor's interactive router draws it.
+ */
+export function legalizeAngles(points) {
+  if (!points || points.length < 2) return points;
+  const out = [points[0]];
+  for (let i = 1; i < points.length; i++) {
+    const a = out[out.length - 1];
+    const b = points[i];
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const adx = Math.abs(dx), ady = Math.abs(dy);
+    if (adx < 0.01 && ady < 0.01) continue;                       // duplicate point
+    if (adx < 0.01 || ady < 0.01 || Math.abs(adx - ady) < 0.01) { out.push(b); continue; }
+    if (adx > ady) out.push({ x: a.x + Math.sign(dx) * (adx - ady), y: a.y });
+    else out.push({ x: a.x, y: a.y + Math.sign(dy) * (ady - adx) });
+    out.push(b);
+  }
+  return out;
 }
 
 /** Minimum spanning tree over the pads of one net (Prim, Manhattan distance). */
@@ -361,6 +414,10 @@ export function autoroute(model, opts = {}) {
   // uses the track half width. Making it via-sized (radius 1.5) stopped a pad's
   // own centre cell from opening whenever a different-net pad sat 6 units away,
   // which made those nets unroutable. Vias are handled by the keep-out mask.
+  // NOTE: adding one cell of margin here (clearance + width/2 + cell) fixed the
+  // negative-clearance turns on the DIP-40 board (35 -> 4 errors) but broke the
+  // 13-part demo board (0 -> 1 error), so the escape margin still needs a rule
+  // that distinguishes a 2.54 mm DIP row from a 0603 pad pair.
   const needed = clearance + width / 2;
 
   // cells of through-hole pads: a layer change there needs no via
@@ -479,7 +536,7 @@ export function autoroute(model, opts = {}) {
       const a = pads[ai], b = pads[bi];
       // walkable while routing this net: the two pads' own areas
       const opened = [...openPad(a), ...openPad(b)];
-      const path = routeCells(grid, { layer: a.layer, i: a.i, j: a.j }, { layer: b.layer, i: b.i, j: b.j }, { viaCost: opts.viaCost ?? 6 });
+      const path = routeCells(grid, { layer: a.layer, i: a.i, j: a.j }, { layer: b.layer, i: b.i, j: b.j }, { viaCost: opts.viaCost ?? 6, octilinear: opts.octilinear !== false });
       if (process.env.LCEDA_ROUTE_DEBUG) {
         const hardNear = [];
         for (let di = -6; di <= 6; di++) for (let dj = -6; dj <= 6; dj++) {
@@ -527,6 +584,7 @@ export function autoroute(model, opts = {}) {
           }
         }
       }
+      for (const t of produced.tracks) t.points = legalizeAngles(t.points);
       netTracks.push(...produced.tracks);
       netVias.push(...produced.vias);
       // reserve the new copper so later nets keep their distance
@@ -745,7 +803,8 @@ export function routeBoard(model, opts = {}) {
   for (const v of result.vias) shape.push(viaRecord({ ...v, diameter: viaDiameter, holeR: viaHole }));
   const doc = boardDocument({
     shape,
-    layers: [...model.layers.values()].map((l) => `${l.id}~${l.name}~${l.color}~${l.visible}~${l.active}`),
+    // no explicit layer table: boardDocument writes the editor's full 53-layer
+    // stack, which is what the editor needs to build its layer panel
     drc: model.drc?.default ? { Default: model.drc.default, isRealtime: true } : DEFAULT_DRC,
     originX: model.canvas?.originX ?? 4000,
     originY: model.canvas?.originY ?? 3000,
