@@ -329,7 +329,16 @@ async function main() {
         const model = await readPcb(f);
         const t0 = Date.now();
         const result = runDrc(model, checkList ? { checks: String(checkList).split(',').map((x) => x.trim()) } : {});
-        rows.push({ file: f, ok: result.ok, summary: result.summary, counts: result.counts, rules: result.rules, ms: Date.now() - t0 });
+        rows.push({
+          file: f, ok: result.ok, summary: result.summary, counts: result.counts, rules: result.rules, ms: Date.now() - t0,
+          // the violations themselves, so a tool call can report what is wrong
+          // instead of only how many things are wrong
+          violations: result.violations.map((v) => ({
+            type: v.type, severity: v.severity, net: v.net || '', otherNet: v.otherNet || '',
+            layer: v.layer ?? null, at: v.at ?? null, measuredMm: v.measuredMm, requiredMm: v.requiredMm,
+            detail: v.detail ?? '',
+          })),
+        });
         log(`## ${f}`);
         log(`   ${result.ok ? 'PASS' : 'FAIL'} — ${result.summary}${Object.keys(result.counts).length ? ' | ' + Object.entries(result.counts).map(([k, v]) => `${k}:${v}`).join(' ') : ''}`);
         for (const v of result.violations.slice(0, 8)) {

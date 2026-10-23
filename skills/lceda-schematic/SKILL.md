@@ -112,7 +112,8 @@ spec 里 `at`/`from`/`to` 可以写引脚引用(`"U1.9"`),坐标一定要**先�
 - `lceda_pcb_build` —— 原理图 → PCB,并可一次跑完 **布局 → 布线 → 铺铜 → 缝合孔 → Gerber → BOM**。
 - `lceda_pcb_read` / `lceda_pcb_render` —— 读板与分层渲染(正面/背面)。
 - `lceda_pcb_route` / `lceda_pcb_pour` / `lceda_pcb_via` —— 布线 / 铺铜 / 缝合孔,各自带间距自检。
-- `lceda_pcb_drc` —— 线宽、间距、过孔环、孔到孔、板边、丝印压盘、连通性。
+- `lceda_pcb_drc` —— 线宽、间距、过孔环、孔到孔、板边、丝印压盘、连通性。返回违规**明细**(类型/网络/层/坐标/实测 vs 要求),不只是数量;`pcb drc --no-fail` 让"有违规"作为结果返回而不是命令失败。
+- `lceda_pcb_build` 的 `drc` 参数默认开启:流水线跑完自动对**成品板**做一次 DRC,写出 `<board>-drc.md` 并把错误逐条回报 —— 避免"布线 43/46"被当成"可以打样"。
 - `lceda_pcb_gerber` / `lceda_pcb_bom` —— 制造文件(Gerber + Excellon)与 BOM/贴片坐标(CSV + XLSX)。
 
 命令行等价物:`lceda-ai pcb {read|render|from-sch|route|pour|via|drc|gerber|bom}`。

@@ -558,7 +558,7 @@ const TOOLS = [
   },
   {
     name: 'lceda_pcb_build',
-    description: 'Build a PCB from a 嘉立创EDA schematic: fetch a footprint for every component from the standard library, place them (rule-based clustering by default), carry the netlist onto the pads and write a board document the editor can open. Optionally continue the whole pipeline in one call: autoroute, pour a net, stitch vias and export Gerber/BOM. Returns the board path, the placement quality (ratsnest length, overlaps) and per-stage results.',
+    description: 'Build a PCB from a 嘉立创EDA schematic: fetch a footprint for every component from the standard library, place them (rule-based clustering by default), carry the netlist onto the pads and write a board document the editor can open. Optionally continue the whole pipeline in one call: autoroute, pour a net, stitch vias, run the DRC and export Gerber/BOM. The DRC stage runs on the finished board and writes a report next to it, so a build cannot look complete while the board still has violations. Returns the board path, the placement quality (ratsnest length, overlaps) and per-stage results.',
     parameters: {
       path: { type: 'string', required: true, description: 'Schematic .esch/.json to build from.' },
       outPath: { type: 'string', required: true, description: 'Where to write the board .json.' },
@@ -570,6 +570,7 @@ const TOOLS = [
       stitchVias: { type: 'boolean', description: 'After pouring, add stitching vias to the poured net.' },
       exportGerber: { type: 'boolean', description: 'Also export Gerber + drill into "<outPath>.gerber/".' },
       exportBom: { type: 'boolean', description: 'Also export BOM + pick-and-place into "<outPath>.bom/".' },
+      drc: { type: 'boolean', description: 'Run the design rule check on the finished board and write "<outPath>-drc.md" (default true). Set false to skip.' },
       sheetTitle: { type: 'string', description: 'Board title stored in the document.' },
     },
     async execute(args, ctx, exec) {
@@ -611,6 +612,19 @@ const TOOLS = [
         current = stitched;
         files.push(stitched);
         lines.push(`stitch: ${r.stats?.placed} vias on ${net}, ${r.check?.count ?? 0} violations`);
+      }
+      if (args.drc !== false) {
+        // Check the board the pipeline actually produced: a build that reports
+        // "routed 43/46" is not the same as one that is manufacturable.
+        const report = `${out.replace(/\.json$/i, '')}-drc.md`;
+        const r = await runCli(['pcb', 'drc', current, '--json', '--no-fail', '-o', report], { cwd });
+        const row = (r.files ?? [])[0] ?? {};
+        const counts = row.counts ?? {};
+        lines.push(`drc: ${row.ok ? 'PASS' : 'FAIL'} — ${row.summary ?? ''}${Object.keys(counts).length ? ' | ' + Object.entries(counts).map(([k, v]) => `${k}:${v}`).join(' ') : ''} (report ${report})`);
+        for (const v of (row.violations ?? []).filter((x) => x.severity === 'error').slice(0, 5)) {
+          lines.push(`  ! ${v.type} ${v.net || ''}${v.otherNet ? ' <-> ' + v.otherNet : ''} ${v.measuredMm}mm / ${v.requiredMm}mm${v.at ? ` @${v.at.x},${v.at.y}` : ''}`);
+        }
+        files.push(report);
       }
       if (args.exportGerber) {
         const dir = `${out.replace(/\.json$/i, '')}.gerber`;
